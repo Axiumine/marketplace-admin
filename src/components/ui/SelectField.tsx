@@ -2,8 +2,8 @@ import * as Label from '@radix-ui/react-label'
 import type { ReactNode, Ref, SelectHTMLAttributes } from 'react'
 import { useId } from 'react'
 
-import { IconFrecciaGiu } from '@/components/ui/icons'
-import { CAMPO_DA_CORREGGERE, CAMPO_VALIDO } from '@/components/ui/statoCampo'
+import { IconArrowGiu } from '@/components/ui/icons'
+import { FIELD_TO_FIX, FIELD_VALID } from '@/components/ui/fieldStatus'
 
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
 	label: string
@@ -49,7 +49,7 @@ export const SelectField = ({ label, error, id, children, ref, ...rest }: Select
 				<select
 					id={selectId}
 					ref={ref}
-					className={`${SELECT_CLASS} ${error === undefined ? CAMPO_VALIDO : CAMPO_DA_CORREGGERE}`}
+					className={`${SELECT_CLASS} ${error === undefined ? FIELD_VALID : FIELD_TO_FIX}`}
 					aria-invalid={error !== undefined}
 					aria-describedby={error === undefined ? undefined : errorId}
 					{...rest}
@@ -59,7 +59,7 @@ export const SelectField = ({ label, error, id, children, ref, ...rest }: Select
 				{/* `pointer-events-none`: the arrow sits over the select, and a click on it has to reach the
 				    select underneath or the one obvious place to press would be the one that does nothing. */}
 				<span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-tip">
-					<IconFrecciaGiu />
+					<IconArrowGiu />
 				</span>
 			</div>
 			{error === undefined ? null : (

@@ -32,7 +32,7 @@ const client = createGraphQLClient({
 
 const container = document.getElementById('root')
 
-if (container === null) throw new Error('Elemento #root non trovato: index.html non è quello atteso.')
+if (container === null) throw new Error('#root element not found: index.html is not the expected one.')
 
 createRoot(container).render(
 	<StrictMode>

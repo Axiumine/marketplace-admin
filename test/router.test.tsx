@@ -6,12 +6,12 @@ import { DEFAULT_PAGE_SIZE } from '@/router'
 import { stubGraphQL } from './helpers/graphql'
 import { renderRoute } from './helpers/render'
 
-const emptyTable = { data: { imprenditoriAttiviTbl: { total: 0, items: [] } } }
+const emptyTable = { data: { shopOwnersActiveTbl: { total: 0, items: [] } } }
 
-const GESTIONE = '/p/imprenditori/gestione-imprenditori'
+const MANAGE = '/p/shopOwners/manage-shopOwners'
 
 /** The search state the route hands the table when the URL says nothing. */
-const DEFAULTS = { page: 1, pageSize: DEFAULT_PAGE_SIZE, search: '', sortBy: 'COGNOME', sortDir: 'ASC' }
+const DEFAULTS = { page: 1, pageSize: DEFAULT_PAGE_SIZE, search: '', sortBy: 'LAST_NAME', sortDir: 'ASC' }
 
 describe('route guard', () => {
 	/**
@@ -21,10 +21,10 @@ describe('route guard', () => {
 	 */
 	it('sends an unauthenticated visitor to the bootstrap page, remembering where they were going', async () => {
 		stubGraphQL({ InfoAdminAfterLogin: { pending: true } })
-		const { router } = await renderRoute('/impostazioni', { session: null })
+		const { router } = await renderRoute('/settings', { session: null })
 
 		expect(router.state.location.pathname).toBe('/loading')
-		expect(router.state.location.search).toEqual({ redirect: '/impostazioni' })
+		expect(router.state.location.search).toEqual({ redirect: '/settings' })
 	})
 
 	// The remembered target is the *validated* URL, not the one that was typed: the guard runs after
@@ -32,18 +32,18 @@ describe('route guard', () => {
 	// — an operator who followed a link to page 3 comes back to page 3, not to page 1.
 	it('carries the search params of the page that was asked for', async () => {
 		stubGraphQL({ InfoAdminAfterLogin: { pending: true } })
-		const { router } = await renderRoute(`${GESTIONE}?page=3`, { session: null })
+		const { router } = await renderRoute(`${MANAGE}?page=3`, { session: null })
 
 		expect(router.state.location.search).toEqual({
-			redirect: `${GESTIONE}?page=3&pageSize=20&search=&sortBy=COGNOME&sortDir=ASC`
+			redirect: `${MANAGE}?page=3&pageSize=20&search=&sortBy=LAST_NAME&sortDir=ASC`
 		})
 	})
 
 	it('lets a signed-in operator through', async () => {
 		stubGraphQL({})
-		const { router } = await renderRoute('/impostazioni')
+		const { router } = await renderRoute('/settings')
 
-		expect(router.state.location.pathname).toBe('/impostazioni')
+		expect(router.state.location.pathname).toBe('/settings')
 	})
 
 	// The login and loading pages sit outside the guarded frame, so they are reachable with no session.
@@ -55,23 +55,23 @@ describe('route guard', () => {
 	})
 })
 
-describe('imprenditori search params', () => {
+describe('shopOwners search params', () => {
 	const searchOf = async (url: string) => {
-		stubGraphQL({ ImprenditoriAttiviTbl: emptyTable })
+		stubGraphQL({ ShopOwnersActiveTbl: emptyTable })
 		const { router } = await renderRoute(url)
 		return router.state.location.search
 	}
 
 	it('fills in every default when the URL carries none', async () => {
-		expect(await searchOf(GESTIONE)).toEqual(DEFAULTS)
+		expect(await searchOf(MANAGE)).toEqual(DEFAULTS)
 	})
 
 	it('reads the whole state out of the URL', async () => {
-		expect(await searchOf(`${GESTIONE}?page=3&pageSize=50&search=rossi&sortBy=COMUNE&sortDir=DESC`)).toEqual({
+		expect(await searchOf(`${MANAGE}?page=3&pageSize=50&search=rossi&sortBy=CITY&sortDir=DESC`)).toEqual({
 			page: 3,
 			pageSize: 50,
 			search: 'rossi',
-			sortBy: 'COMUNE',
+			sortBy: 'CITY',
 			sortDir: 'DESC'
 		})
 	})
@@ -80,51 +80,51 @@ describe('imprenditori search params', () => {
 	// error worth a crash screen — and `?page=abc` crashing would be a self-inflicted denial of service
 	// on anyone who was sent a mangled link.
 	it('falls back on a page that is not a number', async () => {
-		expect((await searchOf(`${GESTIONE}?page=abc`)).page).toBe(1)
+		expect((await searchOf(`${MANAGE}?page=abc`)).page).toBe(1)
 	})
 
 	it('falls back on a page below the first one', async () => {
-		expect((await searchOf(`${GESTIONE}?page=0`)).page).toBe(1)
+		expect((await searchOf(`${MANAGE}?page=0`)).page).toBe(1)
 	})
 
 	it('falls back on a fractional page', async () => {
-		expect((await searchOf(`${GESTIONE}?page=2.5`)).page).toBe(1)
+		expect((await searchOf(`${MANAGE}?page=2.5`)).page).toBe(1)
 	})
 
 	// The upper bound is what stops `?pageSize=100000` from asking the backend for the whole collection
 	// in one document. The value reaches Mongo as a `limit`, so without a ceiling here any operator with
 	// a URL bar can turn a paged query back into a full scan.
 	it('falls back on a page size past the maximum', async () => {
-		expect((await searchOf(`${GESTIONE}?pageSize=100000`)).pageSize).toBe(DEFAULT_PAGE_SIZE)
+		expect((await searchOf(`${MANAGE}?pageSize=100000`)).pageSize).toBe(DEFAULT_PAGE_SIZE)
 	})
 
 	it('falls back on a page size below the minimum', async () => {
-		expect((await searchOf(`${GESTIONE}?pageSize=1`)).pageSize).toBe(DEFAULT_PAGE_SIZE)
+		expect((await searchOf(`${MANAGE}?pageSize=1`)).pageSize).toBe(DEFAULT_PAGE_SIZE)
 	})
 
 	it('keeps a page size inside the bounds', async () => {
-		expect((await searchOf(`${GESTIONE}?pageSize=5`)).pageSize).toBe(5)
+		expect((await searchOf(`${MANAGE}?pageSize=5`)).pageSize).toBe(5)
 	})
 
 	// The enums are the backend's own sort vocabulary, so a column it does not index never reaches the
 	// query — it comes back as a schema validation error rather than as a blocking in-memory sort.
 	it('falls back on a sort column the backend does not know', async () => {
-		expect((await searchOf(`${GESTIONE}?sortBy=PASSWORD`)).sortBy).toBe('COGNOME')
+		expect((await searchOf(`${MANAGE}?sortBy=PASSWORD`)).sortBy).toBe('LAST_NAME')
 	})
 
 	it('falls back on a sort direction that is not a direction', async () => {
-		expect((await searchOf(`${GESTIONE}?sortDir=SIDEWAYS`)).sortDir).toBe('ASC')
+		expect((await searchOf(`${MANAGE}?sortDir=SIDEWAYS`)).sortDir).toBe('ASC')
 	})
 
-	// Each column named one at a time, not as a set: `sortBy=NOME` reaching the query unchanged is the
-	// only thing that says NOME is in the accepted list, because a column that fell out of it would come
+	// Each column named one at a time, not as a set: `sortBy=FIRST_NAME` reaching the query unchanged is the
+	// only thing that says FIRST_NAME is in the accepted list, because a column that fell out of it would come
 	// back as the default and look identical to a column that was never asked for.
-	it.each(['COGNOME', 'NOME', 'ISCRIZIONE', 'COMUNE'])('carries %s through to the query', async (sortBy) => {
-		expect((await searchOf(`${GESTIONE}?sortBy=${sortBy}`)).sortBy).toBe(sortBy)
+	it.each(['LAST_NAME', 'FIRST_NAME', 'REGISTERED_AT', 'CITY'])('carries %s through to the query', async (sortBy) => {
+		expect((await searchOf(`${MANAGE}?sortBy=${sortBy}`)).sortBy).toBe(sortBy)
 	})
 
 	it.each(['ASC', 'DESC'])('carries %s through to the query', async (sortDir) => {
-		expect((await searchOf(`${GESTIONE}?sortDir=${sortDir}`)).sortDir).toBe(sortDir)
+		expect((await searchOf(`${MANAGE}?sortDir=${sortDir}`)).sortDir).toBe(sortDir)
 	})
 
 	/*
@@ -134,51 +134,49 @@ describe('imprenditori search params', () => {
 	 * quietly grown an empty entry would accept it and send a blank column name to MongoDB.
 	 */
 	it('falls back on an empty sort column', async () => {
-		expect((await searchOf(`${GESTIONE}?sortBy=`)).sortBy).toBe('COGNOME')
+		expect((await searchOf(`${MANAGE}?sortBy=`)).sortBy).toBe('LAST_NAME')
 	})
 
 	it('falls back on an empty sort direction', async () => {
-		expect((await searchOf(`${GESTIONE}?sortDir=`)).sortDir).toBe('ASC')
+		expect((await searchOf(`${MANAGE}?sortDir=`)).sortDir).toBe('ASC')
 	})
 })
 
 describe('routes', () => {
-	it('serves the imprenditori stats page', async () => {
+	it('serves the shopOwners stats page', async () => {
 		stubGraphQL({
-			ImprenditoriStats: { data: { imprenditoriStats: 7 } },
-			ImprenditoriPerPeriodo: { data: { imprenditoriPerPeriodo: { granularita: 'MESE', punti: [] } } }
+			ShopOwnersStats: { data: { shopOwnersStats: 7 } },
+			ShopOwnersPerPeriod: { data: { shopOwnersPerPeriod: { granularity: 'MONTH', points: [] } } }
 		})
-		await renderRoute('/imprenditori')
+		await renderRoute('/shopOwners')
 
-		expect(screen.getByRole('heading', { name: 'Imprenditori', level: 1 })).toBeInTheDocument()
+		expect(screen.getByRole('heading', { name: 'ShopOwners', level: 1 })).toBeInTheDocument()
 	})
 
 	it('serves the add page', async () => {
 		stubGraphQL({})
-		await renderRoute('/p/imprenditori/aggiungi-imprenditore')
+		await renderRoute('/p/shopOwners/add-shopOwner')
 
-		expect(screen.getByRole('heading', { name: 'Aggiungi imprenditore', level: 1 })).toBeInTheDocument()
+		expect(screen.getByRole('heading', { name: 'Add shopOwner', level: 1 })).toBeInTheDocument()
 	})
 
 	// The `$_id` param is what the detail page queries on, so a wrong reading of it is a page about
 	// somebody else.
 	it('passes the id segment of the detail route to the query', async () => {
 		const stub = stubGraphQL({
-			ImprenditoreById: { pending: true },
-			ImprenditoreAziende: { pending: true },
-			ImprenditorePuntiVendita: { pending: true }
+			ShopOwnerById: { pending: true },
+			ShopOwnerCompanies: { pending: true }
 		})
-		await renderRoute('/p/imprenditori/id/65f0000000000000000000ff')
+		await renderRoute('/p/shopOwners/id/65f0000000000000000000ff')
 
-		// Three sections, three queries, one id — and three requests rather than four, because the shops
-		// section reads the companies too and urql keys an operation by document and variables.
+		// Two sections, two queries, one id — and the same id in both, which is the whole assertion: a
+		// section reading the wrong param renders somebody else's data beside the right shopOwner's.
 		await waitFor(() => {
-			expect(stub.calls).toHaveLength(3)
+			expect(stub.calls).toHaveLength(2)
 		})
 		expect(stub.calls.map((call) => call.variables)).toEqual([
-			{ idImprenditore: '65f0000000000000000000ff' },
-			{ idImprenditore: '65f0000000000000000000ff' },
-			{ idImprenditore: '65f0000000000000000000ff' }
+			{ idShopOwner: '65f0000000000000000000ff' },
+			{ idShopOwner: '65f0000000000000000000ff' }
 		])
 	})
 })

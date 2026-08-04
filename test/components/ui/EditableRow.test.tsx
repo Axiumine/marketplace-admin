@@ -7,29 +7,29 @@ import { EditableRow } from '@/components/ui/EditableRow'
 describe('EditableRow', () => {
 	it('starts read-only, with the value and a pen beside it', () => {
 		render(
-			<EditableRow label="Cellulare" value="3331234567">
-				<input aria-label="Cellulare" />
+			<EditableRow label="Mobile" value="3331234567">
+				<input aria-label="Mobile" />
 			</EditableRow>
 		)
 
-		expect(screen.getByText('Cellulare')).toBeInTheDocument()
+		expect(screen.getByText('Mobile')).toBeInTheDocument()
 		expect(screen.getByText('3331234567')).toBeInTheDocument()
-		expect(screen.getByRole('button', { name: 'Modifica Cellulare' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Change Mobile' })).toBeInTheDocument()
 		expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
 	})
 
 	it('swaps the value for the editor when the pen is pressed', async () => {
 		render(
-			<EditableRow label="Cellulare" value="3331234567">
-				<input aria-label="Cellulare" />
+			<EditableRow label="Mobile" value="3331234567">
+				<input aria-label="Mobile" />
 			</EditableRow>
 		)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Modifica Cellulare' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Change Mobile' }))
 
-		expect(screen.getByRole('textbox', { name: 'Cellulare' })).toBeInTheDocument()
+		expect(screen.getByRole('textbox', { name: 'Mobile' })).toBeInTheDocument()
 		expect(screen.queryByText('3331234567')).not.toBeInTheDocument()
-		expect(screen.queryByRole('button', { name: 'Modifica Cellulare' })).not.toBeInTheDocument()
+		expect(screen.queryByRole('button', { name: 'Change Mobile' })).not.toBeInTheDocument()
 	})
 
 	/*
@@ -38,104 +38,104 @@ describe('EditableRow', () => {
 	 */
 	it('names the pen after the row it opens', () => {
 		render(
-			<EditableRow label="Passo onboarding" value="3">
-				<input aria-label="Passo onboarding" />
+			<EditableRow label="Onboarding step" value="3">
+				<input aria-label="Onboarding step" />
 			</EditableRow>
 		)
 
-		expect(screen.getByRole('button', { name: 'Modifica Passo onboarding' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Change Onboarding step' })).toBeInTheDocument()
 	})
 
 	// Opening hours are the reason: a shop may open twice on the same day, so two rows carry the same
 	// visible label and the two pens would otherwise announce identically.
 	it('takes an explicit name when the label would not be unique', () => {
 		render(
-			<EditableRow label="lunedì" azione="Modifica orario 2" value="18:30 – 23:00">
+			<EditableRow label="lunedì" action="Change openingHours 2" value="18:30 – 23:00">
 				<input aria-label="Dalle" />
 			</EditableRow>
 		)
 
-		expect(screen.getByRole('button', { name: 'Modifica orario 2' })).toBeInTheDocument()
-		expect(screen.queryByRole('button', { name: 'Modifica lunedì' })).not.toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Change openingHours 2' })).toBeInTheDocument()
+		expect(screen.queryByRole('button', { name: 'Change lunedì' })).not.toBeInTheDocument()
 	})
 
 	// Icon-only, so `aria-label` is the only thing naming it and the glyph has to stay out of the
 	// accessibility tree — otherwise the row announces an unnamed control next to an unnamed image.
 	it('names the icon-only pen and hides the glyph from assistive tech', () => {
 		render(
-			<EditableRow label="Nome" value="Mario">
-				<input aria-label="Nome" />
+			<EditableRow label="First name" value="Mario">
+				<input aria-label="First name" />
 			</EditableRow>
 		)
 
-		const penna = screen.getByRole('button', { name: 'Modifica Nome' })
-		expect(penna.textContent).toBe('')
-		expect(penna.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
-		expect(penna).toHaveAttribute('title', 'Modifica Nome')
+		const pen = screen.getByRole('button', { name: 'Change First name' })
+		expect(pen.textContent).toBe('')
+		expect(pen.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+		expect(pen).toHaveAttribute('title', 'Change First name')
 	})
 
 	// The rows live inside the page's form: a pen that defaulted to `type="submit"` would save the whole
-	// imprenditore on the way into editing one field.
+	// shopOwner on the way into editing one field.
 	it('does not submit the form it sits in', async () => {
-		let inviato = false
+		let submitted = false
 
 		render(
 			<form
 				onSubmit={(event) => {
 					event.preventDefault()
-					inviato = true
+					submitted = true
 				}}
 			>
-				<EditableRow label="Nome" value="Mario">
-					<input aria-label="Nome" />
+				<EditableRow label="First name" value="Mario">
+					<input aria-label="First name" />
 				</EditableRow>
 			</form>
 		)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Modifica Nome' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Change First name' }))
 
-		expect(inviato).toBe(false)
+		expect(submitted).toBe(false)
 	})
 
-	// A row of a fixed document — every field of the anagrafica — has nothing to delete. The bin is opt-in
+	// A row of a fixed document — every field of the personalData — has nothing to delete. The bin is opt-in
 	// so those rows do not grow a control that could only ever be a mistake.
 	it('has no bin unless one is asked for', () => {
 		render(
-			<EditableRow label="Nome" value="Mario">
-				<input aria-label="Nome" />
+			<EditableRow label="First name" value="Mario">
+				<input aria-label="First name" />
 			</EditableRow>
 		)
 
-		expect(screen.queryByRole('button', { name: 'Elimina Nome' })).not.toBeInTheDocument()
+		expect(screen.queryByRole('button', { name: 'Delete First name' })).not.toBeInTheDocument()
 	})
 
 	it('puts a bin beside the pen, named after the row', async () => {
-		let eliminato = false
+		let deleted = false
 
 		render(
 			<EditableRow
-				label="Passo onboarding"
+				label="Onboarding step"
 				value="3"
-				onElimina={() => {
-					eliminato = true
+				onDelete={() => {
+					deleted = true
 				}}
 			>
-				<input aria-label="Passo onboarding" />
+				<input aria-label="Onboarding step" />
 			</EditableRow>
 		)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Elimina Passo onboarding' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Delete Onboarding step' }))
 
-		expect(eliminato).toBe(true)
+		expect(deleted).toBe(true)
 	})
 
 	it('takes an explicit name for the bin when the label would not be unique', () => {
 		render(
 			<EditableRow
 				label="lunedì"
-				azioneElimina="Elimina orario 2"
+				actionDelete="Delete openingHours 2"
 				value="18:30 – 23:00"
-				onElimina={() => {
+				onDelete={() => {
 					/* not pressed here */
 				}}
 			>
@@ -143,39 +143,39 @@ describe('EditableRow', () => {
 			</EditableRow>
 		)
 
-		expect(screen.getByRole('button', { name: 'Elimina orario 2' })).toBeInTheDocument()
-		expect(screen.queryByRole('button', { name: 'Elimina lunedì' })).not.toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Delete openingHours 2' })).toBeInTheDocument()
+		expect(screen.queryByRole('button', { name: 'Delete lunedì' })).not.toBeInTheDocument()
 	})
 
 	// The whole point of keeping it reachable: a row is usually opened *before* the operator decides it
 	// should not exist at all.
 	it('keeps the bin once the row is open', async () => {
-		let eliminato = false
+		let deleted = false
 
 		render(
 			<EditableRow
 				label="lunedì"
 				value="11:30 – 14:30"
-				onElimina={() => {
-					eliminato = true
+				onDelete={() => {
+					deleted = true
 				}}
 			>
 				<input aria-label="Dalle" />
 			</EditableRow>
 		)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Modifica lunedì' }))
-		await userEvent.click(screen.getByRole('button', { name: 'Elimina lunedì' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Change lunedì' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Delete lunedì' }))
 
 		expect(screen.getByRole('textbox', { name: 'Dalle' })).toBeInTheDocument()
-		expect(eliminato).toBe(true)
+		expect(deleted).toBe(true)
 	})
 
 	// A row that was just added has no stored value: closed, it would read as an empty label beside an
 	// empty value, and the operator would have to find the pen of a row that looks like a rendering bug.
 	it('can start open', () => {
 		render(
-			<EditableRow label="" value="" apertoIniziale>
+			<EditableRow label="" value="" openInitial>
 				<input aria-label="Giorno" />
 			</EditableRow>
 		)
@@ -184,19 +184,19 @@ describe('EditableRow', () => {
 	})
 
 	it('does not submit the form it sits in when the bin is pressed', async () => {
-		let inviato = false
+		let submitted = false
 
 		render(
 			<form
 				onSubmit={(event) => {
 					event.preventDefault()
-					inviato = true
+					submitted = true
 				}}
 			>
 				<EditableRow
 					label="lunedì"
 					value="11:30 – 14:30"
-					onElimina={() => {
+					onDelete={() => {
 						/* the submit is what is under test */
 					}}
 				>
@@ -205,15 +205,15 @@ describe('EditableRow', () => {
 			</form>
 		)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Elimina lunedì' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Delete lunedì' }))
 
-		expect(inviato).toBe(false)
+		expect(submitted).toBe(false)
 	})
 
 	it('renders read-only', () => {
 		const { container } = render(
-			<EditableRow label="Nome" value="Mario">
-				<input aria-label="Nome" />
+			<EditableRow label="First name" value="Mario">
+				<input aria-label="First name" />
 			</EditableRow>
 		)
 
@@ -222,11 +222,11 @@ describe('EditableRow', () => {
 
 	it('renders open', async () => {
 		const { container } = render(
-			<EditableRow label="Nome" value="Mario">
-				<input aria-label="Nome" />
+			<EditableRow label="First name" value="Mario">
+				<input aria-label="First name" />
 			</EditableRow>
 		)
-		await userEvent.click(screen.getByRole('button', { name: 'Modifica Nome' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Change First name' }))
 
 		expect(container.firstChild).toMatchSnapshot()
 	})
@@ -236,7 +236,7 @@ describe('EditableRow', () => {
 			<EditableRow
 				label="lunedì"
 				value="11:30 – 14:30"
-				onElimina={() => {
+				onDelete={() => {
 					/* not pressed here */
 				}}
 			>

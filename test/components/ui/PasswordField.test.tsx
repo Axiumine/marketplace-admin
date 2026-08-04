@@ -10,16 +10,16 @@ describe('PasswordField', () => {
 		render(<PasswordField label="Password" />)
 
 		expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password')
-		expect(screen.getByRole('button', { name: 'Mostra password' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Show password' })).toBeInTheDocument()
 	})
 
 	it('reveals and re-masks the value', async () => {
 		render(<PasswordField label="Password" />)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Mostra password' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Show password' }))
 		expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text')
 
-		await userEvent.click(screen.getByRole('button', { name: 'Nascondi password' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Hide password' }))
 		expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'password')
 	})
 
@@ -37,7 +37,7 @@ describe('PasswordField', () => {
 			</form>
 		)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Mostra password' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Show password' }))
 		expect(onSubmit).not.toHaveBeenCalled()
 	})
 
@@ -47,10 +47,10 @@ describe('PasswordField', () => {
 	it('names the icon-only toggle, and hides the glyph from assistive tech', () => {
 		render(<PasswordField label="Password" />)
 
-		const toggle = screen.getByRole('button', { name: 'Mostra password' })
+		const toggle = screen.getByRole('button', { name: 'Show password' })
 		expect(toggle.textContent).toBe('')
 		expect(toggle.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
-		expect(toggle).toHaveAttribute('title', 'Mostra password')
+		expect(toggle).toHaveAttribute('title', 'Show password')
 	})
 
 	// The toggle sits *inside* the field, so it has to be inside the box the input draws — a sibling of
@@ -59,27 +59,27 @@ describe('PasswordField', () => {
 		render(<PasswordField label="Password" />)
 
 		const input = screen.getByLabelText('Password')
-		const toggle = screen.getByRole('button', { name: 'Mostra password' })
+		const toggle = screen.getByRole('button', { name: 'Show password' })
 		expect(input.parentElement).toContainElement(toggle)
 		expect(input).toHaveClass('pr-10')
 	})
 
 	it('shows the validation error and forwards its ref', () => {
 		const ref = createRef<HTMLInputElement>()
-		render(<PasswordField label="Password" error="Inserisci la password" ref={ref} />)
+		render(<PasswordField label="Password" error="Enter the password" ref={ref} />)
 
-		expect(screen.getByText('Inserisci la password')).toBeInTheDocument()
+		expect(screen.getByText('Enter the password')).toBeInTheDocument()
 		expect(ref.current).toBe(screen.getByLabelText('Password'))
 	})
 
 	it('renders masked', () => {
-		const { container } = render(<PasswordField label="Password" id="campo-password" />)
+		const { container } = render(<PasswordField label="Password" id="field-password" />)
 		expect(container.firstChild).toMatchSnapshot()
 	})
 
 	it('renders revealed', async () => {
-		const { container } = render(<PasswordField label="Password" id="campo-password" />)
-		await userEvent.click(screen.getByRole('button', { name: 'Mostra password' }))
+		const { container } = render(<PasswordField label="Password" id="field-password" />)
+		await userEvent.click(screen.getByRole('button', { name: 'Show password' }))
 
 		expect(container.firstChild).toMatchSnapshot()
 	})

@@ -7,16 +7,16 @@ import { Button } from '@/components/ui/Button'
 /**
  * The three sections of the operator app.
  *
- * `/imprenditori` uses `activeOptions.exact: false` on purpose: the gestione, aggiungi and detail
- * pages all live under `/p/imprenditori/…`, a different path prefix entirely, so the highlight is
+ * `/shopOwners` uses `activeOptions.exact: false` on purpose: the manage, add and detail
+ * pages all live under `/p/shopOwners/…`, a different path prefix entirely, so the highlight is
  * driven by an explicit prefix list rather than by the router's path matching. The prefixes live in
  * this one table so that adding a page cannot leave the sidebar pointing at the wrong section —
  * anything that makes each page announce its own highlight goes stale the first time a page forgets.
  */
 const SECTIONS = [
 	{ to: '/home', label: 'Dashboard', prefixes: ['/home'] },
-	{ to: '/imprenditori', label: 'Imprenditori', prefixes: ['/imprenditori', '/p/imprenditori'] },
-	{ to: '/impostazioni', label: 'Impostazioni', prefixes: ['/impostazioni'] }
+	{ to: '/shopOwners', label: 'ShopOwners', prefixes: ['/shopOwners', '/p/shopOwners'] },
+	{ to: '/settings', label: 'Settings', prefixes: ['/settings'] }
 ] as const
 
 export const isSectionActive = (pathname: string, prefixes: readonly string[]): boolean =>
@@ -27,7 +27,7 @@ export const SideMenu = ({ pathname }: { pathname: string }) => {
 	const logout = useLogout()
 
 	return (
-		<nav aria-label="Menu principale" className="flex h-full w-56 flex-col bg-secondary p-4">
+		<nav aria-label="Main menu" className="flex h-full w-56 flex-col bg-secondary p-4">
 			<p className="mb-6 text-lg font-bold text-third">Marketplace</p>
 
 			<ul className="flex flex-col gap-1">
@@ -59,7 +59,7 @@ export const SideMenu = ({ pathname }: { pathname: string }) => {
 						void logout()
 					}}
 				>
-					Esci
+					Logout
 				</Button>
 			</div>
 		</nav>

@@ -4,7 +4,7 @@ import { graphql } from '@gql/publicAuthorization'
  * The only operation this app sends to the public endpoint.
  *
  * `LoginAppType` also carries `onboardingStep` and `onboardingDone`, and they are deliberately not
- * selected: `loginAdmin` hard-codes them (`''` and `true`) because onboarding is an Imprenditore
+ * selected: `loginAdmin` hard-codes them (`''` and `true`) because onboarding is an ShopOwner
  * concept and the `admin` collection has no such fields. Asking for them would type a value the
  * operator app must never branch on.
  *

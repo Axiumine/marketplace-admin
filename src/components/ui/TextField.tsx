@@ -2,7 +2,7 @@ import * as Label from '@radix-ui/react-label'
 import type { InputHTMLAttributes, ReactNode, Ref } from 'react'
 import { useId } from 'react'
 
-import { CAMPO_DA_CORREGGERE, CAMPO_VALIDO } from '@/components/ui/statoCampo'
+import { FIELD_TO_FIX, FIELD_VALID } from '@/components/ui/fieldStatus'
 
 interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 	label: string
@@ -66,7 +66,7 @@ export const TextField = ({ label, error, id, trailing, ref, ...rest }: TextFiel
 				<input
 					id={inputId}
 					ref={ref}
-					className={`${INPUT_CLASS} ${error === undefined ? CAMPO_VALIDO : CAMPO_DA_CORREGGERE} ${trailing === undefined ? 'pr-3' : 'pr-10'}`}
+					className={`${INPUT_CLASS} ${error === undefined ? FIELD_VALID : FIELD_TO_FIX} ${trailing === undefined ? 'pr-3' : 'pr-10'}`}
 					aria-invalid={error !== undefined}
 					aria-describedby={error === undefined ? undefined : errorId}
 					{...rest}

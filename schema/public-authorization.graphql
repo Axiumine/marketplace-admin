@@ -10,7 +10,7 @@
 #   src/graphQLPublic/schema/mutations/loginAdmin.mts
 #   @axiumine/koa-utils/graphQL/schema/types/LoginAppType
 #
-# It contains only what the operator app calls. `login` (the Imprenditore-tier login that shares this
+# It contains only what the operator app calls. `login` (the ShopOwner-tier login that shares this
 # endpoint) is deliberately absent: this app never calls it, and codegen only needs to type what the
 # documents in src/api/operations/publicAuthorization/ actually ask for.
 #
@@ -34,7 +34,7 @@ type MutationsPublic {
 """
 Returned by every login on the platform, which is why it carries the two onboarding fields.
 Both are meaningless for an operator: `loginAdmin` hard-codes `onboardingStep: ''` and
-`onboardingDone: true` because onboarding is an Imprenditore concept — the admin collection has no
+`onboardingDone: true` because onboarding is an ShopOwner concept — the admin collection has no
 such fields. The operator app must not read them.
 """
 type LoginAppType {

@@ -46,7 +46,7 @@ exports[`TextField > renders with a trailing slot 1`] = `
       <button
         type="button"
       >
-        Occhio
+        Eye
       </button>
     </span>
   </div>
@@ -77,7 +77,7 @@ exports[`TextField > renders with an error 1`] = `
     class="text-xs text-app-error"
     id="campo-email-error"
   >
-    Inserisci un indirizzo email valido
+    Enter a valid email address
   </span>
 </div>
 `;

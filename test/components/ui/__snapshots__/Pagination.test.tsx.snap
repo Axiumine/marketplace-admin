@@ -10,22 +10,22 @@ exports[`Pagination > renders 1`] = `
     21
     –
     40
-     di 
+     of 
     41
   </p>
   <nav
-    aria-label="Paginazione"
+    aria-label="Pagination"
     class="flex gap-1"
   >
     <button
-      aria-label="Pagina precedente"
+      aria-label="Previous page"
       class="rounded-box px-2 py-1 disabled:opacity-40"
       type="button"
     >
       ‹
     </button>
     <button
-      aria-label="Pagina 1"
+      aria-label="Page 1"
       class="rounded-box px-2 py-1 "
       type="button"
     >
@@ -33,21 +33,21 @@ exports[`Pagination > renders 1`] = `
     </button>
     <button
       aria-current="page"
-      aria-label="Pagina 2"
+      aria-label="Page 2"
       class="rounded-box px-2 py-1 bg-third text-palette-white"
       type="button"
     >
       2
     </button>
     <button
-      aria-label="Pagina 3"
+      aria-label="Page 3"
       class="rounded-box px-2 py-1 "
       type="button"
     >
       3
     </button>
     <button
-      aria-label="Pagina successiva"
+      aria-label="Next page"
       class="rounded-box px-2 py-1 disabled:opacity-40"
       type="button"
     >

@@ -4,7 +4,7 @@ import type { CodegenConfig } from '@graphql-codegen/cli'
  * One project per access level, not one merged schema.
  *
  * The four endpoints are four independent GraphQL servers that happen to share a browser. Merging
- * them into a single schema would invent an API that exists nowhere: `logout` and `imprenditoriStats`
+ * them into a single schema would invent an API that exists nowhere: `logout` and `shopOwnersStats`
  * would end up on the same `MutationsApi`/`QueriesApi` pair, and a document could be written that
  * type-checks against the merged shape while no single server can answer it. Keeping them apart also
  * means a document physically cannot be sent to the wrong endpoint — the `graphql()` helper it was

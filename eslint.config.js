@@ -91,9 +91,9 @@ export default [
 		// compiler's own diagnostic channel: `eslint --fix` classifies an `eslint-disable-next-line` for
 		// it as unused and deletes the comment, while the warning stays. A config override survives.
 		files: [
-			'src/features/imprenditori/TblImprenditori.tsx',
-			'src/features/imprenditori/ImprenditoreAddForm.tsx',
-			'src/features/imprenditori/PuntiVendita.tsx'
+			'src/features/shopOwners/TblShopOwners.tsx',
+			'src/features/shopOwners/ShopOwnerAddForm.tsx',
+			'src/features/shopOwners/PuntiVendita.tsx'
 		],
 		rules: { 'react-hooks/incompatible-library': 'off' }
 	},

@@ -4,13 +4,13 @@ import { z } from 'zod'
 
 import { getSession } from '@/auth/session'
 import { AppShell } from '@/components/layout/AppShell'
-import type { ImprenditoriQuery } from '@/features/imprenditori/TblImprenditori'
-import { AggiungiImprenditorePage } from '@/pages/AggiungiImprenditorePage'
-import { GestioneImprenditoriPage } from '@/pages/GestioneImprenditoriPage'
+import type { ShopOwnersQuery } from '@/features/shopOwners/TblShopOwners'
+import { AddShopOwnerPage } from '@/pages/AddShopOwnerPage'
+import { ManageShopOwnersPage } from '@/pages/ManageShopOwnersPage'
 import { HomePage } from '@/pages/HomePage'
-import { ImpostazioniPage } from '@/pages/ImpostazioniPage'
-import { ImprenditoreDetailPage } from '@/pages/ImprenditoreDetailPage'
-import { ImprenditoriPage } from '@/pages/ImprenditoriPage'
+import { SettingsPage } from '@/pages/SettingsPage'
+import { ShopOwnerDetailPage } from '@/pages/ShopOwnerDetailPage'
+import { ShopOwnersPage } from '@/pages/ShopOwnersPage'
 import { LoadingPage } from '@/pages/LoadingPage'
 import { LoginPage } from '@/pages/LoginPage'
 
@@ -37,17 +37,17 @@ export const DEFAULT_PAGE_SIZE = 20
  */
 const createAppRouteTree = () => {
 	/**
-	 * The imprenditori table state, as URL search params.
+	 * The shopOwners table state, as URL search params.
 	 *
 	 * Every field `.catch()`es to a default, which is what makes a hand-edited or truncated URL land on
 	 * a usable page instead of a validation crash — `?page=abc` is a typo, not an error worth a screen.
 	 * The two enums are the backend's own sort vocabulary, so an unknown column never reaches the query.
 	 */
-	const imprenditoriSearchSchema = z.object({
+	const shopOwnersSearchSchema = z.object({
 		page: z.coerce.number().int().min(1).catch(1),
 		pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
 		search: z.string().catch(''),
-		sortBy: z.enum(['COGNOME', 'NOME', 'ISCRIZIONE', 'COMUNE']).catch('COGNOME'),
+		sortBy: z.enum(['LAST_NAME', 'FIRST_NAME', 'REGISTERED_AT', 'CITY']).catch('LAST_NAME'),
 		sortDir: z.enum(['ASC', 'DESC']).catch('ASC')
 	})
 
@@ -63,7 +63,7 @@ const createAppRouteTree = () => {
 	 * TanStack Router works out which search params a `<Link>` is *required* to supply from the input
 	 * type of `validateSearch`. Handing it the schema makes every key required at every call site — even
 	 * though each one `.catch()`es to a default and the route is perfectly happy with none of them — so
-	 * `<Link to="/p/imprenditori/gestione-imprenditori">` would not compile without spelling out all
+	 * `<Link to="/p/shopOwners/manage-shopOwners">` would not compile without spelling out all
 	 * five.
 	 *
 	 * The `& SearchSchemaInput` marker is how the router is told to read the parameter type as the
@@ -71,9 +71,9 @@ const createAppRouteTree = () => {
 	 * input is an index signature — "any query string is acceptable", which is exactly what the
 	 * `.catch()` chain guarantees — while the parsed output type stays fully specific.
 	 */
-	const validateImprenditoriSearch = (
+	const validateShopOwnersSearch = (
 		search: Record<string, unknown> & SearchSchemaInput
-	): z.infer<typeof imprenditoriSearchSchema> => imprenditoriSearchSchema.parse(search)
+	): z.infer<typeof shopOwnersSearchSchema> => shopOwnersSearchSchema.parse(search)
 
 	const validateLoadingSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof loadingSearchSchema> =>
 		loadingSearchSchema.parse(search)
@@ -110,35 +110,35 @@ const createAppRouteTree = () => {
 
 	const homeRoute = createRoute({ getParentRoute: () => appRoute, path: '/home', component: HomePage })
 
-	const impostazioniRoute = createRoute({
+	const settingsRoute = createRoute({
 		getParentRoute: () => appRoute,
-		path: '/impostazioni',
-		component: ImpostazioniPage
+		path: '/settings',
+		component: SettingsPage
 	})
 
-	const imprenditoriRoute = createRoute({
+	const shopOwnersRoute = createRoute({
 		getParentRoute: () => appRoute,
-		path: '/imprenditori',
-		component: ImprenditoriPage
+		path: '/shopOwners',
+		component: ShopOwnersPage
 	})
 
-	const gestioneImprenditoriRoute = createRoute({
+	const manageShopOwnersRoute = createRoute({
 		getParentRoute: () => appRoute,
-		path: '/p/imprenditori/gestione-imprenditori',
-		validateSearch: validateImprenditoriSearch,
-		component: GestioneImprenditoriRoute
+		path: '/p/shopOwners/manage-shopOwners',
+		validateSearch: validateShopOwnersSearch,
+		component: ManageShopOwnersRoute
 	})
 
-	const aggiungiImprenditoreRoute = createRoute({
+	const addShopOwnerRoute = createRoute({
 		getParentRoute: () => appRoute,
-		path: '/p/imprenditori/aggiungi-imprenditore',
-		component: AggiungiImprenditorePage
+		path: '/p/shopOwners/add-shopOwner',
+		component: AddShopOwnerPage
 	})
 
-	const imprenditoreDetailRoute = createRoute({
+	const shopOwnerDetailRoute = createRoute({
 		getParentRoute: () => appRoute,
-		path: '/p/imprenditori/id/$_id',
-		component: ImprenditoreDetailRoute
+		path: '/p/shopOwners/id/$_id',
+		component: ShopOwnerDetailRoute
 	})
 
 	/*
@@ -152,25 +152,25 @@ const createAppRouteTree = () => {
 		return <LoadingPage redirect={target} />
 	}
 
-	function GestioneImprenditoriRoute() {
-		const query = gestioneImprenditoriRoute.useSearch()
-		const navigate = gestioneImprenditoriRoute.useNavigate()
+	function ManageShopOwnersRoute() {
+		const query = manageShopOwnersRoute.useSearch()
+		const navigate = manageShopOwnersRoute.useNavigate()
 
-		// Not memoised. `TblImprenditori` does list this callback among the dependencies of the effect
+		// Not memoised. `TblShopOwners` does list this callback among the dependencies of the effect
 		// that pushes the debounced search up, so a fresh identity per render re-runs that effect — but
 		// the effect's own guard (`debouncedSearch !== query.search`) is false on every run after the
 		// first, so it re-runs and does nothing. A `useCallback` would trade that for a dependency array
 		// whose only entry is stable for the life of the router, which is no trade at all.
-		const onQueryChange = (next: Partial<ImprenditoriQuery>) => {
+		const onQueryChange = (next: Partial<ShopOwnersQuery>) => {
 			void navigate({ search: (prev) => ({ ...prev, ...next }) })
 		}
 
-		return <GestioneImprenditoriPage query={query} onQueryChange={onQueryChange} />
+		return <ManageShopOwnersPage query={query} onQueryChange={onQueryChange} />
 	}
 
-	function ImprenditoreDetailRoute() {
-		const { _id } = imprenditoreDetailRoute.useParams()
-		return <ImprenditoreDetailPage idImprenditore={_id} />
+	function ShopOwnerDetailRoute() {
+		const { _id } = shopOwnerDetailRoute.useParams()
+		return <ShopOwnerDetailPage idShopOwner={_id} />
 	}
 
 	return rootRoute.addChildren([
@@ -178,11 +178,11 @@ const createAppRouteTree = () => {
 		loadingRoute,
 		appRoute.addChildren([
 			homeRoute,
-			impostazioniRoute,
-			imprenditoriRoute,
-			gestioneImprenditoriRoute,
-			aggiungiImprenditoreRoute,
-			imprenditoreDetailRoute
+			settingsRoute,
+			shopOwnersRoute,
+			manageShopOwnersRoute,
+			addShopOwnerRoute,
+			shopOwnerDetailRoute
 		])
 	])
 }

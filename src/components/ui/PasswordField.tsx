@@ -28,14 +28,14 @@ const ICON_PROPS = {
  * of eyes is not a reason to add a runtime one. `aria-hidden` keeps them out of the accessibility tree
  * — the button around them carries the name, and an icon announced twice reads as two controls.
  */
-const IconOcchio = () => (
+const IconEye = () => (
 	<svg {...ICON_PROPS}>
 		<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z" />
 		<circle cx="12" cy="12" r="3" />
 	</svg>
 )
 
-const IconOcchioBarrato = () => (
+const IconEyeOff = () => (
 	<svg {...ICON_PROPS}>
 		<path d="M10.7 5.6A11 11 0 0 1 12 5.5c6.4 0 10 6.5 10 6.5a19 19 0 0 1-3.3 4.1" />
 		<path d="M6.5 6.6A18.9 18.9 0 0 0 2 12s3.6 6.5 10 6.5a10.8 10.8 0 0 0 4-.7" />
@@ -47,8 +47,8 @@ const IconOcchioBarrato = () => (
 /**
  * A password input with an eye toggle sitting inside the field, at its right edge.
  *
- * The toggle is an icon, so its accessible name comes from `aria-label` — "Mostra password" /
- * "Nascondi password", the same two strings the visible text used to say. Without it the button
+ * The toggle is an icon, so its accessible name comes from `aria-label` — "Show password" /
+ * "Hide password", the same two strings the visible text used to say. Without it the button
  * announces as an unnamed control and there is no way to know what it does.
  *
  * It is a `<button type="button">` rather than the HTML default `submit` so it cannot post the form it
@@ -57,7 +57,7 @@ const IconOcchioBarrato = () => (
  */
 export const PasswordField = ({ label, error, ref, ...rest }: PasswordFieldProps) => {
 	const [visible, setVisible] = useState(false)
-	const toggleLabel = visible ? 'Nascondi password' : 'Mostra password'
+	const toggleLabel = visible ? 'Hide password' : 'Show password'
 
 	return (
 		<TextField
@@ -75,7 +75,7 @@ export const PasswordField = ({ label, error, ref, ...rest }: PasswordFieldProps
 						setVisible(!visible)
 					}}
 				>
-					{visible ? <IconOcchioBarrato /> : <IconOcchio />}
+					{visible ? <IconEyeOff /> : <IconEye />}
 				</button>
 			}
 			{...rest}

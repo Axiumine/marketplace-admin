@@ -7,7 +7,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { IconX } from '@/components/ui/icons'
 
 /** How long a confirmation stays up. Only the success tone counts down — see the component. */
-export const DURATA_OK = 5000
+export const OK_DURATION = 5000
 
 /**
  * The stack every toast portals into, created on first use and then reused.
@@ -22,20 +22,20 @@ export const DURATA_OK = 5000
  * its widest message and spans the top-right corner, and without this it would swallow clicks on
  * whatever sits under the empty space beside a short one.
  */
-const ID_PILA = 'pila-toast'
+const STACK_ID = 'pila-toast'
 
-const pila = (): HTMLElement => {
-	const esistente = document.getElementById(ID_PILA)
+const stack = (): HTMLElement => {
+	const existing = document.getElementById(STACK_ID)
 
-	if (esistente !== null) return esistente
+	if (existing !== null) return existing
 
-	const creata = document.createElement('div')
+	const created = document.createElement('div')
 
-	creata.id = ID_PILA
-	creata.className = 'pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2'
-	document.body.appendChild(creata)
+	created.id = STACK_ID
+	created.className = 'pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2'
+	document.body.appendChild(created)
 
-	return creata
+	return created
 }
 
 /*
@@ -69,13 +69,13 @@ const TONE_CLASS: Record<AlertTone, string> = {
  */
 export const Toast = ({ tone, children }: { tone: AlertTone; children: ReactNode }) => {
 	const conTimer = tone === 'success'
-	const [inPausa, setInPausa] = useState(false)
-	const [chiuso, setChiuso] = useState(false)
+	const [inPause, setInPause] = useState(false)
+	const [closed, setClosed] = useState(false)
 	// Read once, in a lazy initialiser rather than in an effect: the portal needs the node during the
 	// first render, and creating it on every render would be a `getElementById` per keystroke elsewhere.
-	const [nodo] = useState(pila)
+	const [node] = useState(stack)
 
-	if (chiuso) return null
+	if (closed) return null
 
 	return createPortal(
 		<div
@@ -86,24 +86,24 @@ export const Toast = ({ tone, children }: { tone: AlertTone; children: ReactNode
 			// tab stop, and a toast that closed under a keyboard user's fingers would throw focus back to
 			// the body mid-press.
 			onMouseEnter={() => {
-				setInPausa(true)
+				setInPause(true)
 			}}
 			onMouseLeave={() => {
-				setInPausa(false)
+				setInPause(false)
 			}}
 			onFocus={() => {
-				setInPausa(true)
+				setInPause(true)
 			}}
 			onBlur={() => {
-				setInPausa(false)
+				setInPause(false)
 			}}
 		>
 			<div className="flex items-start gap-3 px-4 py-3 text-sm">
 				<span className="grow">{children}</span>
 				<IconButton
-					nome="Chiudi"
+					name="Close"
 					onClick={() => {
-						setChiuso(true)
+						setClosed(true)
 					}}
 				>
 					<IconX />
@@ -133,19 +133,19 @@ export const Toast = ({ tone, children }: { tone: AlertTone; children: ReactNode
 					<div
 						className="h-full origin-left bg-current"
 						style={{
-							animationName: 'conto-alla-rovescia',
-							animationDuration: `${DURATA_OK}ms`,
+							animationName: 'countdown',
+							animationDuration: `${OK_DURATION}ms`,
 							animationTimingFunction: 'linear',
 							animationFillMode: 'forwards',
-							animationPlayState: inPausa ? 'paused' : 'running'
+							animationPlayState: inPause ? 'paused' : 'running'
 						}}
 						onAnimationEnd={() => {
-							setChiuso(true)
+							setClosed(true)
 						}}
 					/>
 				</div>
 			) : null}
 		</div>,
-		nodo
+		node
 	)
 }

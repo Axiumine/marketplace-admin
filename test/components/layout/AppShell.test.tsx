@@ -9,9 +9,9 @@ describe('AppShell', () => {
 		stubGraphQL({})
 		await renderRoute('/home')
 
-		expect(screen.getByRole('navigation', { name: 'Menu principale' })).toBeInTheDocument()
+		expect(screen.getByRole('navigation', { name: 'Main menu' })).toBeInTheDocument()
 		expect(screen.getByRole('main')).toContainElement(screen.getByRole('heading', { name: 'Dashboard' }))
-		expect(screen.getByText('Marketplace — pannello operatore di piattaforma')).toBeInTheDocument()
+		expect(screen.getByText('Marketplace — platform operator panel')).toBeInTheDocument()
 	})
 
 	// The frame belongs to the pathless `app` route, so the two pages outside it — login and loading —
@@ -20,14 +20,14 @@ describe('AppShell', () => {
 		stubGraphQL({})
 		await renderRoute('/', { token: null, session: null })
 
-		expect(screen.queryByRole('navigation', { name: 'Menu principale' })).not.toBeInTheDocument()
+		expect(screen.queryByRole('navigation', { name: 'Main menu' })).not.toBeInTheDocument()
 	})
 
 	it('does not frame the loading page', async () => {
 		stubGraphQL({ InfoAdminAfterLogin: { pending: true } })
 		await renderRoute('/loading')
 
-		expect(screen.queryByRole('navigation', { name: 'Menu principale' })).not.toBeInTheDocument()
+		expect(screen.queryByRole('navigation', { name: 'Main menu' })).not.toBeInTheDocument()
 	})
 
 	it('renders', async () => {

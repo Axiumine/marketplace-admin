@@ -22,8 +22,8 @@ import { Toast } from '@/components/ui/Toast'
  * cost a round-trip.
  */
 const loginSchema = z.object({
-	email: z.email('Inserisci un indirizzo email valido'),
-	password: z.string().min(1, 'Inserisci la password'),
+	email: z.email('Enter a valid email address'),
+	password: z.string().min(1, 'Enter the password'),
 	rememberMe: z.boolean()
 })
 
@@ -81,7 +81,7 @@ export const LoginForm = () => {
 		>
 			<div>
 				<h2 className="text-xl font-bold">Login</h2>
-				<p className="text-sm text-tip">Inserisci le credenziali per effettuare l&apos;accesso.</p>
+				<p className="text-sm text-tip">Enter your credentials to sign in.</p>
 			</div>
 
 			<TextField
@@ -103,14 +103,14 @@ export const LoginForm = () => {
 
 			<label className="flex items-center gap-2 text-sm">
 				<input type="checkbox" {...register('rememberMe')} />
-				Ricordami su questo dispositivo
+				Remember me on this device
 			</label>
 
 			{loginState.error === undefined ? null : <Toast tone="error">{messageOf(loginState.error)}</Toast>}
-			{failed ? <Toast tone="error">Credenziali non valide</Toast> : null}
+			{failed ? <Toast tone="error">Invalid credentials</Toast> : null}
 
 			<Button type="submit" loading={loginState.fetching}>
-				Accedi
+				Sign in
 			</Button>
 		</form>
 	)

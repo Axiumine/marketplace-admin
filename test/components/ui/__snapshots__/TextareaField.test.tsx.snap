@@ -8,7 +8,7 @@ exports[`TextareaField > renders 1`] = `
     class="text-sm font-semibold"
     for="campo-note"
   >
-    Note
+    Notes
   </label>
   <textarea
     aria-invalid="false"
@@ -30,7 +30,7 @@ exports[`TextareaField > renders with a count 1`] = `
     class="text-sm font-semibold"
     for="campo-note"
   >
-    Note
+    Notes
   </label>
   <textarea
     aria-describedby="campo-note-rimanenti"
@@ -48,7 +48,7 @@ exports[`TextareaField > renders with a count 1`] = `
       id="campo-note-rimanenti"
     >
       1985
-       caratteri rimanenti
+       characters remaining
     </span>
   </div>
 </div>
@@ -62,7 +62,7 @@ exports[`TextareaField > renders with an error 1`] = `
     class="text-sm font-semibold"
     for="campo-note"
   >
-    Note
+    Notes
   </label>
   <textarea
     aria-describedby="campo-note-error"
@@ -78,7 +78,7 @@ exports[`TextareaField > renders with an error 1`] = `
       class="text-xs text-app-error"
       id="campo-note-error"
     >
-      La nota non può superare 2000 caratteri
+      The notes cannot exceed 2000 characters
     </span>
   </div>
 </div>

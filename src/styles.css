@@ -26,7 +26,7 @@
 }
 
 /*
- * Account-status backgrounds on the imprenditore detail page. Named rather than inlined because the
+ * Account-status backgrounds on the shopOwner detail page. Named rather than inlined because the
  * three states are a domain concept — deleted / disabled / waiting for approval. A helper that
  * returned raw hex in a style string would put the same three facts somewhere unsearchable.
  */
@@ -53,7 +53,7 @@
  * everything. It is a common snippet and it would make every confirmation flash past unread — this
  * animation carries a duration that means something, and shortening it shortens the message.
  */
-@keyframes conto-alla-rovescia {
+@keyframes countdown {
 	from {
 		transform: scaleX(1);
 	}

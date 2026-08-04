@@ -52,16 +52,6 @@ describe('formatDate', () => {
 	})
 })
 
-describe('formatOra', () => {
-	it('keeps only the time half of an opening-hours timestamp', () => {
-		expect(format.formatOra(ISO)).toBe('08:05')
-	})
-
-	it('renders NO_VALUE for an unparseable timestamp', () => {
-		expect(format.formatOra('mezzogiorno')).toBe(format.NO_VALUE)
-	})
-})
-
 describe('handleNull', () => {
 	it('renders NO_VALUE for null and for undefined', () => {
 		expect(format.handleNull(null)).toBe(format.NO_VALUE)
@@ -113,22 +103,22 @@ describe('handleNullBoolYN', () => {
 	})
 })
 
-describe('toDataInput', () => {
+describe('toDateInput', () => {
 	it('keeps the date half an `input type="date"` accepts', () => {
-		expect(format.toDataInput('1980-06-15T00:00:00.000Z')).toBe('1980-06-15')
+		expect(format.toDateInput('1980-06-15T00:00:00.000Z')).toBe('1980-06-15')
 	})
 
 	// Midnight UTC is what the collection stores, and reading it in local time would seed the box with
 	// the previous day everywhere west of Greenwich — a field dirty on arrival and written back a day
 	// early on the next save that touched anything else.
 	it('reads the stored timestamp in UTC', () => {
-		expect(format.toDataInput('1980-06-15T23:30:00.000Z')).toBe('1980-06-15')
+		expect(format.toDateInput('1980-06-15T23:30:00.000Z')).toBe('1980-06-15')
 	})
 
 	// The empty string, not NO_VALUE: this feeds a form control, where `---` is three characters the
 	// operator has to delete rather than an empty field.
 	it('is empty for an unparseable value', () => {
-		expect(format.toDataInput('non una data')).toBe('')
+		expect(format.toDateInput('non una data')).toBe('')
 	})
 })
 
@@ -153,18 +143,18 @@ describe('vuotoInNull', () => {
 	// `''` is a string of the right bsonType, so it would be *written* — a landline of no digits — while
 	// `null` is what the services' validators turn into an absent key.
 	it('turns a cleared box into null', () => {
-		expect(format.vuotoInNull('')).toBeNull()
+		expect(format.emptyInNull('')).toBeNull()
 	})
 
 	it('leaves anything else alone, including a lone space', () => {
-		expect(format.vuotoInNull('021234567')).toBe('021234567')
-		expect(format.vuotoInNull(' ')).toBe(' ')
+		expect(format.emptyInNull('021234567')).toBe('021234567')
+		expect(format.emptyInNull(' ')).toBe(' ')
 	})
 })
 
-describe('formatIndirizzo', () => {
+describe('formatAddress', () => {
 	it('composes the one-line address the tables and cards show', () => {
-		expect(format.formatIndirizzo({ indirizzo: 'via Roma 1', cap: '20100', comune: 'Milano', provincia: 'MI' })).toBe(
+		expect(format.formatAddress({ street: 'via Roma 1', postalCode: '20100', city: 'Milano', province: 'MI' })).toBe(
 			'via Roma 1, 20100 Milano (MI)'
 		)
 	})

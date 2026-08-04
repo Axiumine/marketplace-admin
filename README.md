@@ -2,8 +2,8 @@
 
 Marketplace platform-operator panel (`Admin` tier). Vite + React SPA, TypeScript strict.
 
-**Operator tier only.** It logs in through `loginAdmin` and manages *imprenditori*. The shop-owner
-(`Imprenditore`) and customer (`Utente`) frontends are separate apps that do not exist yet — this is
+**Operator tier only.** It logs in through `loginAdmin` and manages *shopOwners*. The shop-owner
+(`ShopOwner`) and customer (`Utente`) frontends are separate apps that do not exist yet — this is
 what they should be copied from, not a shell to add their routes into.
 
 ## Stack
@@ -98,11 +98,11 @@ schema slices; it describes nothing that exists.
 | `/` | login |
 | `/loading` | session restore, then `?redirect=` |
 | `/home` | dashboard |
-| `/impostazioni` | change own password |
-| `/imprenditori` | counters + section menu |
-| `/p/imprenditori/gestione-imprenditori` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
-| `/p/imprenditori/aggiungi-imprenditore` | create form |
-| `/p/imprenditori/id/$_id` | detail — anagrafica + punti vendita |
+| `/settings` | change own password |
+| `/shopOwners` | counters + section menu |
+| `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
+| `/p/shopOwners/add-shopOwner` | create form |
+| `/p/shopOwners/id/$_id` | detail — personalData + punti vendita |
 
 Everything except `/` and `/loading` is behind a pathless guarded route. An empty session redirects to
 `/loading`, not to `/`: only a round-trip can tell "never signed in" from "signed in and reloaded".
@@ -119,28 +119,28 @@ Each entry is a plausible change someone will propose, and the reason it is not 
 they guard against all render as a working screen.
 
 - **The table is paged, searched and sorted by the server, never by the browser.**
-  `imprenditoriAttiviTbl` is `(offset, limit, search, sortBy, sortDir) → { items, total }`, backed by
+  `shopOwnersActiveTbl` is `(offset, limit, search, sortBy, sortDir) → { items, total }`, backed by
   indexes in `marketplace-db-setup`. Filtering or sorting client-side means fetching the whole
-  `imprenditore` collection first — every operator downloading every record to look at twenty rows, on
+  `shopOwner` collection first — every operator downloading every record to look at twenty rows, on
   a collection with no upper bound. `?pageSize=` is clamped in `router.tsx` for the same reason.
 - **`deleted` is a timestamp, not a flag.** Its presence is the soft delete, so it is tested with
   `!= null`. Compared against `true` — or passed through `handleNullBoolYN` — it is false for every
   value the field can hold, and a deleted account reads "Eliminato: No" with no tint.
 - **Every optional field goes through `handleNull`.** A dash means "not given"; a blank space beside a
   label means "this broke", and an operator cannot tell that apart from a field that failed to load.
-- **Never render a label for a field the collection does not have.** `imprenditore` has no `account`
+- **Never render a label for a field the collection does not have.** `shopOwner` has no `account`
   sub-document; a row bound to one shows a permanent blank that looks like missing data.
 - **`adminUpdatePwd` takes no id.** The account is the one the Redis session names. The platform has no
   role field, so an id supplied by a browser would be a way for any operator to set another operator's
   password.
 - **Operator password recovery is a note, not a form.** The platform's recovery pair
-  (`resetPasswordAccesso`, `aggiornaLoginPassword`) resolves against the `imprenditore` collection and
+  (`resetPasswordAccesso`, `aggiornaLoginPassword`) resolves against the `shopOwner` collection and
   answers "not found" for every `admin`. A recovery form here would be a dead end that reads to the
   operator as a problem with their own credentials.
-- **One statistic on the imprenditori page, because one query answers one.** Counters for "email da
+- **One statistic on the shopOwners page, because one query answers one.** Counters for "email da
   confermare", "confermati", "disabilitati" and "eliminati" all read naturally and none has a resolver.
   Add the backend query first — a placeholder counter is indistinguishable on screen from a broken one.
-- **Route paths are singular where the route is singular** (`…/aggiungi-imprenditore`). The plural
+- **Route paths are singular where the route is singular** (`…/add-shopOwner`). The plural
   reads better next to its section and serves no page; `to` is typed against the router's own union so
   `tsc` catches it, which is why no destination is ever passed as a bare string.
 

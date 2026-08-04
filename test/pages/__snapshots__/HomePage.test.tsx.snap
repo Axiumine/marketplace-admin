@@ -22,17 +22,17 @@ exports[`HomePage > renders 1`] = `
   >
     <a
       class="block rounded-box border-4 border-third bg-white p-4 shadow transition-shadow hover:shadow-lg"
-      href="/p/imprenditori/gestione-imprenditori"
+      href="/p/shopOwners/manage-shopOwners"
     >
       <h2
         class="font-bold"
       >
-        Imprenditori
+        Shop owners
       </h2>
       <p
         class="text-sm text-tip"
       >
-        Gestione degli imprenditori
+        Manage shop owners
       </p>
     </a>
   </div>

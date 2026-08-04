@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 
 import { SelectField } from '@/components/ui/SelectField'
 
-const giorni = (
+const days = (
 	<>
 		<option value="Lun">Lunedì</option>
 		<option value="Mar">Martedì</option>
@@ -14,7 +14,7 @@ const giorni = (
 
 describe('SelectField', () => {
 	it('associates its label with the select', async () => {
-		render(<SelectField label="Giorno">{giorni}</SelectField>)
+		render(<SelectField label="Giorno">{days}</SelectField>)
 
 		const select = screen.getByLabelText('Giorno')
 		await userEvent.selectOptions(select, 'Mar')
@@ -25,7 +25,7 @@ describe('SelectField', () => {
 	// `Lun` is written — so a select that reported its label instead of its value would silently put a
 	// second vocabulary into a collection that already has one.
 	it('reports the option value, not the option text', async () => {
-		render(<SelectField label="Giorno">{giorni}</SelectField>)
+		render(<SelectField label="Giorno">{days}</SelectField>)
 
 		await userEvent.selectOptions(screen.getByLabelText('Giorno'), screen.getByRole('option', { name: 'Lunedì' }))
 		expect(screen.getByLabelText('Giorno')).toHaveValue('Lun')
@@ -34,8 +34,8 @@ describe('SelectField', () => {
 	it('generates an id when none is given, so two fields on one page do not collide', () => {
 		render(
 			<>
-				<SelectField label="Da">{giorni}</SelectField>
-				<SelectField label="A">{giorni}</SelectField>
+				<SelectField label="Da">{days}</SelectField>
+				<SelectField label="A">{days}</SelectField>
 			</>
 		)
 
@@ -47,15 +47,15 @@ describe('SelectField', () => {
 
 	it('uses a caller-supplied id verbatim', () => {
 		render(
-			<SelectField label="Giorno" id="campo-giorno">
-				{giorni}
+			<SelectField label="Giorno" id="field-giorno">
+				{days}
 			</SelectField>
 		)
-		expect(screen.getByLabelText('Giorno')).toHaveAttribute('id', 'campo-giorno')
+		expect(screen.getByLabelText('Giorno')).toHaveAttribute('id', 'field-giorno')
 	})
 
 	it('is valid and describes nothing when there is no error', () => {
-		render(<SelectField label="Giorno">{giorni}</SelectField>)
+		render(<SelectField label="Giorno">{days}</SelectField>)
 
 		const select = screen.getByLabelText('Giorno')
 		expect(select).toHaveAttribute('aria-invalid', 'false')
@@ -66,15 +66,15 @@ describe('SelectField', () => {
 	// "Giorno, casella combinata" and never learns why the form refused.
 	it('wires the error message to the select', () => {
 		render(
-			<SelectField label="Giorno" id="campo-giorno" error="Il giorno è obbligatorio">
-				{giorni}
+			<SelectField label="Giorno" id="field-giorno" error="Day is required">
+				{days}
 			</SelectField>
 		)
 
 		const select = screen.getByLabelText('Giorno')
 		expect(select).toHaveAttribute('aria-invalid', 'true')
-		expect(select).toHaveAttribute('aria-describedby', 'campo-giorno-error')
-		expect(document.getElementById('campo-giorno-error')).toHaveTextContent('Il giorno è obbligatorio')
+		expect(select).toHaveAttribute('aria-describedby', 'field-giorno-error')
+		expect(document.getElementById('field-giorno-error')).toHaveTextContent('Day is required')
 	})
 
 	// Without the forwarded ref, react-hook-form's `register()` never reaches the real select: the field
@@ -83,7 +83,7 @@ describe('SelectField', () => {
 		const ref = createRef<HTMLSelectElement>()
 		render(
 			<SelectField label="Giorno" ref={ref}>
-				{giorni}
+				{days}
 			</SelectField>
 		)
 		expect(ref.current).toBe(screen.getByLabelText('Giorno'))
@@ -91,13 +91,13 @@ describe('SelectField', () => {
 
 	it('passes the remaining select attributes through', () => {
 		render(
-			<SelectField label="Giorno" name="orari.0.giorno" disabled>
-				{giorni}
+			<SelectField label="Giorno" name="openingHours.0.giorno" disabled>
+				{days}
 			</SelectField>
 		)
 
 		const select = screen.getByLabelText('Giorno')
-		expect(select).toHaveAttribute('name', 'orari.0.giorno')
+		expect(select).toHaveAttribute('name', 'openingHours.0.giorno')
 		expect(select).toBeDisabled()
 	})
 
@@ -108,29 +108,29 @@ describe('SelectField', () => {
 	 * without `appearance-none` the page shows two arrows, and without the span it shows none at all.
 	 */
 	it('draws its own arrow, having dropped the native one', () => {
-		const { container } = render(<SelectField label="Giorno">{giorni}</SelectField>)
+		const { container } = render(<SelectField label="Giorno">{days}</SelectField>)
 
 		expect(screen.getByLabelText('Giorno')).toHaveClass('appearance-none')
 
-		const freccia = container.querySelector('svg')?.parentElement
-		expect(freccia).toHaveClass('right-3')
+		const arrow = container.querySelector('svg')?.parentElement
+		expect(arrow).toHaveClass('right-3')
 		// A click landing on the arrow must reach the select underneath, or the one obvious place to
 		// press is the one place that does nothing.
-		expect(freccia).toHaveClass('pointer-events-none')
+		expect(arrow).toHaveClass('pointer-events-none')
 	})
 
 	// Every class is asserted absent in the other state: the two pairs set two properties, so a field
 	// carrying both halves of either would be resolved by stylesheet order rather than by the error.
 	it('doubles its border and turns red when it is invalid', () => {
-		const { rerender } = render(<SelectField label="Giorno">{giorni}</SelectField>)
+		const { rerender } = render(<SelectField label="Giorno">{days}</SelectField>)
 
 		expect(screen.getByLabelText('Giorno')).toHaveClass('border', 'bg-white')
 		expect(screen.getByLabelText('Giorno')).not.toHaveClass('border-2')
 		expect(screen.getByLabelText('Giorno')).not.toHaveClass('bg-app-error/10')
 
 		rerender(
-			<SelectField label="Giorno" error="Il giorno è obbligatorio">
-				{giorni}
+			<SelectField label="Giorno" error="Day is required">
+				{days}
 			</SelectField>
 		)
 
@@ -141,8 +141,8 @@ describe('SelectField', () => {
 
 	it('renders', () => {
 		const { container } = render(
-			<SelectField label="Giorno" id="campo-giorno">
-				{giorni}
+			<SelectField label="Giorno" id="field-giorno">
+				{days}
 			</SelectField>
 		)
 		expect(container.firstChild).toMatchSnapshot()
@@ -150,8 +150,8 @@ describe('SelectField', () => {
 
 	it('renders with an error', () => {
 		const { container } = render(
-			<SelectField label="Giorno" id="campo-giorno" error="Il giorno è obbligatorio">
-				{giorni}
+			<SelectField label="Giorno" id="field-giorno" error="Day is required">
+				{days}
 			</SelectField>
 		)
 		expect(container.firstChild).toMatchSnapshot()

@@ -17,7 +17,7 @@ const ICON_PROPS = {
 } as const
 
 /** Edit. */
-export const IconPenna = () => (
+export const IconPen = () => (
 	<svg {...ICON_PROPS}>
 		<path d="M12 20h9" />
 		<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
@@ -25,7 +25,7 @@ export const IconPenna = () => (
 )
 
 /** Delete. */
-export const IconCestino = () => (
+export const IconTrash = () => (
 	<svg {...ICON_PROPS}>
 		<path d="M4 7h16" />
 		<path d="M9 7V4h6v3" />
@@ -36,14 +36,14 @@ export const IconCestino = () => (
 )
 
 /** Open a list. The arrow `SelectField` draws itself, because the native one cannot be positioned. */
-export const IconFrecciaGiu = () => (
+export const IconArrowGiu = () => (
 	<svg {...ICON_PROPS}>
 		<path d="m6 9 6 6 6-6" />
 	</svg>
 )
 
 /** Add. */
-export const IconPiu = () => (
+export const IconPlus = () => (
 	<svg {...ICON_PROPS}>
 		<path d="M12 5v14" />
 		<path d="M5 12h14" />
@@ -59,7 +59,7 @@ export const IconX = () => (
 )
 
 /** Disable — the prohibition sign: a circle struck through. */
-export const IconDivieto = () => (
+export const IconBan = () => (
 	<svg {...ICON_PROPS}>
 		<circle cx="12" cy="12" r="9" />
 		<path d="m5.6 5.6 12.8 12.8" />

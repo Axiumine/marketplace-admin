@@ -23,7 +23,7 @@ export interface CreateGraphQLClientOptions {
  * touched. That falls down in exactly one case — a mutation that creates or deletes, where the
  * response mentions no typename of the list it changed — and this app's create/delete mutations
  * return a bare `Boolean`, so every one of them has to name the affected types explicitly through
- * `additionalTypenames` at the call site. See src/features/imprenditori.
+ * `additionalTypenames` at the call site. See src/features/shopOwners.
  *
  * `fetchOptions.credentials: 'include'` is what carries the refresh cookie. It works because the app
  * and the services share one origin; see the comment in vite.config.ts.

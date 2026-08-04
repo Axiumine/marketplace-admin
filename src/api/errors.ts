@@ -84,5 +84,5 @@ export const messageOf = (error: CombinedError | undefined): string => {
 	const first = error.graphQLErrors[0]
 	if (first !== undefined && first.message !== '') return first.message
 
-	return 'Errore nella comunicazione con il server'
+	return 'Error while communicating with the server'
 }

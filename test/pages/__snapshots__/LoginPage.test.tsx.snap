@@ -11,7 +11,7 @@ exports[`LoginPage > renders the login card 1`] = `
       <h1
         class="mb-4 text-2xl font-bold"
       >
-        Marketplace — pannello operatore
+        Marketplace — operator panel
       </h1>
       <form
         class="flex w-full max-w-sm flex-col gap-4"
@@ -25,7 +25,7 @@ exports[`LoginPage > renders the login card 1`] = `
           <p
             class="text-sm text-tip"
           >
-            Inserisci le credenziali per effettuare l'accesso.
+            Enter your credentials to sign in.
           </p>
         </div>
         <div
@@ -76,9 +76,9 @@ exports[`LoginPage > renders the login card 1`] = `
               class="absolute inset-y-0 right-1 flex items-center"
             >
               <button
-                aria-label="Mostra password"
+                aria-label="Show password"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third"
-                title="Mostra password"
+                title="Show password"
                 type="button"
               >
                 <svg
@@ -111,19 +111,19 @@ exports[`LoginPage > renders the login card 1`] = `
             name="rememberMe"
             type="checkbox"
           />
-          Ricordami su questo dispositivo
+          Remember me on this device
         </label>
         <button
           class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-pomodoro px-4"
           type="submit"
         >
-          Accedi
+          Sign in
         </button>
       </form>
       <p
         class="mt-6 text-xs text-tip"
       >
-        Password dimenticata? Il recupero autonomo non è disponibile per gli account operatore: contatta l'amministratore della piattaforma.
+        Password forgotten? Standalone recovery is not available for operator accounts: contact the administrator of the platform.
       </p>
     </div>
   </div>

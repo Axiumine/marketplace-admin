@@ -25,7 +25,7 @@ export const PageHeader = ({
 }) => (
 	<header className="mb-6 flex flex-col gap-3 border-b border-tip pb-4">
 		{crumbs.length === 0 ? null : (
-			<nav aria-label="Percorso">
+			<nav aria-label="Path">
 				<ol className="flex flex-wrap gap-2 text-xs text-tip">
 					{crumbs.map((crumb) => (
 						<li key={crumb.name} className="after:ml-2 after:content-['/'] last:after:content-['']">

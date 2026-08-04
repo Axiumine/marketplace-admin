@@ -11,12 +11,12 @@ exports[`Toast > renders 1`] = `
     <span
       class="grow"
     >
-      Modifiche salvate.
+      Changes saved.
     </span>
     <button
-      aria-label="Chiudi"
+      aria-label="Close"
       class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      title="Chiudi"
+      title="Close"
       type="button"
     >
       <svg
@@ -44,7 +44,7 @@ exports[`Toast > renders 1`] = `
   >
     <div
       class="h-full origin-left bg-current"
-      style="animation-name: conto-alla-rovescia; animation-duration: 5000ms; animation-timing-function: linear; animation-fill-mode: forwards; animation-play-state: running;"
+      style="animation-name: countdown; animation-duration: 5000ms; animation-timing-function: linear; animation-fill-mode: forwards; animation-play-state: running;"
     />
   </div>
 </div>
@@ -61,12 +61,12 @@ exports[`Toast > renders an error 1`] = `
     <span
       class="grow"
     >
-      Salvataggio non riuscito.
+      Save failed.
     </span>
     <button
-      aria-label="Chiudi"
+      aria-label="Close"
       class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      title="Chiudi"
+      title="Close"
       type="button"
     >
       <svg

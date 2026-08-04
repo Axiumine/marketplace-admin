@@ -46,7 +46,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * `type` defaults to `button`, not `submit`.
  *
  * HTML's default is `submit`, which makes every unmarked button inside a form submit it — the classic
- * way a "Mostra password" toggle ends up posting the login form. Forms opt in explicitly.
+ * way a "Show password" toggle ends up posting the login form. Forms opt in explicitly.
  */
 export const Button = ({
 	variant = 'primary',

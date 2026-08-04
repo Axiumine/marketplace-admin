@@ -16,7 +16,7 @@ exports[`LoadingPage > renders 1`] = `
       <span
         class="sr-only"
       >
-        Caricamento sessione
+        Loading session
       </span>
     </span>
   </div>

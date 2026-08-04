@@ -2,7 +2,7 @@ import * as Label from '@radix-ui/react-label'
 import type { Ref, TextareaHTMLAttributes } from 'react'
 import { useId } from 'react'
 
-import { CAMPO_DA_CORREGGERE, CAMPO_VALIDO } from '@/components/ui/statoCampo'
+import { FIELD_TO_FIX, FIELD_VALID } from '@/components/ui/fieldStatus'
 
 interface TextareaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 	label: string
@@ -15,7 +15,7 @@ interface TextareaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement>
 	 * through a ref, without an `onChange`, so a length this component measured itself would start at zero
 	 * for a note of two hundred characters and only correct itself once something was typed.
 	 */
-	rimanenti?: number | undefined
+	remaining?: number | undefined
 	/** As on `TextField`: `register()`'s ref has to reach the real control or the field reads as empty. */
 	ref?: Ref<HTMLTextAreaElement> | undefined
 }
@@ -35,7 +35,7 @@ const TEXTAREA_CLASS =
 	'focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1'
 
 /** How tall the box starts. Five lines is a note rather than a paragraph — and `resize-y` covers the rest. */
-const RIGHE = 5
+const ROWS = 5
 
 /**
  * The `aria-describedby` list, which is a space-separated list of ids and not one id.
@@ -43,9 +43,9 @@ const RIGHE = 5
  * `undefined` rather than an empty string when neither is there: an empty attribute is a reference to
  * nothing, which some screen readers announce as a missing element rather than skipping.
  */
-const descrittori = (...ids: readonly (string | null)[]): string | undefined => {
-	const presenti = ids.filter((id) => id !== null)
-	return presenti.length === 0 ? undefined : presenti.join(' ')
+const descriptors = (...ids: readonly (string | null)[]): string | undefined => {
+	const present = ids.filter((id) => id !== null)
+	return present.length === 0 ? undefined : present.join(' ')
 }
 
 /**
@@ -55,11 +55,11 @@ const descrittori = (...ids: readonly (string | null)[]): string | undefined => 
  * attribute sets (`rows`, `cols`, no `type`) and different ref types, so one component covering both
  * would take a union of props that is wrong for whichever half is not in use.
  */
-export const TextareaField = ({ label, error, rimanenti, id, rows = RIGHE, ref, ...rest }: TextareaFieldProps) => {
+export const TextareaField = ({ label, error, remaining, id, rows = ROWS, ref, ...rest }: TextareaFieldProps) => {
 	const generatedId = useId()
 	const areaId = id ?? generatedId
 	const errorId = `${areaId}-error`
-	const contatoreId = `${areaId}-rimanenti`
+	const counterId = `${areaId}-remaining`
 
 	return (
 		<div className="flex flex-col gap-1">
@@ -70,12 +70,12 @@ export const TextareaField = ({ label, error, rimanenti, id, rows = RIGHE, ref, 
 				id={areaId}
 				ref={ref}
 				rows={rows}
-				className={`${TEXTAREA_CLASS} ${error === undefined ? CAMPO_VALIDO : CAMPO_DA_CORREGGERE}`}
+				className={`${TEXTAREA_CLASS} ${error === undefined ? FIELD_VALID : FIELD_TO_FIX}`}
 				aria-invalid={error !== undefined}
 				// Both, when both are there: the message says what is wrong and the counter says how far
 				// past the cap it is, and a screen reader that is handed only one of the two is handed the
 				// half that cannot be acted on.
-				aria-describedby={descrittori(error === undefined ? null : errorId, rimanenti === undefined ? null : contatoreId)}
+				aria-describedby={descriptors(error === undefined ? null : errorId, remaining === undefined ? null : counterId)}
 				{...rest}
 			/>
 			{/* One line under the box, error on the left and the count on the right — `justify-between` on a
@@ -86,12 +86,12 @@ export const TextareaField = ({ label, error, rimanenti, id, rows = RIGHE, ref, 
 						{error}
 					</span>
 				)}
-				{rimanenti === undefined ? null : (
+				{remaining === undefined ? null : (
 					/* `aria-live`, because the number changes while the operator types and nothing else on
 					   screen would tell a screen-reader user they are running out of room. `ml-auto` keeps it
 					   right-aligned when it is the only child of the row. */
-					<span id={contatoreId} aria-live="polite" className="ml-auto text-xs text-tip">
-						{rimanenti} caratteri rimanenti
+					<span id={counterId} aria-live="polite" className="ml-auto text-xs text-tip">
+						{remaining} characters remaining
 					</span>
 				)}
 			</div>

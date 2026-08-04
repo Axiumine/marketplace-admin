@@ -4,9 +4,16 @@ Platform-operator SPA (`Admin` tier) for Marketplace. Vite + React + TypeScript.
 workspace's `/media/nvme/websites/fullstack-marketplace-blueprint/CLAUDE.md` first — this is one of ten repos and almost
 nothing here is changeable on its own.
 
-**Language: domain names, UI text and form labels are Italian. Comments, commit messages and these
-docs are English.** Never "translate" an identifier: `imprenditore`, `puntoVendita`, `anagrafica`,
-`iscrizione` are the names the database and the resolvers use.
+⚠️ **Language: everything is English — identifiers, UI text, form labels, comments, routes.** This
+reverses the rule this file carried until 2026-08-04, when the whole platform was renamed on the
+user's explicit instruction: `imprenditore` → `shopOwner`, `azienda` → `company`, `anagrafica` →
+`personalData`, `iscrizione` → `registeredAt`, and the routes with them (`/imprenditori` →
+`/shopOwners`). Never "translate back", and never add a new Italian identifier — the names here are
+the names the database and the resolvers use.
+
+Italian survives in two deliberate places: **domain terms with no English equivalent** in prose and
+comments (*partita IVA*, *codice fiscale*, *PEC*, *ragione sociale*, *visura*), and the **`it-IT`
+locale** `formatDateTime` renders with, which is a market choice and not a name.
 
 ## Do not trust `schema/*.graphql`
 
@@ -57,6 +64,10 @@ That is what lets a page be rendered in a test without a router assertion in the
 - **Create and delete mutations need `additionalTypenames`.** The document cache invalidates by the
   `__typename`s a mutation's *response* mentions, and these mutations answer a bare `Boolean` — so
   nothing is invalidated unless the call site names the affected types.
+- **⚠️ Snapshots are stale and must be regenerated.** `test/**/__snapshots__/*.snap` were translated
+  mechanically during the rename and still hold markup for features deleted before it (shop opening
+  hours, the shop card, the company list's old routes). They will not byte-match a real render. Run
+  `yarn test -u` and review the diff before trusting any snapshot assertion.
 - **Never send an id to `adminUpdatePwd`.** It takes none. The account is the one the Redis session
   names; the platform has no role field, so a client-supplied id would be a way to set another
   operator's password.

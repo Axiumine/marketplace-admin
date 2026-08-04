@@ -2,17 +2,17 @@
 #
 # Hand-maintained slice — see the header of public-authorization.graphql for why there is no SDL to
 # pull. Verified on 2026-08-02 against every file under src/graphQLApi/schema/ of that service, plus
-# the two shared fragments in marketplace-common (GraphQLIndirizzoBaseFrag, GraphQLPositionFrag).
+# the two shared fragments in marketplace-common (GraphQLBaseAddressFrag, GraphQLPositionFrag).
 #
 # This is the only endpoint that serves domain data to the operator app. Everything the app queries
 # that is not login / refresh / logout goes here.
 #
 # ⚠️ `puntoVendita` and `categoria` were deleted platform-wide on 2026-08-04 — collections, migrations,
-# models, resolvers, the lot. This slice lost `imprenditorePuntiVendita`, the four `puntoVendita*`
-# mutations, every `GraphQLPuntoVendita*`/`GraphQLPVIndirizzo`/`GraphQLPVPosition`/`GraphQLPVContatti`/
-# `GraphQLOrario` type and their inputs, and the `Time` scalar that existed only to serve
-# `GraphQLInputPuntoVenditaOrari`. `azienda` survives untouched; `aziendaDel` no longer has a shop to be
-# refused over, since nothing references a company by id any more.
+# models, resolvers, the lot. This slice lost `shopOwnerPuntiVendita`, the four `puntoVendita*`
+# mutations, every `GraphQLPuntoVendita*`/`GraphQLPVAddress`/`GraphQLPVPosition`/`GraphQLPVContacts`/
+# `GraphQLOpeningHours` type, all four `GraphQLInputPuntoVendita*` inputs, and the `Time` scalar that
+# existed only to serve their opening hours. `company` survives untouched; `companyDel` no longer has a
+# shop to be refused over, since nothing references a company by id any more.
 
 schema {
 	query: QueriesApi
@@ -25,7 +25,7 @@ graphql-scalars' DateTime, as mounted by the service. Serialised as an ISO-8601 
 scalar DateTime
 
 """
-graphql-scalars' Date — a calendar day with no time part (YYYY-MM-DD). Used only for `nascita.data`
+graphql-scalars' Date — a calendar day with no time part (YYYY-MM-DD). Used only for `birth.date`
 on input; the output type reports the same field as DateTime, which is the schema's own asymmetry and
 not a transcription error.
 """
@@ -39,45 +39,45 @@ type QueriesApi {
 	infoAdminAfterLogin: GraphQLAdminInfoAfterLogin!
 
 	"""
-	One page of the operator table, filtered to the imprenditori that are neither disabled nor
-	soft-deleted. Every argument has a server-side default, so `imprenditoriAttiviTbl { … }` with no
+	One page of the operator table, filtered to the shopOwners that are neither disabled nor
+	soft-deleted. Every argument has a server-side default, so `shopOwnersActiveTbl { … }` with no
 	arguments is a legal first page.
 	"""
-	imprenditoriAttiviTbl(
+	shopOwnersActiveTbl(
 		offset: Int! = 0
 		limit: Int! = 25
 		search: String
-		sortBy: GraphQLImprenditoriTblSortField! = ISCRIZIONE
+		sortBy: GraphQLShopOwnersTblSortField! = REGISTERED_AT
 		sortDir: GraphQLSortDirection! = DESC
-	): GraphQLImprenditoriAttiviTblPage!
+	): GraphQLShopOwnersActiveTblPage!
 
 	"""
-	Headline count of imprenditori. Unfiltered — this is NOT `total` from the table page, which is the
+	Headline count of shopOwners. Unfiltered — this is NOT `total` from the table page, which is the
 	size of the searched set and changes as the operator types.
 	"""
-	imprenditoriStats: Int!
+	shopOwnersStats: Int!
 
 	"""
-	The imprenditori-over-time series behind the stats chart. Unfiltered on the same terms as
-	`imprenditoriStats`, so the points sum to that number.
+	The shopOwners-over-time series behind the stats chart. Unfiltered on the same terms as
+	`shopOwnersStats`, so the points sum to that number.
 
-	`granularita` is a RESPONSE field, not an argument: the bucket width is a consequence of the range,
-	so `TUTTO` answers one point per month and the two bounded ranges one per day. A client able to ask
+	`granularity` is a RESPONSE field, not an argument: the bucket width is a consequence of the range,
+	so `ALL` answers one point per month and the two bounded ranges one per day. A client able to ask
 	for day buckets over the whole life of the platform would be asking for a point per day since it
 	opened. Buckets are UTC, and a month bucket is stamped with its own first day — `data` is
 	`YYYY-MM-DD` in both granularities.
 	"""
-	imprenditoriPerPeriodo(periodo: GraphQLPeriodoImprenditori! = TUTTO): GraphQLImprenditoriPerPeriodo!
+	shopOwnersPerPeriod(period: GraphQLShopOwnersPeriod! = ALL): GraphQLShopOwnersPerPeriod!
 
-	imprenditoreById(idImprenditore: ID!): GraphQLImprenditoreById!
+	shopOwnerById(idShopOwner: ID!): GraphQLShopOwnerById!
 
 	"""
-	The companies belonging to one imprenditore. Filtered on `idImprenditore` **and** on `deleted`, like
-	the shops: since `aziendaDel` became a soft delete the collection does have a deleted-but-present
+	The companies belonging to one shopOwner. Filtered on `idShopOwner` **and** on `deleted`, like
+	the shops: since `companyDel` became a soft delete the collection does have a deleted-but-present
 	state, and a retired company left in this list would be offered by the shop form's picker and then
 	refused by the write.
 	"""
-	imprenditoreAziende(idImprenditore: ID!): [GraphQLAzienda!]!
+	shopOwnerCompanies(idShopOwner: ID!): [GraphQLCompany!]!
 }
 
 type MutationsApi {
@@ -91,16 +91,16 @@ type MutationsApi {
 	"""
 	adminUpdatePwd(passwordOld: String!, passwordNew: String!): Boolean!
 
-	imprenditoreAdd(login: GraphQLInputLogin!, anagrafica: GraphQLInputAnagraficaImprenditore!): Boolean!
-	imprenditoreUpdate(_id: ID!, anagrafica: GraphQLInputAnagraficaImprenditore!): Boolean!
-	imprenditoreDel(_id: ID!): Boolean!
+	shopOwnerAdd(login: GraphQLInputLogin!, personalData: GraphQLInputShopOwnerPersonalData!): Boolean!
+	shopOwnerUpdate(_id: ID!, personalData: GraphQLInputShopOwnerPersonalData!): Boolean!
+	shopOwnerDel(_id: ID!): Boolean!
 
 	"""
-	Changes `login.email` — the credential, not `anagrafica.contatti.email`. Its own mutation because it
+	Changes `login.email` — the credential, not `personalData.contacts.email`. Its own mutation because it
 	is the only field on the collection with a unique index behind it: answers 409 when the address
-	already belongs to another imprenditore, 400 when it is malformed, 404 when `_id` matches nothing.
+	already belongs to another shopOwner, 400 when it is malformed, 404 when `_id` matches nothing.
 	"""
-	imprenditoreUpdateEmail(_id: ID!, email: String!): Boolean!
+	shopOwnerUpdateEmail(_id: ID!, email: String!): Boolean!
 
 	"""
 	The disable switch and the manual-approval gate. Both arguments are required: a partial update
@@ -108,51 +108,51 @@ type MutationsApi {
 	`false` REMOVES the field rather than storing false — `waitApprov: { $exists: true }` is how the
 	approval queue is built.
 	"""
-	imprenditoreUpdateStato(_id: ID!, disabled: Boolean!, waitApprov: Boolean!): Boolean!
+	shopOwnerUpdateStatus(_id: ID!, disabled: Boolean!, waitApprov: Boolean!): Boolean!
 
 	"""
-	The three preference fields under `login`. Opposite rule to `imprenditoreUpdateStato`: the two
+	The three preference fields under `login`. Opposite rule to `shopOwnerUpdateStatus`: the two
 	booleans are declared `bool` on the collection and are stored as false, while `onboardingStep` is
 	optional and is removed when blank or omitted.
 	"""
-	imprenditoreUpdatePreferenze(_id: ID!, rememberMe: Boolean!, onboardingDone: Boolean!, onboardingStep: String): Boolean!
+	shopOwnerUpdatePreferences(_id: ID!, rememberMe: Boolean!, onboardingDone: Boolean!, onboardingStep: String): Boolean!
 
 	"""
 	The operator's note about the account, at most 2000 characters. Its own mutation because it is not
-	part of the anagrafica — `imprenditoreUpdate` replaces that whole sub-document, and the note sits at
-	the top level of the imprenditore. `note` is `String!` and not nullable on purpose: the empty string
+	part of the personalData — `shopOwnerUpdate` replaces that whole sub-document, and the note sits at
+	the top level of the shopOwner. `notes` is `String!` and not nullable on purpose: the empty string
 	is how the note is cleared (the resolver turns it into an `$unset`), so a nullable argument would
 	give "leave it alone" and "remove it" the same wire value. 400 over the cap, 404 on an unknown `_id`.
 	"""
-	imprenditoreUpdateNote(_id: ID!, note: String!): Boolean!
+	shopOwnerUpdateNote(_id: ID!, notes: String!): Boolean!
 
 	"""
-	Creates one company under an imprenditore. Answers 409 on either unique index (`piva_unique`,
-	`pec_unique`, both GLOBAL — one partita IVA is one company, whoever registered it), 400 naming the
-	offending path, and 404 when `idImprenditore` names no imprenditore. `Boolean!`, not the new `_id`:
-	the page re-reads `imprenditoreAziende` after a save.
+	Creates one company under an shopOwner. Answers 409 on either unique index (`vatNumber_unique`,
+	`certifiedEmail_unique`, both GLOBAL — one partita IVA is one company, whoever registered it), 400 naming the
+	offending path, and 404 when `idShopOwner` names no shopOwner. `Boolean!`, not the new `_id`:
+	the page re-reads `shopOwnerCompanies` after a save.
 
 	A company has to exist before a shop can point at it, so this is the first step of adding a shop to
-	an imprenditore who has none — not a side page.
+	an shopOwner who has none — not a side page.
 	"""
-	aziendaAdd(idImprenditore: ID!, azienda: GraphQLInputAzienda!): Boolean!
+	companyAdd(idShopOwner: ID!, company: GraphQLInputCompany!): Boolean!
 
 	"""
-	Rewrites one company's data. Same input object as `aziendaAdd`, minus the owner: `idImprenditore` is
-	neither an argument nor a field of `GraphQLInputAzienda`, so editing a card cannot hand the company —
-	and its shops with it — to another imprenditore. Same 409 / 400, 404 when `_id` matches no company.
+	Rewrites one company's data. Same input object as `companyAdd`, minus the owner: `idShopOwner` is
+	neither an argument nor a field of `GraphQLInputCompany`, so editing a card cannot hand the company —
+	and its shops with it — to another shopOwner. Same 409 / 400, 404 when `_id` matches no company.
 	"""
-	aziendaUpdate(_id: ID!, azienda: GraphQLInputAzienda!): Boolean!
+	companyUpdate(_id: ID!, company: GraphQLInputCompany!): Boolean!
 
 	"""
 	Retires one company — a soft delete: the row keeps its place and gains a `deleted` instant, and every
 	read path filters on it. 404 when `_id` matches no company; a company already retired answers 200
 	again, since the `$set` still matches it.
 
-	⚠️ `piva_unique` and `pec_unique` are plain global unique indexes with no `partialFilterExpression`,
+	⚠️ `vatNumber_unique` and `certifiedEmail_unique` are plain global unique indexes with no `partialFilterExpression`,
 	so a retired company keeps its partita IVA occupied and the same one cannot be registered again.
 	"""
-	aziendaDel(_id: ID!): Boolean!
+	companyDel(_id: ID!): Boolean!
 }
 
 type GraphQLAdminInfoAfterLogin {
@@ -163,22 +163,22 @@ type GraphQLAdminInfoAfterLogin {
 """
 One page of the operator table. `total` is the size of the FILTERED set, not of the collection.
 """
-type GraphQLImprenditoriAttiviTblPage {
-	items: [GraphQLImprenditoreAttiviTbl!]!
+type GraphQLShopOwnersActiveTblPage {
+	items: [GraphQLShopOwnerActiveTbl!]!
 	total: Int!
 }
 
 """
 The four columns the table can order by. Value-less on the backend, so the resolver receives the enum
 NAME and maps it to a Mongo path itself. Each one has a matching index in marketplace-db-setup
-(`tbl_attivi_*`); a column not listed here has no index and is refused at schema validation rather
+(`tbl_active_*`); a column not listed here has no index and is refused at schema validation rather
 than turned into a blocking in-memory sort.
 """
-enum GraphQLImprenditoriTblSortField {
-	ISCRIZIONE
-	NOME
-	COGNOME
-	COMUNE
+enum GraphQLShopOwnersTblSortField {
+	REGISTERED_AT
+	FIRST_NAME
+	LAST_NAME
+	CITY
 }
 
 enum GraphQLSortDirection {
@@ -187,79 +187,79 @@ enum GraphQLSortDirection {
 }
 
 """
-How far back the stats chart looks. `TUTTO` runs from the month the first imprenditore registered in
+How far back the stats chart looks. `ALL` runs from the month the first shopOwner registered in
 to the current one; the other two are counted back from today, clamped to the target month's length
 (one month before 31 March is 28 February, not 3 March).
 """
-enum GraphQLPeriodoImprenditori {
-	TUTTO
-	TRE_MESI
-	UN_MESE
+enum GraphQLShopOwnersPeriod {
+	ALL
+	THREE_MONTHS
+	ONE_MONTH
 }
 
 """
-The width of one bucket. Derived from the range by the server — see `imprenditoriPerPeriodo`.
+The width of one bucket. Derived from the range by the server — see `shopOwnersPerPeriod`.
 """
-enum GraphQLGranularitaPeriodo {
-	GIORNO
-	MESE
+enum GraphQLPeriodGranularity {
+	DAY
+	MONTH
 }
 
-type GraphQLImprenditoriPerPeriodo {
-	granularita: GraphQLGranularitaPeriodo!
-	punti: [GraphQLImprenditoriPerPeriodoPunto!]!
+type GraphQLShopOwnersPerPeriod {
+	granularity: GraphQLPeriodGranularity!
+	points: [GraphQLShopOwnersPerPeriodPoint!]!
 }
 
-type GraphQLImprenditoriPerPeriodoPunto {
+type GraphQLShopOwnersPerPeriodPoint {
 	"""
 	Bucket start, `YYYY-MM-DD`. A plain String and not the `Date` scalar: the service builds it with
 	`$dateToString` in the aggregation, so it is a string on the wire in both granularities.
 	"""
-	data: String!
+	date: String!
 
 	"""
 	Registrations in this bucket. Gaps are filled server-side, so an empty bucket is present with `0`
 	rather than absent — the series is contiguous and the client never interpolates.
 	"""
-	totale: Int!
+	total: Int!
 }
 
-type GraphQLImprenditoreAttiviTbl {
+type GraphQLShopOwnerActiveTbl {
 	_id: ID!
-	iscrizione: DateTime!
-	anagrafica: GraphQLAnagrafica!
+	registeredAt: DateTime!
+	personalData: GraphQLPersonalData!
 }
 
-type GraphQLAnagrafica {
-	nome: String!
-	cognome: String!
-	indirizzo: GraphQLIndirizzoImprenditoreTbl!
+type GraphQLPersonalData {
+	firstName: String!
+	lastName: String!
+	address: GraphQLShopOwnerAddressTbl!
 }
 
-type GraphQLIndirizzoImprenditoreTbl {
-	indirizzo: String!
-	cap: String!
-	comune: String!
-	provincia: String!
+type GraphQLShopOwnerAddressTbl {
+	street: String!
+	postalCode: String!
+	city: String!
+	province: String!
 }
 
-type GraphQLImprenditoreById {
+type GraphQLShopOwnerById {
 	_id: ID!
-	login: GraphQLImprenditoreLogin!
-	anagrafica: GraphQLAnagraficaImprenditoreById!
-	iscrizione: DateTime!
+	login: GraphQLShopOwnerLogin!
+	personalData: GraphQLShopOwnerPersonalDataById!
+	registeredAt: DateTime!
 	deleted: DateTime
 	disabled: Boolean
 	waitApprov: Boolean
 	"""
 	The operator's free-text note about this account, at most 2000 characters. Absent until one is
-	written; `imprenditoreUpdateNote` removes the field again when the note is cleared.
+	written; `shopOwnerUpdateNote` removes the field again when the note is cleared.
 	"""
-	note: String
+	notes: String
 	resetPwd: GraphQLResetPwd
 }
 
-type GraphQLImprenditoreLogin {
+type GraphQLShopOwnerLogin {
 	email: String!
 	firstLogin: DateTime
 	lastLogin: DateTime
@@ -268,27 +268,27 @@ type GraphQLImprenditoreLogin {
 	rememberMe: Boolean
 }
 
-type GraphQLAnagraficaImprenditoreById {
-	nome: String!
-	cognome: String!
-	indirizzo: GraphQLIndirizzoImprenditore!
-	nascita: GraphQLDataNascita!
-	contatti: GraphQLImprenditoreContatti!
+type GraphQLShopOwnerPersonalDataById {
+	firstName: String!
+	lastName: String!
+	address: GraphQLShopOwnerAddress!
+	birth: GraphQLBirth!
+	contacts: GraphQLShopOwnerContacts!
 }
 
-type GraphQLIndirizzoImprenditore {
-	indirizzo: String!
-	cap: String!
-	comune: String!
-	provincia: String!
+type GraphQLShopOwnerAddress {
+	street: String!
+	postalCode: String!
+	city: String!
+	province: String!
 	"""
 	⚠️ **Nullable, unlike the punto vendita's `GraphQLPVPosition!`.** The point was added to the
 	collection by 20260802000300 as an optional field and nothing backfilled it — `collMod` does not
 	re-validate stored documents, and there is nothing to derive a coordinate from without geocoding —
-	so every imprenditore that existed before the migration answers `null` here until an address is
+	so every shopOwner that existed before the migration answers `null` here until an address is
 	picked from the autocomplete and saved.
 	"""
-	position: GraphQLPosizioneImprenditore
+	position: GraphQLPositionShopOwner
 }
 
 """
@@ -296,19 +296,19 @@ GeoJSON `Point`, same shape as `GraphQLPVPosition` under a name of its own — a
 flat type namespace, so the two tiers cannot share the fragment's output type. `coordinates` is
 [longitude, latitude].
 """
-type GraphQLPosizioneImprenditore {
+type GraphQLPositionShopOwner {
 	type: String!
 	coordinates: [Float!]!
 }
 
-type GraphQLDataNascita {
-	data: DateTime!
+type GraphQLBirth {
+	date: DateTime!
 }
 
-type GraphQLImprenditoreContatti {
+type GraphQLShopOwnerContacts {
 	email: String!
-	fisso: String
-	cellulare: String!
+	landline: String
+	mobile: String!
 }
 
 """
@@ -321,55 +321,55 @@ type GraphQLResetPwd {
 }
 
 """
-A company, as its own entity — the `azienda` collection since migration 20260803000000.
+A company, as its own entity — the `company` collection since migration 20260803000000.
 
-`idImprenditore` is exposed rather than kept internal: the operator app reaches a company through its
+`idShopOwner` is exposed rather than kept internal: the operator app reaches a company through its
 owner's detail page, and the field is what a client re-reading one row can check it against.
 
-`cf` and `univoco` are the two nullable fields, matching the collection's `required` array. `cf` is new
+`taxCode` and `uniqueCode` are the two nullable fields, matching the collection's `required` array. `taxCode` is new
 with the extraction and no stored company carries one.
 """
-type GraphQLAzienda {
+type GraphQLCompany {
 	_id: ID!
-	idImprenditore: ID!
-	ragionesociale: String!
-	piva: String!
-	cf: String
-	referente: String!
-	amministratore: String!
-	univoco: String
-	pec: String!
-	indirizzo: GraphQLAziendaIndirizzo!
+	idShopOwner: ID!
+	legalName: String!
+	vatNumber: String!
+	taxCode: String
+	contactPerson: String!
+	administrator: String!
+	uniqueCode: String
+	certifiedEmail: String!
+	address: GraphQLCompanyAddress!
 	"""
-	The path of the uploaded visura, not the document. Required, and capped at 1000 characters by the
+	The path of the uploaded registryExtract, not the document. Required, and capped at 1000 characters by the
 	collection — it was the one unbounded string on the embedded shape.
 	"""
-	visura: String!
+	registryExtract: String!
 }
 
 """
 The company's legal seat — not the address of any of its shops. Same four fields and the same GeoJSON
-point as `GraphQLPVIndirizzo`, under a name of its own: a GraphQL schema has one flat type namespace,
+point as `GraphQLPVAddress`, under a name of its own: a GraphQL schema has one flat type namespace,
 so two collections' addresses cannot share one type without a field added to either appearing on both.
 """
-type GraphQLAziendaIndirizzo {
-	indirizzo: String!
-	cap: String!
-	comune: String!
-	provincia: String!
-	position: GraphQLAziendaPosition!
+type GraphQLCompanyAddress {
+	street: String!
+	postalCode: String!
+	city: String!
+	province: String!
+	position: GraphQLCompanyPosition!
 }
 
-type GraphQLAziendaPosition {
+type GraphQLCompanyPosition {
 	type: String!
 	coordinates: [Float!]!
 }
 
-type GraphQLPVIndirizzo {
-	indirizzo: String!
-	cap: String!
-	comune: String!
-	provincia: String!
+type GraphQLPVAddress {
+	street: String!
+	postalCode: String!
+	city: String!
+	province: String!
 	position: GraphQLPVPosition!
 }
 
@@ -382,16 +382,16 @@ type GraphQLPVPosition {
 	coordinates: [Float!]!
 }
 
-type GraphQLPVContatti {
-	cellulare: String!
+type GraphQLPVContacts {
+	mobile: String!
 	email: String
 	web: String
-	pec: String
-	fisso: String
+	certifiedEmail: String
+	landline: String
 }
 
-type GraphQLOrario {
-	giorno: String!
+type GraphQLOpeningHours {
+	day: String!
 	da: DateTime!
 	a: DateTime!
 }
@@ -401,115 +401,81 @@ input GraphQLInputLogin {
 	password: String!
 }
 
-input GraphQLInputAnagraficaImprenditore {
-	nome: String!
-	cognome: String!
-	nascita: GraphQLInputNascita!
-	indirizzo: GraphQLInputIndirizzo!
-	contatti: GraphQLInputContatti!
+input GraphQLInputShopOwnerPersonalData {
+	firstName: String!
+	lastName: String!
+	birth: GraphQLInputBirth!
+	address: GraphQLInputAddress!
+	contacts: GraphQLInputContacts!
 }
 
-input GraphQLInputNascita {
-	data: Date!
+input GraphQLInputBirth {
+	date: Date!
 }
 
-input GraphQLInputIndirizzo {
-	indirizzo: String!
-	cap: String!
-	comune: String!
-	provincia: String!
+input GraphQLInputAddress {
+	street: String!
+	postalCode: String!
+	city: String!
+	province: String!
 	"""
-	⚠️ **Coordinates only and nullable.** No `type` field, like `GraphQLInputPuntoVenditaPosition` —
-	the resolver adds `type: 'Point'`. Nullable because the operator can save an anagrafica whose
+	⚠️ **Coordinates only and nullable.** No `type` field, like `GraphQLInputCompanyPosition` — the
+	resolver adds `type: 'Point'`. Nullable because the operator can save personal data whose
 	address was never re-picked. ⚠️ Omitting it does **not** preserve the stored point:
-	`imprenditoreUpdate` `$set`s the whole `anagrafica`, so a save without `position` erases it. Send
+	`shopOwnerUpdate` `$set`s the whole `personalData`, so a save without `position` erases it. Send
 	back the point the query returned whenever the address is left alone.
 	"""
-	position: GraphQLInputIndirizzoPosition
+	position: GraphQLInputAddressPosition
 }
 
-input GraphQLInputIndirizzoPosition {
+input GraphQLInputAddressPosition {
 	coordinates: [Float!]!
 }
 
-input GraphQLInputContatti {
-	cellulare: String!
-	fisso: String
+input GraphQLInputContacts {
+	mobile: String!
+	landline: String
 	email: String!
 }
 
 """
 Everything the operator types about a company, in one object — one form and one Save, which is also what
-lets `aziendaUpdate` `$set` the document in a single atomic write.
+lets `companyUpdate` `$set` the document in a single atomic write.
 
-`_id` and `idImprenditore` are deliberately absent: the first is minted by the service, the second is a
-separate argument on `aziendaAdd` and is nowhere on the update path, so a company cannot be moved to
+`_id` and `idShopOwner` are deliberately absent: the first is minted by the service, the second is a
+separate argument on `companyAdd` and is nowhere on the update path, so a company cannot be moved to
 another owner by editing its card.
 
-`cf` and `univoco` are the two optional ones, mirroring the collection's `required` array. Both are
+`taxCode` and `uniqueCode` are the two optional ones, mirroring the collection's `required` array. Both are
 dropped rather than stored empty when blank — sending `null` for them is legal on the wire and the
 service reads it as "not set".
 """
-input GraphQLInputAzienda {
-	ragionesociale: String!
-	piva: String!
-	cf: String
-	referente: String!
-	amministratore: String!
-	univoco: String
-	pec: String!
-	indirizzo: GraphQLInputAziendaIndirizzo!
-	visura: String!
+input GraphQLInputCompany {
+	legalName: String!
+	vatNumber: String!
+	taxCode: String
+	contactPerson: String!
+	administrator: String!
+	uniqueCode: String
+	certifiedEmail: String!
+	address: GraphQLInputCompanyAddress!
+	registryExtract: String!
 }
 
-input GraphQLInputAziendaIndirizzo {
-	indirizzo: String!
-	cap: String!
-	comune: String!
-	provincia: String!
-	position: GraphQLInputAziendaPosition!
+input GraphQLInputCompanyAddress {
+	street: String!
+	postalCode: String!
+	city: String!
+	province: String!
+	position: GraphQLInputCompanyPosition!
 }
 
 """
-⚠️ **Coordinates only**, for the reason `GraphQLInputPuntoVenditaPosition` gives at length: the GeoJSON
-type has one legal spelling and the service writes the literal.
+⚠️ **Coordinates only.** This input has no `type` field: the value has exactly one legal spelling
+(`Point`), the collection caps it at 5 characters and the model declares it as an enum of one, so
+accepting it from a client would only be a way to receive `point` or `POINT` and fail the write
+naming a field the operator never saw. The service writes the literal.
 """
-input GraphQLInputAziendaPosition {
+input GraphQLInputCompanyPosition {
 	coordinates: [Float!]!
-}
-
-input GraphQLInputPuntoVenditaIndirizzo {
-	indirizzo: String!
-	cap: String!
-	comune: String!
-	provincia: String!
-	position: GraphQLInputPuntoVenditaPosition!
-}
-
-"""
-⚠️ **Coordinates only.** Unlike the output `GraphQLPVPosition`, this input has no `type` field: the
-value has exactly one legal spelling (`Point`), the collection caps it at 5 characters and the model
-declares it as an enum of one, so accepting it from a client would only be a way to receive `point`
-or `POINT` and fail the write naming a field the operator never saw. The service writes the literal.
-"""
-input GraphQLInputPuntoVenditaPosition {
-	coordinates: [Float!]!
-}
-
-input GraphQLInputPuntoVenditaContatti {
-	cellulare: String!
-	email: String
-	web: String
-	pec: String
-	fisso: String
-}
-
-"""
-One opening slot. `Time` in, `DateTime` out — see the `Time` scalar's own note for the round trip and
-for the timezone designator it insists on.
-"""
-input GraphQLInputPuntoVenditaOrari {
-	giorno: String!
-	da: Time!
-	a: Time!
 }

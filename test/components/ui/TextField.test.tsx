@@ -10,27 +10,27 @@ describe('TextField', () => {
 		render(<TextField label="Email" />)
 
 		const input = screen.getByLabelText('Email')
-		await userEvent.type(input, 'operatore@marketplace.it')
-		expect(input).toHaveValue('operatore@marketplace.it')
+		await userEvent.type(input, 'operator@marketplace.it')
+		expect(input).toHaveValue('operator@marketplace.it')
 	})
 
 	it('generates an id when none is given, so two fields on one page do not collide', () => {
 		render(
 			<>
-				<TextField label="Nome" />
-				<TextField label="Cognome" />
+				<TextField label="First name" />
+				<TextField label="Last name" />
 			</>
 		)
 
-		const nome = screen.getByLabelText('Nome')
-		const cognome = screen.getByLabelText('Cognome')
-		expect(nome.id).not.toBe('')
-		expect(nome.id).not.toBe(cognome.id)
+		const firstName = screen.getByLabelText('First name')
+		const lastName = screen.getByLabelText('Last name')
+		expect(firstName.id).not.toBe('')
+		expect(firstName.id).not.toBe(lastName.id)
 	})
 
 	it('uses a caller-supplied id verbatim', () => {
-		render(<TextField label="Email" id="campo-email" />)
-		expect(screen.getByLabelText('Email')).toHaveAttribute('id', 'campo-email')
+		render(<TextField label="Email" id="field-email" />)
+		expect(screen.getByLabelText('Email')).toHaveAttribute('id', 'field-email')
 	})
 
 	it('is valid and describes nothing when there is no error', () => {
@@ -42,14 +42,14 @@ describe('TextField', () => {
 	})
 
 	// The message has to be announced *with* the field, not float unattached beneath it — otherwise a
-	// screen-reader user hears "Email, campo di testo" and never learns why the form refused.
+	// screen-reader user hears "Email, field di testo" and never learns why the form refused.
 	it('wires the error message to the input', () => {
-		render(<TextField label="Email" id="campo-email" error="Inserisci un indirizzo email valido" />)
+		render(<TextField label="Email" id="field-email" error="Enter a valid email address" />)
 
 		const input = screen.getByLabelText('Email')
 		expect(input).toHaveAttribute('aria-invalid', 'true')
-		expect(input).toHaveAttribute('aria-describedby', 'campo-email-error')
-		expect(document.getElementById('campo-email-error')).toHaveTextContent('Inserisci un indirizzo email valido')
+		expect(input).toHaveAttribute('aria-describedby', 'field-email-error')
+		expect(document.getElementById('field-email-error')).toHaveTextContent('Enter a valid email address')
 	})
 
 	// Without the forwarded ref, react-hook-form's `register()` never reaches the real input: the field
@@ -79,7 +79,7 @@ describe('TextField', () => {
 		expect(screen.getByLabelText('Email')).not.toHaveClass('pr-10')
 		expect(screen.queryByRole('button')).not.toBeInTheDocument()
 
-		rerender(<TextField label="Email" trailing={<button type="button">Occhio</button>} />)
+		rerender(<TextField label="Email" trailing={<button type="button">Eye</button>} />)
 
 		expect(screen.getByLabelText('Email')).toHaveClass('pr-10')
 		expect(screen.getByLabelText('Email')).not.toHaveClass('pr-3')
@@ -100,7 +100,7 @@ describe('TextField', () => {
 		expect(screen.getByLabelText('Email')).not.toHaveClass('border-2')
 		expect(screen.getByLabelText('Email')).not.toHaveClass('bg-app-error/10')
 
-		rerender(<TextField label="Email" error="Inserisci un indirizzo email valido" />)
+		rerender(<TextField label="Email" error="Enter a valid email address" />)
 
 		expect(screen.getByLabelText('Email')).toHaveClass('border-2', 'bg-app-error/10')
 		expect(screen.getByLabelText('Email')).not.toHaveClass('border')
@@ -108,17 +108,17 @@ describe('TextField', () => {
 	})
 
 	it('renders', () => {
-		const { container } = render(<TextField label="Email" id="campo-email" />)
+		const { container } = render(<TextField label="Email" id="field-email" />)
 		expect(container.firstChild).toMatchSnapshot()
 	})
 
 	it('renders with a trailing slot', () => {
-		const { container } = render(<TextField label="Email" id="campo-email" trailing={<button type="button">Occhio</button>} />)
+		const { container } = render(<TextField label="Email" id="field-email" trailing={<button type="button">Eye</button>} />)
 		expect(container.firstChild).toMatchSnapshot()
 	})
 
 	it('renders with an error', () => {
-		const { container } = render(<TextField label="Email" id="campo-email" error="Inserisci un indirizzo email valido" />)
+		const { container } = render(<TextField label="Email" id="field-email" error="Enter a valid email address" />)
 		expect(container.firstChild).toMatchSnapshot()
 	})
 })

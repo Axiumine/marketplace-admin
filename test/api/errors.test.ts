@@ -79,19 +79,19 @@ describe('descriptionOf', () => {
 	})
 
 	it('reads the backend long form', () => {
-		expect(descriptionOf(backendError('Password errata', { description: 'La password attuale non coincide' }))).toBe(
-			'La password attuale non coincide'
+		expect(descriptionOf(backendError('Wrong password', { description: 'Current password non coincide' }))).toBe(
+			'Current password non coincide'
 		)
 	})
 
 	it('is undefined when the backend wrote no description', () => {
-		expect(descriptionOf(backendError('Password errata'))).toBeUndefined()
+		expect(descriptionOf(backendError('Wrong password'))).toBeUndefined()
 	})
 
 	// An empty description is a description the backend did not write; falling through to the title is
 	// better than rendering a blank alert box.
 	it('treats an empty description as absent', () => {
-		expect(descriptionOf(backendError('Password errata', { description: '' }))).toBeUndefined()
+		expect(descriptionOf(backendError('Wrong password', { description: '' }))).toBeUndefined()
 	})
 
 	it('ignores a non-string description', () => {
@@ -112,7 +112,7 @@ describe('isAuthExpired', () => {
 
 	it('is false for every other status', () => {
 		expect(isAuthExpired(backendError('Non autorizzato', { status: 401 }))).toBe(false)
-		expect(isAuthExpired(backendError('Token richiesto', { status: 499 }))).toBe(false)
+		expect(isAuthExpired(backendError('Token required', { status: 499 }))).toBe(false)
 		expect(isAuthExpired(undefined)).toBe(false)
 	})
 })
@@ -148,20 +148,20 @@ describe('messageOf', () => {
 	})
 
 	it('prefers the backend description', () => {
-		expect(messageOf(backendError('Password errata', { description: 'La password attuale non coincide' }))).toBe(
-			'La password attuale non coincide'
+		expect(messageOf(backendError('Wrong password', { description: 'Current password non coincide' }))).toBe(
+			'Current password non coincide'
 		)
 	})
 
 	it('falls back to the GraphQL error message', () => {
-		expect(messageOf(backendError('Password errata'))).toBe('Password errata')
+		expect(messageOf(backendError('Wrong password'))).toBe('Wrong password')
 	})
 
 	it('falls back to the generic line when the error carries an empty message', () => {
-		expect(messageOf(backendError(''))).toBe('Errore nella comunicazione con il server')
+		expect(messageOf(backendError(''))).toBe('Error while communicating with the server')
 	})
 
 	it('falls back to the generic line for a transport failure', () => {
-		expect(messageOf(new CombinedError({ networkError: new Error('offline') }))).toBe('Errore nella comunicazione con il server')
+		expect(messageOf(new CombinedError({ networkError: new Error('offline') }))).toBe('Error while communicating with the server')
 	})
 })

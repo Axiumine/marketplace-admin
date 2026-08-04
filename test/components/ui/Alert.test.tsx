@@ -8,22 +8,22 @@ describe('Alert', () => {
 	// failed login, wrong for "salvato" — so the tone decides the role, and that mapping is the one
 	// thing in this component that can be wrong.
 	it('announces an error assertively', () => {
-		render(<Alert tone="error">Credenziali non valide</Alert>)
-		expect(screen.getByRole('alert')).toHaveTextContent('Credenziali non valide')
+		render(<Alert tone="error">Invalid credentials</Alert>)
+		expect(screen.getByRole('alert')).toHaveTextContent('Invalid credentialse')
 	})
 
 	it('announces a success politely', () => {
-		render(<Alert tone="success">Password aggiornata</Alert>)
+		render(<Alert tone="success">Password updated</Alert>)
 		expect(screen.getByRole('status')).toHaveTextContent('Password aggiornata')
 	})
 
 	it('announces information politely', () => {
-		render(<Alert tone="info">Nessun dato</Alert>)
+		render(<Alert tone="info">No dato</Alert>)
 		expect(screen.getByRole('status')).toHaveTextContent('Nessun dato')
 	})
 
 	it.each(['error', 'success', 'info'] as const)('renders the %s tone', (tone) => {
-		const { container } = render(<Alert tone={tone}>Messaggio</Alert>)
+		const { container } = render(<Alert tone={tone}>Message</Alert>)
 		expect(container.firstChild).toMatchSnapshot()
 	})
 })

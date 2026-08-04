@@ -77,37 +77,37 @@ describe('Pagination', () => {
 
 	it('marks the current page for assistive technology', () => {
 		setup({ page: 2 })
-		expect(screen.getByRole('button', { name: 'Pagina 2' })).toHaveAttribute('aria-current', 'page')
-		expect(screen.getByRole('button', { name: 'Pagina 1' })).not.toHaveAttribute('aria-current')
+		expect(screen.getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page')
+		expect(screen.getByRole('button', { name: 'Page 1' })).not.toHaveAttribute('aria-current')
 	})
 
 	it('moves to the page that was clicked', async () => {
 		const { onPageChange } = setup({ page: 1 })
 
-		await userEvent.click(screen.getByRole('button', { name: 'Pagina 3' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Page 3' }))
 		expect(onPageChange).toHaveBeenCalledWith(3)
 	})
 
 	it('steps forward and back', async () => {
 		const { onPageChange } = setup({ page: 2 })
 
-		await userEvent.click(screen.getByRole('button', { name: 'Pagina successiva' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Next page' }))
 		expect(onPageChange).toHaveBeenLastCalledWith(3)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Pagina precedente' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Previous page' }))
 		expect(onPageChange).toHaveBeenLastCalledWith(1)
 	})
 
 	it('disables the arrows at the ends', () => {
 		setup({ page: 1 })
-		expect(screen.getByRole('button', { name: 'Pagina precedente' })).toBeDisabled()
-		expect(screen.getByRole('button', { name: 'Pagina successiva' })).toBeEnabled()
+		expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled()
+		expect(screen.getByRole('button', { name: 'Next page' })).toBeEnabled()
 	})
 
 	it('disables the forward arrow on the last page', () => {
 		setup({ page: 3 })
-		expect(screen.getByRole('button', { name: 'Pagina successiva' })).toBeDisabled()
-		expect(screen.getByRole('button', { name: 'Pagina precedente' })).toBeEnabled()
+		expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled()
+		expect(screen.getByRole('button', { name: 'Previous page' })).toBeEnabled()
 	})
 
 	it('renders', () => {

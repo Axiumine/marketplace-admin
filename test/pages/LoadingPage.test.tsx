@@ -12,7 +12,7 @@ const signedIn = { data: { infoAdminAfterLogin: ADMIN } }
 
 describe('safeRedirect', () => {
 	it('keeps a same-site path', () => {
-		expect(safeRedirect('/impostazioni')).toBe('/impostazioni')
+		expect(safeRedirect('/settings')).toBe('/settings')
 	})
 
 	it('falls back when there is no target', () => {
@@ -33,7 +33,7 @@ describe('safeRedirect', () => {
 	})
 
 	it('refuses a relative path', () => {
-		expect(safeRedirect('impostazioni')).toBe(DEFAULT_REDIRECT)
+		expect(safeRedirect('settings')).toBe(DEFAULT_REDIRECT)
 	})
 
 	it('refuses an empty target', () => {
@@ -46,7 +46,7 @@ describe('LoadingPage', () => {
 		stubGraphQL({ InfoAdminAfterLogin: { pending: true } })
 		await renderRoute('/loading')
 
-		expect(screen.getByText('Caricamento sessione')).toBeInTheDocument()
+		expect(screen.getByText('Loading session')).toBeInTheDocument()
 	})
 
 	it('stores the identity and lands on the dashboard', async () => {
@@ -64,7 +64,7 @@ describe('LoadingPage', () => {
 		const { router } = await renderRoute('/loading?redirect=%2Fimpostazioni', { session: null })
 
 		await waitFor(() => {
-			expect(router.state.location.pathname).toBe('/impostazioni')
+			expect(router.state.location.pathname).toBe('/settings')
 		})
 	})
 
@@ -120,7 +120,7 @@ describe('LoadingPage', () => {
 	})
 
 	it('clears everything and returns to the login page when the session is gone', async () => {
-		stubGraphQL({ InfoAdminAfterLogin: { errors: [graphQLError('Nessuna sessione', undefined, 401)], status: 401 } })
+		stubGraphQL({ InfoAdminAfterLogin: { errors: [graphQLError('No session', undefined, 401)], status: 401 } })
 		const { router } = await renderRoute('/loading', { session: null })
 
 		await waitFor(() => {

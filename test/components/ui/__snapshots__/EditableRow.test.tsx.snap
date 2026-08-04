@@ -11,7 +11,7 @@ exports[`EditableRow > renders open 1`] = `
       class="grow"
     >
       <input
-        aria-label="Nome"
+        aria-label="First name"
       />
     </div>
   </div>
@@ -25,16 +25,16 @@ exports[`EditableRow > renders read-only 1`] = `
   <span
     class="text-tip"
   >
-    Nome
+    First name
   </span>
   <span
     class="flex items-center gap-1 text-right"
   >
     Mario
     <button
-      aria-label="Modifica Nome"
+      aria-label="Change First name"
       class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      title="Modifica Nome"
+      title="Change First name"
       type="button"
     >
       <svg
@@ -66,16 +66,16 @@ exports[`EditableRow > renders with a bin 1`] = `
   <span
     class="text-tip"
   >
-    lunedì
+    monday
   </span>
   <span
     class="flex items-center gap-1 text-right"
   >
     11:30 – 14:30
     <button
-      aria-label="Modifica lunedì"
+      aria-label="Change monday"
       class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      title="Modifica lunedì"
+      title="Change monday"
       type="button"
     >
       <svg
@@ -97,9 +97,9 @@ exports[`EditableRow > renders with a bin 1`] = `
       </svg>
     </button>
     <button
-      aria-label="Elimina lunedì"
+      aria-label="Delete monday"
       class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      title="Elimina lunedì"
+      title="Delete monday"
       type="button"
     >
       <svg

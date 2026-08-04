@@ -7,7 +7,7 @@ import { isSectionActive } from '@/components/layout/SideMenu'
 import { stubGraphQL } from '../../helpers/graphql'
 import { ADMIN, renderRoute } from '../../helpers/render'
 
-const emptyTable = { data: { imprenditoriAttiviTbl: { total: 0, items: [] } } }
+const emptyTable = { data: { shopOwnersActiveTbl: { total: 0, items: [] } } }
 
 describe('isSectionActive', () => {
 	it('matches the prefix exactly', () => {
@@ -15,17 +15,17 @@ describe('isSectionActive', () => {
 	})
 
 	it('matches a path below the prefix', () => {
-		expect(isSectionActive('/p/imprenditori/gestione-imprenditori', ['/imprenditori', '/p/imprenditori'])).toBe(true)
+		expect(isSectionActive('/p/shopOwners/manage-shopOwners', ['/shopOwners', '/p/shopOwners'])).toBe(true)
 	})
 
-	// `/impostazioni-avanzate` is not inside `/impostazioni`. A bare `startsWith` says it is, which is
+	// `/settings-avanzate` is not inside `/settings`. A bare `startsWith` says it is, which is
 	// why the check tests for the separator too.
 	it('does not match a sibling that merely starts with the same letters', () => {
-		expect(isSectionActive('/impostazionix', ['/impostazioni'])).toBe(false)
+		expect(isSectionActive('/settingsx', ['/settings'])).toBe(false)
 	})
 
 	it('does not match an unrelated path', () => {
-		expect(isSectionActive('/home', ['/impostazioni'])).toBe(false)
+		expect(isSectionActive('/home', ['/settings'])).toBe(false)
 	})
 
 	it('is false when there is no prefix to match', () => {
@@ -38,11 +38,11 @@ describe('SideMenu', () => {
 		stubGraphQL({})
 		await renderRoute('/home')
 
-		const menu = screen.getByRole('navigation', { name: 'Menu principale' })
+		const menu = screen.getByRole('navigation', { name: 'Main menu' })
 		expect(menu).toBeInTheDocument()
 		expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/home')
-		expect(screen.getByRole('link', { name: 'Imprenditori' })).toHaveAttribute('href', '/imprenditori')
-		expect(screen.getByRole('link', { name: 'Impostazioni' })).toHaveAttribute('href', '/impostazioni')
+		expect(screen.getByRole('link', { name: 'ShopOwners' })).toHaveAttribute('href', '/shopOwners')
+		expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
 	})
 
 	it('highlights the section the operator is standing in', async () => {
@@ -50,20 +50,20 @@ describe('SideMenu', () => {
 		await renderRoute('/home')
 
 		expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveClass('font-bold')
-		expect(screen.getByRole('link', { name: 'Impostazioni' })).not.toHaveClass('font-bold')
+		expect(screen.getByRole('link', { name: 'Settings' })).not.toHaveClass('font-bold')
 	})
 
-	// The reason `isSectionActive` exists at all: the gestione page lives under `/p/imprenditori/…`, a
-	// different prefix from the section's own `/imprenditori`, so exact matching would unlight the
+	// The reason `isSectionActive` exists at all: the manage page lives under `/p/shopOwners/…`, a
+	// different prefix from the section's own `/shopOwners`, so exact matching would unlight the
 	// sidebar the moment an operator opened the table.
-	it('keeps Imprenditori highlighted on a page under the other prefix', async () => {
-		stubGraphQL({ ImprenditoriAttiviTbl: emptyTable })
-		await renderRoute('/p/imprenditori/gestione-imprenditori')
+	it('keeps ShopOwners highlighted on a page under the other prefix', async () => {
+		stubGraphQL({ ShopOwnersActiveTbl: emptyTable })
+		await renderRoute('/p/shopOwners/manage-shopOwners')
 
 		// Scoped to the sidebar: the page's own breadcrumb trail and its section menu both carry a link
-		// called "Imprenditori", and an unscoped query matches all three.
-		const menu = within(screen.getByRole('navigation', { name: 'Menu principale' }))
-		expect(menu.getByRole('link', { name: 'Imprenditori' })).toHaveClass('font-bold')
+		// called "ShopOwners", and an unscoped query matches all three.
+		const menu = within(screen.getByRole('navigation', { name: 'Main menu' }))
+		expect(menu.getByRole('link', { name: 'ShopOwners' })).toHaveClass('font-bold')
 		expect(menu.getByRole('link', { name: 'Dashboard' })).not.toHaveClass('font-bold')
 	})
 
@@ -75,7 +75,7 @@ describe('SideMenu', () => {
 	})
 
 	// The window `useLogout` opens: it clears the session and only then navigates, so the menu renders
-	// once with no operator. The address has to go with it — a stale email under a "Esci" button that
+	// once with no operator. The address has to go with it — a stale email under a "Sign out" button that
 	// has already fired is worse than none.
 	//
 	// The two positive assertions are what make this a test of the empty state rather than a test that
@@ -92,14 +92,14 @@ describe('SideMenu', () => {
 		})
 
 		expect(screen.queryByText(ADMIN.email)).not.toBeInTheDocument()
-		expect(screen.getByRole('navigation', { name: 'Menu principale' })).toBeInTheDocument()
-		expect(screen.getByRole('button', { name: 'Esci' })).toBeInTheDocument()
+		expect(screen.getByRole('navigation', { name: 'Main menu' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
 	})
 
 	it('renders', async () => {
 		stubGraphQL({})
 		await renderRoute('/home')
 
-		expect(screen.getByRole('navigation', { name: 'Menu principale' })).toMatchSnapshot()
+		expect(screen.getByRole('navigation', { name: 'Main menu' })).toMatchSnapshot()
 	})
 })

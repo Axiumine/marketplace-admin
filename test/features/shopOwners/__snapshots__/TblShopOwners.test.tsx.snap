@@ -1,0 +1,272 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`TblShop owners > renders 1`] = `
+<main
+  class="flex-1 overflow-auto p-6"
+>
+  <header
+    class="mb-6 flex flex-col gap-3 border-b border-tip pb-4"
+  >
+    <nav
+      aria-label="Path"
+    >
+      <ol
+        class="flex flex-wrap gap-2 text-xs text-tip"
+      >
+        <li
+          class="after:ml-2 after:content-['/'] last:after:content-['']"
+        >
+          <a
+            href="/shopOwners"
+          >
+            Shop owners
+          </a>
+        </li>
+        <li
+          class="after:ml-2 after:content-['/'] last:after:content-['']"
+        >
+          Manage
+        </li>
+      </ol>
+    </nav>
+    <div
+      class="flex flex-wrap items-center justify-between gap-4"
+    >
+      <h1
+        class="text-2xl font-bold"
+      >
+        Manage shop owners
+      </h1>
+      <div
+        class="flex gap-2"
+      >
+        <nav
+          aria-label="Shop owner sections"
+          class="flex flex-wrap gap-2"
+        >
+          <a
+            class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm"
+            href="/shopOwners"
+          >
+            Stats
+          </a>
+          <a
+            aria-current="page"
+            class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm bg-third text-palette-white"
+            data-status="active"
+            href="/p/shopOwners/manage-shopOwners"
+          >
+            Manage
+          </a>
+          <a
+            class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm"
+            href="/p/shopOwners/add-shopOwner"
+          >
+            Add
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+  <div
+    class="flex flex-col gap-4"
+  >
+    <div
+      class="flex flex-col gap-1"
+    >
+      <label
+        class="text-sm font-semibold"
+        for=":id-0:"
+      >
+        Search shop owner
+      </label>
+      <div
+        class="relative"
+      >
+        <input
+          aria-invalid="false"
+          class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+          id=":id-0:"
+          type="search"
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      class="overflow-x-auto"
+    >
+      <table
+        class="w-full text-left text-sm"
+      >
+        <thead>
+          <tr>
+            <th
+              aria-sort="ascending"
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <button
+                class="font-bold"
+                type="button"
+              >
+                Last name
+              </button>
+            </th>
+            <th
+              aria-sort="none"
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <button
+                class="font-bold"
+                type="button"
+              >
+                First name
+              </button>
+            </th>
+            <th
+              aria-sort="none"
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <button
+                class="font-bold"
+                type="button"
+              >
+                Registration
+              </button>
+            </th>
+            <th
+              aria-sort="none"
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <button
+                class="font-bold"
+                type="button"
+              >
+                Address
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            class="border-b border-palette-bg3/10"
+          >
+            <td
+              class="p-2"
+            >
+              <a
+                class="underline"
+                href="/p/shopOwners/id/65f0000000000000000000f1"
+              >
+                Rossi
+              </a>
+            </td>
+            <td
+              class="p-2"
+            >
+              Mario
+            </td>
+            <td
+              class="p-2"
+            >
+              01/02/2026
+            </td>
+            <td
+              class="p-2"
+            >
+              Via Roma 1, 20100 Milano (MI)
+            </td>
+          </tr>
+          <tr
+            class="border-b border-palette-bg3/10"
+          >
+            <td
+              class="p-2"
+            >
+              <a
+                class="underline"
+                href="/p/shopOwners/id/65f0000000000000000000f2"
+              >
+                Bianchi
+              </a>
+            </td>
+            <td
+              class="p-2"
+            >
+              Anna
+            </td>
+            <td
+              class="p-2"
+            >
+              15/03/2026
+            </td>
+            <td
+              class="p-2"
+            >
+              Corso Italia 9, 00100 Roma (RM)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div
+      class="flex flex-wrap items-center justify-between gap-4 py-3 text-sm"
+    >
+      <p
+        aria-live="polite"
+      >
+        1
+        –
+        20
+         of 
+        41
+      </p>
+      <nav
+        aria-label="Pagination"
+        class="flex gap-1"
+      >
+        <button
+          aria-label="Previous page"
+          class="rounded-box px-2 py-1 disabled:opacity-40"
+          disabled=""
+          type="button"
+        >
+          ‹
+        </button>
+        <button
+          aria-current="page"
+          aria-label="Page 1"
+          class="rounded-box px-2 py-1 bg-third text-palette-white"
+          type="button"
+        >
+          1
+        </button>
+        <button
+          aria-label="Page 2"
+          class="rounded-box px-2 py-1 "
+          type="button"
+        >
+          2
+        </button>
+        <button
+          aria-label="Page 3"
+          class="rounded-box px-2 py-1 "
+          type="button"
+        >
+          3
+        </button>
+        <button
+          aria-label="Next page"
+          class="rounded-box px-2 py-1 disabled:opacity-40"
+          type="button"
+        >
+          ›
+        </button>
+      </nav>
+    </div>
+  </div>
+</main>
+`;

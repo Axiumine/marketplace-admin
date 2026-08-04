@@ -16,7 +16,7 @@ import { useId } from 'react'
 export const Infobox = ({
 	title,
 	className = '',
-	azioni,
+	actions,
 	children
 }: {
 	title: string
@@ -26,7 +26,7 @@ export const Infobox = ({
 	 * opening hour is the only one so far. They sit on the title line, pushed right, because a card
 	 * whose rows are a list has nowhere else to put "and one more".
 	 */
-	azioni?: ReactNode
+	actions?: ReactNode
 	children: ReactNode
 }) => {
 	const headingId = useId()
@@ -42,7 +42,7 @@ export const Infobox = ({
 				<h3 id={headingId} className="font-bold">
 					{title}
 				</h3>
-				{azioni}
+				{actions}
 			</div>
 			{children}
 		</section>

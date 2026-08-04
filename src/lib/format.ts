@@ -33,14 +33,12 @@ const DATE_FORMAT = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2
 /*
  * UTC, unlike the two above, and the difference is not an oversight.
  *
- * `orari.da` / `.a` are not moments in time — they are clock readings the operator typed, which the
+ * `openingHours.da` / `.a` are not moments in time — they are clock readings the operator typed, which the
  * backend's `Time` scalar stamped onto an arbitrary calendar day at the offset they were sent with. The
  * app sends them as `HH:MM:00Z`, so reading them back in the browser's zone would print an Italian
  * shop's 11:30 opening as 13:30 in summer, and the edit box beside it — which is fed the UTC half —
  * would disagree with the value printed above it.
  */
-const TIME_FORMAT = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
-
 /**
  * An unparseable timestamp renders as NO_VALUE rather than "Invalid Date". The backend types these
  * fields as non-null DateTime, so this branch should be unreachable — but a rendered "Invalid Date" in
@@ -54,16 +52,6 @@ export const formatDateTime = (iso: string): string => {
 export const formatDate = (iso: string): string => {
 	const date = new Date(iso)
 	return Number.isNaN(date.getTime()) ? NO_VALUE : DATE_FORMAT.format(date)
-}
-
-/**
- * Opening hours. `puntoVendita.orari.da` / `.a` are typed `DateTime!` on the backend, so a full
- * timestamp arrives and only the time half is meaningful — the date part is whatever day the row was
- * written.
- */
-export const formatOra = (iso: string): string => {
-	const date = new Date(iso)
-	return Number.isNaN(date.getTime()) ? NO_VALUE : TIME_FORMAT.format(date)
 }
 
 /** A missing value renders as the placeholder, never as an empty cell or the string `null`. */
@@ -88,7 +76,7 @@ export const handleNullBoolYN = (val: boolean | null | undefined): string => (va
 /**
  * A stored timestamp as `<input type="date">` needs it: `YYYY-MM-DD`, read in UTC.
  *
- * UTC and not local: `nascita.data` is stored as midnight UTC, so a browser west of Greenwich would
+ * UTC and not local: `birth.date` is stored as midnight UTC, so a browser west of Greenwich would
  * seed the date box with the previous day — and, since react-hook-form compares against exactly this
  * value to decide what is dirty, the field would arrive already "edited" and be written back a day
  * earlier on every save that touched anything else in the same block.
@@ -96,7 +84,7 @@ export const handleNullBoolYN = (val: boolean | null | undefined): string => (va
  * An unparseable value answers the empty string rather than the placeholder: this feeds a form control,
  * where `---` is not "nothing" but three characters the operator has to delete.
  */
-export const toDataInput = (iso: string): string => {
+export const toDateInput = (iso: string): string => {
 	const date = new Date(iso)
 	return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10)
 }
@@ -121,11 +109,11 @@ export const toOraWire = (ora: string): string => `${ora}:00Z`
  *
  * An emptied optional field has to travel as `null`, never as `''`. Every collection on this platform
  * is validated with `additionalProperties: false` and `bsonType: 'string'`, so an empty string is a
- * *value* of the right type and gets written — a landline number of no digits, a codice univoco of no
+ * *value* of the right type and gets written — a landline number of no digits, a codice uniqueCode of no
  * characters — while `null` is what the services' validators turn into an absent key.
  */
-export const vuotoInNull = (valore: string): string | null => (valore === '' ? null : valore)
+export const emptyInNull = (value: string): string | null => (value === '' ? null : value)
 
 /** `via Roma 1, 20100 Milano (MI)` */
-export const formatIndirizzo = (indirizzo: { indirizzo: string; cap: string; comune: string; provincia: string }): string =>
-	`${indirizzo.indirizzo}, ${indirizzo.cap} ${indirizzo.comune} (${indirizzo.provincia})`
+export const formatAddress = (address: { street: string; postalCode: string; city: string; province: string }): string =>
+	`${address.street}, ${address.postalCode} ${address.city} (${address.province})`

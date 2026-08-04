@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { clearSession, getSession, setSession, subscribeSession, useSession } from '@/auth/session'
 
-const ADMIN = { _id: '65f0000000000000000000a1', email: 'operatore@marketplace.it' }
+const ADMIN = { _id: '65f0000000000000000000a1', email: 'operator@marketplace.it' }
 
 describe('the session store', () => {
 	it('starts empty', () => {

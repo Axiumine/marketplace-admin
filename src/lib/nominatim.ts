@@ -5,7 +5,7 @@ import { z } from 'zod'
  *
  * Nominatim is a free service run on donated hardware and its usage policy is a real constraint, not
  * a formality: at most one request per second, no bulk querying, and an identifiable client. The
- * per-second limit is why every caller must debounce — see `RICERCA_DEBOUNCE_MS` in `AddressField` —
+ * per-second limit is why every caller must debounce — see `SEARCH_DEBOUNCE_MS` in `AddressField` —
  * and `limit=5` keeps a single answer small. A browser cannot set `User-Agent`, so the identification
  * Nominatim actually sees is the `Referer` the browser sends on its own; that is the documented
  * arrangement for web front ends and the reason there is no header here to forget.
@@ -18,7 +18,7 @@ const NOMINATIM_SEARCH = 'https://nominatim.openstreetmap.org/search'
 const OSM_EMBED = 'https://www.openstreetmap.org/export/embed.html'
 
 /** Nominatim's own cap is 50; five is what fits under a text field without becoming a page. */
-export const MAX_RISULTATI = 5
+export const MAX_RESULTS = 5
 
 /** Half the side of the box the embed frames around a point, in degrees — roughly 450 m at Italian latitudes. */
 export const DELTA_BBOX = 0.004
@@ -30,86 +30,86 @@ export const DELTA_BBOX = 0.004
  * country: `IT-MI`. `county` is the province's *name*, and it arrives spelled in whichever way the
  * mappers wrote it — `Milano`, `Città Metropolitana di Milano` — with no way to reach `MI` from it.
  */
-const ISO_PROVINCIA = 'ISO3166-2-lvl6'
+const ISO_PROVINCE = 'ISO3166-2-lvl6'
 
 /**
- * A comune is tagged by size, not by role: a city is `city`, a small town `town`, a village `village`.
+ * A city is tagged by size, not by role: a city is `city`, a small town `town`, a village `village`.
  * One of the three is present, never more than one, and which one is not something an address form
  * can care about.
  */
-const CHIAVI_COMUNE = ['city', 'town', 'village'] as const
+const CITY_KEYS = ['city', 'town', 'village'] as const
 
 /**
  * Every field defaults to the empty string because `addressdetails` omits what it does not know rather
  * than sending it null — a rural address has no `house_number` key at all. Unknown keys are dropped:
  * zod objects strip by default, and Nominatim sends a dozen this form has no use for.
  */
-const indirizzoSchema = z.object({
+const addressSchema = z.object({
 	road: z.string().default(''),
 	house_number: z.string().default(''),
 	postcode: z.string().default(''),
 	city: z.string().default(''),
 	town: z.string().default(''),
 	village: z.string().default(''),
-	[ISO_PROVINCIA]: z.string().default('')
+	[ISO_PROVINCE]: z.string().default('')
 })
 
 /** `lat` and `lon` arrive as strings — `"45.4642035"` — which is why they are coerced and not declared numeric. */
-const risultatoSchema = z.object({
+const resultSchema = z.object({
 	place_id: z.coerce.string(),
 	display_name: z.string(),
 	lat: z.coerce.number(),
 	lon: z.coerce.number(),
-	address: indirizzoSchema.optional()
+	address: addressSchema.optional()
 })
 
-const rispostaSchema = z.array(risultatoSchema)
+const responseSchema = z.array(resultSchema)
 
 /** The shape an empty `address` parses to, so the mapping below has no undefined to branch on. */
-const INDIRIZZO_VUOTO = indirizzoSchema.parse({})
+const EMPTY_ADDRESS = addressSchema.parse({})
 
-/** One geocoded address, flattened into the four fields the anagrafica stores. */
-export interface IndirizzoTrovato {
+/** One geocoded address, flattened into the four fields the personalData stores. */
+export interface FoundAddress {
 	/** Nominatim's own id for the place — a stable React key, and nothing else. */
 	readonly id: string
 	/** The full one-line address, as OSM writes it. What the suggestion list shows. */
-	readonly etichetta: string
+	readonly label: string
 	/** Street and house number, in Italian order: `Via Roma 1`. */
-	readonly indirizzo: string
-	readonly cap: string
-	readonly comune: string
+	readonly street: string
+	readonly postalCode: string
+	readonly city: string
 	/** The two-letter province code, upper-case: `MI`. Empty when OSM has no province for the point. */
-	readonly provincia: string
+	readonly province: string
 	readonly lat: number
 	readonly lon: number
 }
 
-type IndirizzoOsm = z.infer<typeof indirizzoSchema>
+type AddressOsm = z.infer<typeof addressSchema>
 
-const comuneDi = (address: IndirizzoOsm): string => CHIAVI_COMUNE.map((chiave) => address[chiave]).find((v) => v !== '') ?? ''
+const cityDi = (address: AddressOsm): string => CITY_KEYS.map((key) => address[key]).find((v) => v !== '') ?? ''
 
-const mappa = (risultato: z.infer<typeof risultatoSchema>): IndirizzoTrovato => {
-	const address = risultato.address ?? INDIRIZZO_VUOTO
+const map = (result: z.infer<typeof resultSchema>): FoundAddress => {
+	const address = result.address ?? EMPTY_ADDRESS
 
 	return {
-		id: risultato.place_id,
-		etichetta: risultato.display_name,
+		id: result.place_id,
+		label: result.display_name,
 		// Filtered before joining: a road with no house number must not come back with a trailing space,
 		// and a point with neither must be the empty string the form treats as "nothing found".
-		indirizzo: [address.road, address.house_number].filter((parte) => parte !== '').join(' '),
-		cap: address.postcode,
-		comune: comuneDi(address),
+		street: [address.road, address.house_number].filter((part) => part !== '').join(' '),
+		postalCode: address.postcode,
+		city: cityDi(address),
 		// `IT-MI` → `MI`. An absent code is the empty string, and `''.slice(-2)` is `''`.
-		provincia: address[ISO_PROVINCIA].slice(-2),
-		lat: risultato.lat,
-		lon: risultato.lon
+		province: address[ISO_PROVINCE].slice(-2),
+		lat: result.lat,
+		lon: result.lon
 	}
 }
 
 /**
  * Geocodes free text through Nominatim.
  *
- * Restricted to Italy: every field around it — a five-digit CAP, a two-letter province — is an Italian
+ * Restricted to Italy: every field around it — a five-digit postal code, a two-letter province — is an Italian
  * address, so a Roman street in Texas is noise the operator has to read past. `signal` is required
  * rather than optional because the caller types faster than the network answers, and an unaborted
  * earlier request can land after a later one and overwrite the newer suggestions with older ones.
@@ -118,36 +118,36 @@ const mappa = (risultato: z.infer<typeof risultatoSchema>): IndirizzoTrovato => 
  * a partial one, and the field reports the failure rather than silently showing no matches — which
  * reads as "this address does not exist".
  */
-export const cercaIndirizzi = async (query: string, signal: AbortSignal): Promise<IndirizzoTrovato[]> => {
-	const parametri = new URLSearchParams({
+export const searchAddresses = async (query: string, signal: AbortSignal): Promise<FoundAddress[]> => {
+	const params = new URLSearchParams({
 		q: query,
 		format: 'jsonv2',
 		addressdetails: '1',
-		limit: String(MAX_RISULTATI),
+		limit: String(MAX_RESULTS),
 		countrycodes: 'it',
 		'accept-language': 'it'
 	})
 
-	const risposta = await fetch(`${NOMINATIM_SEARCH}?${parametri.toString()}`, { signal })
-	if (!risposta.ok) throw new Error(`Nominatim ha risposto ${String(risposta.status)}`)
+	const response = await fetch(`${NOMINATIM_SEARCH}?${params.toString()}`, { signal })
+	if (!response.ok) throw new Error(`Nominatim ha risposto ${String(response.status)}`)
 
-	return rispostaSchema.parse(await risposta.json()).map(mappa)
+	return responseSchema.parse(await response.json()).map(map)
 }
 
 /**
  * The embed URL for a map framed on one point, with a marker on it.
  *
  * The box is built from a fixed delta rather than from Nominatim's own `boundingbox`, which is the
- * extent of the *matched object*: a house is a few metres across and a comune is kilometres, so
+ * extent of the *matched object*: a house is a few metres across and a city is kilometres, so
  * following it would swing the zoom wildly between two suggestions in the same list. A constant box
  * means the map always answers the same question — what is around this address.
  *
  * Fixed to five decimals (about a metre) so the URL is a pure function of the point: binary floating
  * point would otherwise write `9.190000000000001` into it and change the frame's `src` for nothing.
  */
-export const urlMappa = (lat: number, lon: number): string => {
+export const urlMap = (lat: number, lon: number): string => {
 	const bbox = [lon - DELTA_BBOX, lat - DELTA_BBOX, lon + DELTA_BBOX, lat + DELTA_BBOX]
-		.map((grado) => grado.toFixed(5))
+		.map((degree) => degree.toFixed(5))
 		.join(',')
 
 	return `${OSM_EMBED}?bbox=${bbox}&layer=mapnik&marker=${lat.toFixed(5)},${lon.toFixed(5)}`

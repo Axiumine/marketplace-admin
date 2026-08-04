@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 /**
  * A button that is nothing but an icon.
  *
- * `nome` is required and is spent twice: as `aria-label`, because the glyph inside is `aria-hidden` and
+ * `name` is required and is spent twice: as `aria-label`, because the glyph inside is `aria-hidden` and
  * the button would otherwise reach a screen reader with no accessible name at all, and as `title`,
  * because a sighted operator has only a shape to go on.
  *
@@ -16,12 +16,12 @@ import type { ReactNode } from 'react'
  * for that state, since `:hover` still matches a disabled button and would go on promising a press.
  */
 export const IconButton = ({
-	nome,
+	name,
 	onClick,
 	disabled = false,
 	children
 }: {
-	nome: string
+	name: string
 	onClick: () => void
 	disabled?: boolean
 	children: ReactNode
@@ -29,8 +29,8 @@ export const IconButton = ({
 	<button
 		type="button"
 		className="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-		aria-label={nome}
-		title={nome}
+		aria-label={name}
+		title={name}
 		disabled={disabled}
 		onClick={onClick}
 	>

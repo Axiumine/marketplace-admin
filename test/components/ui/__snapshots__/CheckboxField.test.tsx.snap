@@ -13,7 +13,7 @@ exports[`CheckboxField > renders 1`] = `
     class="text-sm font-semibold"
     for="campo-disabled"
   >
-    Disabilitato
+    Disabled
   </label>
 </div>
 `;

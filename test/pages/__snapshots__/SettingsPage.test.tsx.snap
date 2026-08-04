@@ -1,0 +1,195 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SettingsPage > renders 1`] = `
+<main
+  class="flex-1 overflow-auto p-6"
+>
+  <header
+    class="mb-6 flex flex-col gap-3 border-b border-tip pb-4"
+  >
+    <div
+      class="flex flex-wrap items-center justify-between gap-4"
+    >
+      <h1
+        class="text-2xl font-bold"
+      >
+        Settings
+      </h1>
+    </div>
+  </header>
+  <h2
+    class="mb-4 text-lg font-bold"
+  >
+    Password change
+  </h2>
+  <form
+    class="flex max-w-sm flex-col gap-4"
+  >
+    <div
+      class="flex flex-col gap-1"
+    >
+      <label
+        class="text-sm font-semibold"
+        for=":id-0:"
+      >
+        Current password
+      </label>
+      <div
+        class="relative"
+      >
+        <input
+          aria-invalid="false"
+          autocomplete="current-password"
+          class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-10"
+          id=":id-0:"
+          maxlength="72"
+          name="passwordOld"
+          type="password"
+        />
+        <span
+          class="absolute inset-y-0 right-1 flex items-center"
+        >
+          <button
+            aria-label="Show password"
+            class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third"
+            title="Show password"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              />
+            </svg>
+          </button>
+        </span>
+      </div>
+    </div>
+    <div
+      class="flex flex-col gap-1"
+    >
+      <label
+        class="text-sm font-semibold"
+        for=":id-1:"
+      >
+        New password
+      </label>
+      <div
+        class="relative"
+      >
+        <input
+          aria-invalid="false"
+          autocomplete="new-password"
+          class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-10"
+          id=":id-1:"
+          maxlength="72"
+          name="passwordNew"
+          type="password"
+        />
+        <span
+          class="absolute inset-y-0 right-1 flex items-center"
+        >
+          <button
+            aria-label="Show password"
+            class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third"
+            title="Show password"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              />
+            </svg>
+          </button>
+        </span>
+      </div>
+    </div>
+    <div
+      class="flex flex-col gap-1"
+    >
+      <label
+        class="text-sm font-semibold"
+        for=":id-2:"
+      >
+        Repeat the new password
+      </label>
+      <div
+        class="relative"
+      >
+        <input
+          aria-invalid="false"
+          autocomplete="new-password"
+          class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-10"
+          id=":id-2:"
+          maxlength="72"
+          name="passwordNewRepeat"
+          type="password"
+        />
+        <span
+          class="absolute inset-y-0 right-1 flex items-center"
+        >
+          <button
+            aria-label="Show password"
+            class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third"
+            title="Show password"
+            type="button"
+          >
+            <svg
+              aria-hidden="true"
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.75"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+              />
+              <circle
+                cx="12"
+                cy="12"
+                r="3"
+              />
+            </svg>
+          </button>
+        </span>
+      </div>
+    </div>
+    <button
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-pomodoro px-4"
+      type="submit"
+    >
+      Change password
+    </button>
+  </form>
+</main>
+`;

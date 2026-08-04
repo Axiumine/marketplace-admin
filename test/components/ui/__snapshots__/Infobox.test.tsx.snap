@@ -7,7 +7,7 @@ exports[`InfoRow > renders 1`] = `
   <span
     class="text-tip"
   >
-    Cellulare
+    Mobile
   </span>
   <span
     class="text-right"
@@ -38,7 +38,7 @@ exports[`Infobox > renders without a caller class 1`] = `
     <span
       class="text-tip"
     >
-      Disabilitato
+      Disabled
     </span>
     <span
       class="text-right"

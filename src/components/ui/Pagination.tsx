@@ -43,11 +43,11 @@ export const Pagination = ({
 				{firstRow}–{lastRow} di {total}
 			</p>
 
-			<nav aria-label="Paginazione" className="flex gap-1">
+			<nav aria-label="Pagination" className="flex gap-1">
 				<button
 					type="button"
 					disabled={page <= 1}
-					aria-label="Pagina precedente"
+					aria-label="Previous page"
 					className="rounded-box px-2 py-1 disabled:opacity-40"
 					onClick={() => {
 						onPageChange(page - 1)
@@ -60,7 +60,7 @@ export const Pagination = ({
 					<button
 						key={candidate}
 						type="button"
-						aria-label={`Pagina ${candidate}`}
+						aria-label={`Page ${candidate}`}
 						aria-current={candidate === page ? 'page' : undefined}
 						className={`rounded-box px-2 py-1 ${candidate === page ? 'bg-third text-palette-white' : ''}`}
 						onClick={() => {
@@ -74,7 +74,7 @@ export const Pagination = ({
 				<button
 					type="button"
 					disabled={page >= pages}
-					aria-label="Pagina successiva"
+					aria-label="Next page"
 					className="rounded-box px-2 py-1 disabled:opacity-40"
 					onClick={() => {
 						onPageChange(page + 1)

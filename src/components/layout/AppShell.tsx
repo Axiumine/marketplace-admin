@@ -16,7 +16,7 @@ export const AppShell = () => {
 				<main className="flex-1 overflow-auto p-6">
 					<Outlet />
 				</main>
-				<footer className="border-t border-tip px-6 py-3 text-xs text-tip">Marketplace — pannello operatore di piattaforma</footer>
+				<footer className="border-t border-tip px-6 py-3 text-xs text-tip">Marketplace — panel operator di platform</footer>
 			</div>
 		</div>
 	)

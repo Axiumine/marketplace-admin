@@ -2,19 +2,19 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 
-import { DURATA_OK, Toast } from '@/components/ui/Toast'
+import { OK_DURATION, Toast } from '@/components/ui/Toast'
 
-const chiudi = async () => {
-	await userEvent.click(screen.getByRole('button', { name: 'Chiudi' }))
+const close = async () => {
+	await userEvent.click(screen.getByRole('button', { name: 'Close' }))
 }
 
-const toast = () => screen.queryByText('Modifiche salvate.')
+const toast = () => screen.queryByText('Changes saved.')
 
 /**
  * The countdown bar, by the only thing that identifies it: the one-pixel track under the message. Not by
  * `aria-hidden`, which the cross's glyph carries too, and not by a test id — the app has none.
  */
-const barra = (dentro: HTMLElement) => dentro.querySelector('.h-1 > div')
+const bar = (inside: HTMLElement) => inside.querySelector('.h-1 > div')
 
 /**
  * ⚠️ Ends the countdown by hand, because **jsdom runs no animations**: it keeps the properties, it never
@@ -23,8 +23,8 @@ const barra = (dentro: HTMLElement) => dentro.querySelector('.h-1 > div')
  * real is everything around it — that the bar carries a five-second linear animation, that pausing marks
  * it paused, and that the end of it closes the toast.
  */
-const finisci = (dentro: HTMLElement) => {
-	fireEvent.animationEnd(barra(dentro) as Element)
+const finish = (inside: HTMLElement) => {
+	fireEvent.animationEnd(bar(inside) as Element)
 }
 
 describe('Toast', () => {
@@ -32,19 +32,19 @@ describe('Toast', () => {
 	// it. A toast rendered from a card three levels down still lands in the corner of the page rather than
 	// inside that card's layout.
 	it('renders into a stack outside its own container', () => {
-		const { container } = render(<Toast tone="success">Modifiche salvate.</Toast>)
+		const { container } = render(<Toast tone="success">Changes saved.</Toast>)
 
 		expect(container).toBeEmptyDOMElement()
 
-		const pila = document.getElementById('pila-toast')
-		expect(pila).not.toBeNull()
-		expect(pila).toContainElement(toast())
+		const stack = document.getElementById('pila-toast')
+		expect(stack).not.toBeNull()
+		expect(stack).toContainElement(toast())
 
 		// Spelled out whole, because the stack is built once and then reused: every later toast finds the
 		// node already there and never runs the line that dresses it. Only the first one can state what it
 		// was dressed with — fixed in the corner, above everything, and transparent to the pointer so a
 		// message floating over a form does not swallow a click meant for the field under it.
-		expect(pila?.className).toBe('pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2')
+		expect(stack?.className).toBe('pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2')
 	})
 
 	// Vertically, in mount order, and in one stack rather than one per toast: two messages have to be
@@ -52,15 +52,15 @@ describe('Toast', () => {
 	it('stacks several messages in one column, in the order they appeared', () => {
 		render(
 			<>
-				<Toast tone="error">Salvataggio non riuscito.</Toast>
-				<Toast tone="success">Modifiche salvate.</Toast>
+				<Toast tone="error">Save failed.</Toast>
+				<Toast tone="success">Changes saved.</Toast>
 			</>
 		)
 
-		const pila = document.getElementById('pila-toast') as HTMLElement
+		const stack = document.getElementById('pila-toast') as HTMLElement
 
-		expect(pila).toHaveClass('flex', 'flex-col')
-		expect(pila.textContent).toBe('Salvataggio non riuscito.Modifiche salvate.')
+		expect(stack).toHaveClass('flex', 'flex-col')
+		expect(stack.textContent).toBe('Save failed.Changes saved.')
 	})
 
 	// Assertive for a refusal, polite for a confirmation — the same split `Alert` makes, and for the same
@@ -68,14 +68,14 @@ describe('Toast', () => {
 	it('announces an error assertively and everything else politely', () => {
 		render(
 			<>
-				<Toast tone="error">Salvataggio non riuscito.</Toast>
-				<Toast tone="success">Modifiche salvate.</Toast>
-				<Toast tone="info">Nessuna modifica.</Toast>
+				<Toast tone="error">Save failed.</Toast>
+				<Toast tone="success">Changes saved.</Toast>
+				<Toast tone="info">No change.</Toast>
 			</>
 		)
 
-		expect(screen.getByRole('alert')).toHaveTextContent('Salvataggio non riuscito.')
-		expect(screen.getAllByRole('status').map((nodo) => nodo.textContent)).toEqual(['Modifiche salvate.', 'Nessuna modifica.'])
+		expect(screen.getByRole('alert')).toHaveTextContent('Save failed.')
+		expect(screen.getAllByRole('status').map((node) => node.textContent)).toEqual(['Changes saved.', 'No changes.'])
 	})
 
 	/*
@@ -88,33 +88,33 @@ describe('Toast', () => {
 	 * animation and the re-render that unmounts it.
 	 */
 	it('draws a five-second linear countdown under a confirmation', () => {
-		render(<Toast tone="success">Modifiche salvate.</Toast>)
+		render(<Toast tone="success">Changes saved.</Toast>)
 
-		expect(barra(screen.getByRole('status'))).toHaveStyle({
-			animationName: 'conto-alla-rovescia',
+		expect(bar(screen.getByRole('status'))).toHaveStyle({
+			animationName: 'countdown',
 			animationDuration: '5000ms',
 			animationTimingFunction: 'linear',
 			animationFillMode: 'forwards',
 			animationPlayState: 'running'
 		})
-		expect(DURATA_OK).toBe(5000)
+		expect(OK_DURATION).toBe(5000)
 	})
 
 	// A width driven from React would move in whatever steps the re-render rate allows; the browser
 	// interpolates a transform on its own thread, which is what makes the bar fluid — and free.
 	it('animates the bar with a transform, not a width', () => {
-		render(<Toast tone="success">Modifiche salvate.</Toast>)
+		render(<Toast tone="success">Changes saved.</Toast>)
 
-		const bar = barra(screen.getByRole('status')) as HTMLElement
+		const track = bar(screen.getByRole('status')) as HTMLElement
 
-		expect(bar).toHaveClass('origin-left')
-		expect(bar.style.width).toBe('')
+		expect(track).toHaveClass('origin-left')
+		expect(track.style.width).toBe('')
 	})
 
 	it('closes a confirmation when its countdown runs out', () => {
-		render(<Toast tone="success">Modifiche salvate.</Toast>)
+		render(<Toast tone="success">Changes saved.</Toast>)
 
-		finisci(screen.getByRole('status'))
+		finish(screen.getByRole('status'))
 
 		expect(toast()).not.toBeInTheDocument()
 	})
@@ -126,31 +126,31 @@ describe('Toast', () => {
 	 * `setTimeout` beside it would need that arithmetic written out, and could then disagree with the bar.
 	 */
 	it('pauses the countdown while the pointer is on it, and resumes it on the way out', async () => {
-		render(<Toast tone="success">Modifiche salvate.</Toast>)
+		render(<Toast tone="success">Changes saved.</Toast>)
 
 		await userEvent.hover(screen.getByRole('status'))
-		expect(barra(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'paused' })
+		expect(bar(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'paused' })
 
 		await userEvent.unhover(screen.getByRole('status'))
-		expect(barra(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'running' })
+		expect(bar(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'running' })
 	})
 
 	// Focus pauses it too, and has to: the cross is a tab stop, so a toast that kept counting under a
 	// keyboard user would close between the tab and the press.
 	it('pauses the countdown while something inside it has focus', () => {
-		render(<Toast tone="success">Modifiche salvate.</Toast>)
+		render(<Toast tone="success">Changes saved.</Toast>)
 
-		fireEvent.focus(screen.getByRole('button', { name: 'Chiudi' }))
-		expect(barra(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'paused' })
+		fireEvent.focus(screen.getByRole('button', { name: 'Close' }))
+		expect(bar(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'paused' })
 
-		fireEvent.blur(screen.getByRole('button', { name: 'Chiudi' }))
-		expect(barra(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'running' })
+		fireEvent.blur(screen.getByRole('button', { name: 'Close' }))
+		expect(bar(screen.getByRole('status'))).toHaveStyle({ animationPlayState: 'running' })
 	})
 
 	it('closes a confirmation immediately when the cross is pressed', async () => {
-		render(<Toast tone="success">Modifiche salvate.</Toast>)
+		render(<Toast tone="success">Changes saved.</Toast>)
 
-		await chiudi()
+		await close()
 
 		expect(toast()).not.toBeInTheDocument()
 	})
@@ -162,43 +162,43 @@ describe('Toast', () => {
 	 * close it either.
 	 */
 	it('draws no countdown for an error, and so has nothing to close it', () => {
-		render(<Toast tone="error">Salvataggio non riuscito.</Toast>)
+		render(<Toast tone="error">Save failed.</Toast>)
 
-		expect(barra(screen.getByRole('alert'))).toBeNull()
-		expect(screen.getByText('Salvataggio non riuscito.')).toBeInTheDocument()
+		expect(bar(screen.getByRole('alert'))).toBeNull()
+		expect(screen.getByText('Save failed.')).toBeInTheDocument()
 	})
 
 	it('closes an error when the cross is pressed', async () => {
-		render(<Toast tone="error">Salvataggio non riuscito.</Toast>)
+		render(<Toast tone="error">Save failed.</Toast>)
 
-		await chiudi()
+		await close()
 
-		expect(screen.queryByText('Salvataggio non riuscito.')).not.toBeInTheDocument()
+		expect(screen.queryByText('Save failed.')).not.toBeInTheDocument()
 	})
 
 	// An info toast is neither: no clock, like the error, and the polite role, like the confirmation.
 	it('draws no countdown for an info message', () => {
-		render(<Toast tone="info">Nessuna modifica.</Toast>)
+		render(<Toast tone="info">No change.</Toast>)
 
-		expect(barra(screen.getByRole('status'))).toBeNull()
-		expect(screen.getByText('Nessuna modifica.')).toBeInTheDocument()
+		expect(bar(screen.getByRole('status'))).toBeNull()
+		expect(screen.getByText('No changes.')).toBeInTheDocument()
 	})
 
 	// The third tone's colours, which the two snapshots below never see. Opaque like the others — a toast
 	// floats over the page, and a tinted background over a form is the form read through a filter.
 	it('dresses an info message in the neutral tone', () => {
-		render(<Toast tone="info">Nessuna modifica.</Toast>)
+		render(<Toast tone="info">No change.</Toast>)
 
 		expect(screen.getByRole('status')).toHaveClass('border-third', 'bg-palette-white', 'text-palette-bg')
 	})
 
 	it('renders', () => {
-		render(<Toast tone="success">Modifiche salvate.</Toast>)
+		render(<Toast tone="success">Changes saved.</Toast>)
 		expect(screen.getByRole('status')).toMatchSnapshot()
 	})
 
 	it('renders an error', () => {
-		render(<Toast tone="error">Salvataggio non riuscito.</Toast>)
+		render(<Toast tone="error">Save failed.</Toast>)
 		expect(screen.getByRole('alert')).toMatchSnapshot()
 	})
 })

@@ -12,7 +12,7 @@ import type { AdminIdentity } from '@/auth/session'
 import { setSession } from '@/auth/session'
 import { createAppRouter } from '@/router'
 
-export const ADMIN: AdminIdentity = { _id: '65f0000000000000000000a1', email: 'operatore@marketplace.it' }
+export const ADMIN: AdminIdentity = { _id: '65f0000000000000000000a1', email: 'operator@marketplace.it' }
 
 export interface RenderOptions {
 	/**

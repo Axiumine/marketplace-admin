@@ -6,7 +6,7 @@ exports[`AppShell > renders 1`] = `
     class="flex h-full"
   >
     <nav
-      aria-label="Menu principale"
+      aria-label="Main menu"
       class="flex h-full w-56 flex-col bg-secondary p-4"
     >
       <p
@@ -30,17 +30,17 @@ exports[`AppShell > renders 1`] = `
         <li>
           <a
             class="block rounded-box px-3 py-2 text-sm "
-            href="/imprenditori"
+            href="/shopOwners"
           >
-            Imprenditori
+            Shop owners
           </a>
         </li>
         <li>
           <a
             class="block rounded-box px-3 py-2 text-sm "
-            href="/impostazioni"
+            href="/settings"
           >
-            Impostazioni
+            Settings
           </a>
         </li>
       </ul>
@@ -50,13 +50,13 @@ exports[`AppShell > renders 1`] = `
         <p
           class="text-xs break-all text-tip"
         >
-          operatore@marketplace.it
+          operator@marketplace.it
         </p>
         <button
           class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-secondary text-palette-bg hover:bg-primary px-4"
           type="button"
         >
-          Esci
+          Sign out
         </button>
       </div>
     </nav>
@@ -84,17 +84,17 @@ exports[`AppShell > renders 1`] = `
         >
           <a
             class="block rounded-box border-4 border-third bg-white p-4 shadow transition-shadow hover:shadow-lg"
-            href="/p/imprenditori/gestione-imprenditori"
+            href="/p/shopOwners/manage-shopOwners"
           >
             <h2
               class="font-bold"
             >
-              Imprenditori
+              Shop owners
             </h2>
             <p
               class="text-sm text-tip"
             >
-              Gestione degli imprenditori
+              Manage shop owners
             </p>
           </a>
         </div>
@@ -102,7 +102,7 @@ exports[`AppShell > renders 1`] = `
       <footer
         class="border-t border-tip px-6 py-3 text-xs text-tip"
       >
-        Marketplace — pannello operatore di piattaforma
+        Marketplace — platform operator panel
       </footer>
     </div>
   </div>

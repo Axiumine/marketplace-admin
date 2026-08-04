@@ -2,14 +2,14 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { AddressField, LUNGHEZZA_MINIMA, RICERCA_DEBOUNCE_MS } from '@/components/ui/AddressField'
-import type { IndirizzoTrovato } from '@/lib/nominatim'
+import { AddressField, MIN_LENGTH, SEARCH_DEBOUNCE_MS } from '@/components/ui/AddressField'
+import type { FoundAddress } from '@/lib/nominatim'
 
-import { installaOsm, risultatoOsm } from '../../helpers/nominatim'
+import { installOsm, resultOsm } from '../../helpers/nominatim'
 
-const MILANO = risultatoOsm()
+const MILAN = resultOsm()
 
-const COMO = risultatoOsm({
+const COMO = resultOsm({
 	place_id: 12,
 	display_name: 'Via Roma, 4, Como, CO, 22100, Italia',
 	lat: '45.80800',
@@ -24,44 +24,44 @@ const COMO = risultatoOsm({
  * do with `setValue` and what makes the "do not search for what was just picked" rule reachable at all:
  * without the write-back the value never changes and the round-trip it skips never comes round.
  *
- * ⚠️ `componi` is what the two of them disagree on, and the disagreement is the whole reason the rule
- * cannot be a comparison against the box's text. `ImprenditoreAddForm` writes the street and puts the
- * CAP, comune and provincia in boxes of their own; the shop panel has one box and writes the composed
+ * ⚠️ `compose` is what the two of them disagree on, and the disagreement is the whole reason the rule
+ * cannot be a comparison against the box's text. `ShopOwnerAddForm` writes the street and puts the
+ * postal code, city and province in boxes of their own; the shop panel has one box and writes the composed
  * line into it. Both are "the address that was just picked" and neither can be recognised as such by
  * looking at it.
  */
-const Ospite = ({
+const Host = ({
 	onSelect = () => undefined,
-	componi = (indirizzo) => indirizzo.indirizzo,
-	valoreIniziale = '',
-	centroIniziale
+	compose = (address) => address.street,
+	valueInitial = '',
+	initialCenter
 }: {
-	onSelect?: (indirizzo: IndirizzoTrovato) => void
-	componi?: (indirizzo: IndirizzoTrovato) => string
-	valoreIniziale?: string
-	centroIniziale?: { lat: number; lon: number }
+	onSelect?: (address: FoundAddress) => void
+	compose?: (address: FoundAddress) => string
+	valueInitial?: string
+	initialCenter?: { lat: number; lon: number }
 }) => {
-	const [value, setValue] = useState(valoreIniziale)
+	const [value, setValue] = useState(valueInitial)
 
 	return (
 		<AddressField
-			label="Indirizzo"
+			label="Address"
 			value={value}
-			centroIniziale={centroIniziale}
+			initialCenter={initialCenter}
 			onChange={(event) => {
 				setValue(event.target.value)
 			}}
-			onSelect={(indirizzo) => {
-				setValue(componi(indirizzo))
-				onSelect(indirizzo)
+			onSelect={(address) => {
+				setValue(compose(address))
+				onSelect(address)
 			}}
 		/>
 	)
 }
 
-/** The composed line the shop panel writes back — street, CAP, comune and sigla, on one line. */
-const composto = (indirizzo: IndirizzoTrovato) =>
-	`${indirizzo.indirizzo}, ${indirizzo.cap} ${indirizzo.comune} (${indirizzo.provincia})`
+/** The composed line the shop panel writes back — street, postal code, city and province code, on one line. */
+const composed = (address: FoundAddress) =>
+	`${address.street}, ${address.postalCode} ${address.city} (${address.province})`
 
 // Fake timers throughout: the debounce is the component's whole rhythm, and waiting 700 ms of wall
 // clock per assertion would make this file the slowest in the suite for no added confidence.
@@ -73,25 +73,25 @@ afterEach(() => {
 	vi.useRealTimers()
 })
 
-const scrivi = (testo: string) => {
-	fireEvent.change(screen.getByLabelText('Indirizzo'), { target: { value: testo } })
+const write = (text: string) => {
+	fireEvent.change(screen.getByLabelText('Address'), { target: { value: text } })
 }
 
 /** Runs out the debounce and lets the request that follows settle. */
-const attendiRicerca = async () => {
+const attendiSearch = async () => {
 	await act(async () => {
-		await vi.advanceTimersByTimeAsync(RICERCA_DEBOUNCE_MS)
+		await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS)
 	})
 }
 
-const mappa = () => screen.getByTitle("Mappa dell'indirizzo")
+const map = () => screen.getByTitle("Address map")
 
 describe('AddressField', () => {
 	it('renders a map of Italy before anything is typed', () => {
-		installaOsm()
-		const { container } = render(<Ospite />)
+		installOsm()
+		const { container } = render(<Host />)
 
-		expect(mappa().getAttribute('src')).toContain('marker=41.90280,12.49640')
+		expect(map().getAttribute('src')).toContain('marker=41.90280,12.49640')
 		expect(container).toMatchSnapshot()
 	})
 
@@ -102,12 +102,12 @@ describe('AddressField', () => {
 	 * The padded value is the one that matters: `'  Via  '` is seven characters and three letters, and a
 	 * length check that forgot to trim would spend a request on a box that looks empty.
 	 */
-	it.each(['Via', '  Via  '])('does not geocode %o — too short to be an address', async (testo) => {
-		const osm = installaOsm({ risultati: [MILANO] })
-		render(<Ospite />)
+	it.each(['Via', '  Via  '])('does not geocode %o — too short to be an address', async (text) => {
+		const osm = installOsm({ results: [MILAN] })
+		render(<Host />)
 
-		scrivi(testo)
-		await attendiRicerca()
+		write(text)
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(0)
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
@@ -116,42 +116,42 @@ describe('AddressField', () => {
 	// Exactly at the minimum, which is the boundary the guard is written on: `Roma` is four characters
 	// and is geocodable.
 	it('geocodes a value exactly at the minimum length', async () => {
-		const osm = installaOsm({ risultati: [MILANO] })
-		render(<Ospite />)
+		const osm = installOsm({ results: [MILAN] })
+		render(<Host />)
 
-		expect(LUNGHEZZA_MINIMA).toBe(4)
-		scrivi('Roma')
-		await attendiRicerca()
+		expect(MIN_LENGTH).toBe(4)
+		write('Roma')
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(1)
 	})
 
 	it('waits for the typing to stop before spending a request', async () => {
-		const osm = installaOsm({ risultati: [MILANO] })
-		render(<Ospite />)
+		const osm = installOsm({ results: [MILAN] })
+		render(<Host />)
 
-		scrivi('Via Rom')
+		write('Via Rom')
 		await act(async () => {
-			await vi.advanceTimersByTimeAsync(RICERCA_DEBOUNCE_MS - 1)
+			await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS - 1)
 		})
 		expect(osm.calls).toHaveLength(0)
 		// And says nothing while it waits: the spinner means a request is out, not that the operator paused
 		// between two words. One that appears on the first keystroke is on screen for the whole address.
 		expect(screen.queryByRole('status')).not.toBeInTheDocument()
 
-		scrivi('Via Roma 1')
-		await attendiRicerca()
+		write('Via Roma 1')
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(1)
 		expect(osm.calls[0]).toContain('q=Via+Roma+1')
 	})
 
 	it('shows the suggestions OSM answered with', async () => {
-		installaOsm({ risultati: [MILANO, COMO] })
-		const { container } = render(<Ospite />)
+		installOsm({ results: [MILAN, COMO] })
+		const { container } = render(<Host />)
 
-		scrivi('Via Roma 1')
-		await attendiRicerca()
+		write('Via Roma 1')
+		await attendiSearch()
 
 		const suggerimenti = screen.getAllByRole('button')
 		expect(suggerimenti.map((b) => b.textContent)).toEqual([
@@ -162,13 +162,13 @@ describe('AddressField', () => {
 	})
 
 	it('announces the wait while the geocoder is answering', async () => {
-		installaOsm({ pending: true })
-		const { container } = render(<Ospite />)
+		installOsm({ pending: true })
+		const { container } = render(<Host />)
 
-		scrivi('Via Roma 1')
-		await attendiRicerca()
+		write('Via Roma 1')
+		await attendiSearch()
 
-		expect(screen.getByRole('status')).toHaveTextContent('Ricerca indirizzi in corso')
+		expect(screen.getByRole('status')).toHaveTextContent('Searching addresses')
 		expect(container).toMatchSnapshot()
 	})
 
@@ -176,23 +176,23 @@ describe('AddressField', () => {
 	// "the map updates as you write" means, and it is the only feedback that says the geocoder
 	// understood the address.
 	it('moves the map onto the best match while the address is being typed', async () => {
-		installaOsm({ risultati: [MILANO, COMO] })
-		render(<Ospite />)
+		installOsm({ results: [MILAN, COMO] })
+		render(<Host />)
 
-		scrivi('Via Roma 1')
-		await attendiRicerca()
+		write('Via Roma 1')
+		await attendiSearch()
 
-		expect(mappa().getAttribute('src')).toContain('marker=45.46420,9.18950')
+		expect(map().getAttribute('src')).toContain('marker=45.46420,9.18950')
 	})
 
 	it('says so when the address matches nothing', async () => {
-		installaOsm({ risultati: [] })
-		const { container } = render(<Ospite />)
+		installOsm({ results: [] })
+		const { container } = render(<Host />)
 
-		scrivi('Via Inesistente 99')
-		await attendiRicerca()
+		write('Via Inesistente 99')
+		await attendiSearch()
 
-		expect(screen.getByRole('status')).toHaveTextContent('Nessun indirizzo trovato')
+		expect(screen.getByRole('status')).toHaveTextContent('Nessun address trovato')
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
 		expect(container).toMatchSnapshot()
 	})
@@ -200,13 +200,13 @@ describe('AddressField', () => {
 	// 429 is what a client over the usage limit gets. "Nothing found" would be a lie: the address may
 	// well exist and nobody asked.
 	it('reports a geocoder failure instead of pretending there are no matches', async () => {
-		installaOsm({ status: 429, body: 'Too Many Requests' })
-		const { container } = render(<Ospite />)
+		installOsm({ status: 429, body: 'Too Many Requests' })
+		const { container } = render(<Host />)
 
-		scrivi('Via Roma 1')
-		await attendiRicerca()
+		write('Via Roma 1')
+		await attendiSearch()
 
-		expect(screen.getByRole('alert')).toHaveTextContent('Ricerca degli indirizzi non disponibile')
+		expect(screen.getByRole('alert')).toHaveTextContent('Address search unavailable')
 		expect(container).toMatchSnapshot()
 	})
 
@@ -220,14 +220,14 @@ describe('AddressField', () => {
 	 * finished correcting.
 	 */
 	it('lets the newer answer win over an older one still in flight', async () => {
-		installaOsm([{ risultati: [MILANO], ritardo: 3000 }, { risultati: [COMO] }])
-		render(<Ospite />)
+		installOsm([{ results: [MILAN], delay: 3000 }, { results: [COMO] }])
+		render(<Host />)
 
-		scrivi('Via Roma')
-		await attendiRicerca()
+		write('Via Roma')
+		await attendiSearch()
 
-		scrivi('Via Roma 4 Como')
-		await attendiRicerca()
+		write('Via Roma 4 Como')
+		await attendiSearch()
 
 		// Where the first answer would have landed, had it not been given up on.
 		await act(async () => {
@@ -236,7 +236,7 @@ describe('AddressField', () => {
 
 		expect(screen.getByRole('button', { name: 'Via Roma, 4, Como, CO, 22100, Italia' })).toBeInTheDocument()
 		expect(screen.queryByRole('button', { name: 'Via Roma, 1, Milano, MI, 20121, Italia' })).not.toBeInTheDocument()
-		expect(mappa().getAttribute('src')).toContain('marker=45.80800,9.08520')
+		expect(map().getAttribute('src')).toContain('marker=45.80800,9.08520')
 	})
 
 	/*
@@ -244,18 +244,18 @@ describe('AddressField', () => {
 	 *
 	 * Deleting back to something too short to geocode is the case that shows it: the request in flight is
 	 * abandoned and nothing replaces it, so an abandonment mistaken for a failure has the field sitting
-	 * there with "ricerca non disponibile" under an almost-empty box.
+	 * there with "search unavailable" under an almost-empty box.
 	 */
 	it('does not report the request it abandoned itself', async () => {
-		installaOsm({ pending: true })
-		render(<Ospite />)
+		installOsm({ pending: true })
+		render(<Host />)
 
-		scrivi('Via Roma')
-		await attendiRicerca()
-		expect(screen.getByRole('status')).toHaveTextContent('Ricerca indirizzi in corso')
+		write('Via Roma')
+		await attendiSearch()
+		expect(screen.getByRole('status')).toHaveTextContent('Searching addresses')
 
-		scrivi('Via')
-		await attendiRicerca()
+		write('Via')
+		await attendiSearch()
 
 		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 		expect(screen.queryByRole('status')).not.toBeInTheDocument()
@@ -269,38 +269,38 @@ describe('AddressField', () => {
 	 * geocoder is down while the fresh request for it is still in flight.
 	 */
 	it('does not report it later either, when the abandoned query is typed again', async () => {
-		installaOsm({ pending: true })
-		render(<Ospite />)
+		installOsm({ pending: true })
+		render(<Host />)
 
-		scrivi('Via Roma')
-		await attendiRicerca()
+		write('Via Roma')
+		await attendiSearch()
 
-		scrivi('Via')
-		await attendiRicerca()
+		write('Via')
+		await attendiSearch()
 
-		scrivi('Via Roma')
-		await attendiRicerca()
+		write('Via Roma')
+		await attendiSearch()
 
 		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-		expect(screen.getByRole('status')).toHaveTextContent('Ricerca indirizzi in corso')
+		expect(screen.getByRole('status')).toHaveTextContent('Searching addresses')
 	})
 
 	it('hands the whole geocoded address up and closes the list when one is picked', async () => {
-		installaOsm({ risultati: [MILANO, COMO] })
+		installOsm({ results: [MILAN, COMO] })
 		const onSelect = vi.fn()
-		render(<Ospite onSelect={onSelect} />)
+		render(<Host onSelect={onSelect} />)
 
-		scrivi('Via Roma')
-		await attendiRicerca()
+		write('Via Roma')
+		await attendiSearch()
 		fireEvent.click(screen.getByRole('button', { name: 'Via Roma, 4, Como, CO, 22100, Italia' }))
 
 		expect(onSelect).toHaveBeenCalledWith({
 			id: '12',
-			etichetta: 'Via Roma, 4, Como, CO, 22100, Italia',
-			indirizzo: 'Via Roma 4',
-			cap: '22100',
-			comune: 'Como',
-			provincia: 'CO',
+			label: 'Via Roma, 4, Como, CO, 22100, Italia',
+			street: 'Via Roma 4',
+			postalCode: '22100',
+			city: 'Como',
+			province: 'CO',
 			lat: 45.808,
 			lon: 9.0852
 		})
@@ -308,14 +308,14 @@ describe('AddressField', () => {
 	})
 
 	it('leaves the map on the address that was picked, not on the best match', async () => {
-		installaOsm({ risultati: [MILANO, COMO] })
-		render(<Ospite />)
+		installOsm({ results: [MILAN, COMO] })
+		render(<Host />)
 
-		scrivi('Via Roma')
-		await attendiRicerca()
+		write('Via Roma')
+		await attendiSearch()
 		fireEvent.click(screen.getByRole('button', { name: 'Via Roma, 4, Como, CO, 22100, Italia' }))
 
-		expect(mappa().getAttribute('src')).toContain('marker=45.80800,9.08520')
+		expect(map().getAttribute('src')).toContain('marker=45.80800,9.08520')
 	})
 
 	/*
@@ -324,13 +324,13 @@ describe('AddressField', () => {
 	 * spending a second request to be told what the operator already accepted.
 	 */
 	it('does not geocode the address it just filled in', async () => {
-		const osm = installaOsm({ risultati: [MILANO] })
-		render(<Ospite />)
+		const osm = installOsm({ results: [MILAN] })
+		render(<Host />)
 
-		scrivi('via roma milano')
-		await attendiRicerca()
+		write('via roma milano')
+		await attendiSearch()
 		fireEvent.click(screen.getByRole('button', { name: 'Via Roma, 1, Milano, MI, 20121, Italia' }))
-		await attendiRicerca()
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(1)
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
@@ -348,20 +348,20 @@ describe('AddressField', () => {
 	 * business. Only the keyboard is geocoded, and a pick is not the keyboard.
 	 */
 	it('does not geocode what a form writes back, whatever it writes', async () => {
-		const osm = installaOsm({ risultati: [MILANO] })
-		render(<Ospite componi={composto} />)
+		const osm = installOsm({ results: [MILAN] })
+		render(<Host compose={composed} />)
 
-		scrivi('via roma milano')
-		await attendiRicerca()
+		write('via roma milano')
+		await attendiSearch()
 		fireEvent.click(screen.getByRole('button', { name: 'Via Roma, 1, Milano, MI, 20121, Italia' }))
 
-		expect(screen.getByLabelText('Indirizzo')).toHaveValue('Via Roma 1, 20121 Milano (MI)')
+		expect(screen.getByLabelText('Address')).toHaveValue('Via Roma 1, 20121 Milano (MI)')
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
 		// Nothing at all under the box, not even the spinner. The debounce is still holding the text that led
 		// to the pick, and a field that reads that instead of the keyboard starts searching for it.
 		expect(screen.queryByRole('status')).not.toBeInTheDocument()
 
-		await attendiRicerca()
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(1)
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
@@ -370,20 +370,20 @@ describe('AddressField', () => {
 	// And it stays shut for as long as nobody types: the debounce has nothing left to settle onto, so no
 	// number of ticks brings the list back.
 	it('leaves the list shut until something is typed again', async () => {
-		const osm = installaOsm({ risultati: [MILANO] })
-		render(<Ospite componi={composto} />)
+		const osm = installOsm({ results: [MILAN] })
+		render(<Host compose={composed} />)
 
-		scrivi('via roma milano')
-		await attendiRicerca()
+		write('via roma milano')
+		await attendiSearch()
 		fireEvent.click(screen.getByRole('button', { name: 'Via Roma, 1, Milano, MI, 20121, Italia' }))
-		await attendiRicerca()
-		await attendiRicerca()
+		await attendiSearch()
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(1)
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
 
-		scrivi('Via Roma 1, 20121 Milano (MI) 2')
-		await attendiRicerca()
+		write('Via Roma 1, 20121 Milano (MI) 2')
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(2)
 		expect(screen.getByRole('list')).toBeInTheDocument()
@@ -395,10 +395,10 @@ describe('AddressField', () => {
 	 * about, and spend a request on a donated service to do it.
 	 */
 	it('does not geocode the address it was opened with', async () => {
-		const osm = installaOsm({ risultati: [MILANO] })
-		render(<Ospite valoreIniziale="Via Verdi 8, 20100 Milano (MI)" />)
+		const osm = installOsm({ results: [MILAN] })
+		render(<Host valueInitial="Via Verdi 8, 20100 Milano (MI)" />)
 
-		await attendiRicerca()
+		await attendiSearch()
 
 		expect(osm.calls).toHaveLength(0)
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
@@ -407,14 +407,14 @@ describe('AddressField', () => {
 	// The shop the editor was opened on, and not the middle of Italy: the position exists, the card was
 	// drawing it a moment ago, and the first four characters typed are no reason to lose it.
 	it('frames the map on the point it was given until the geocoder answers', async () => {
-		installaOsm({ risultati: [COMO] })
-		render(<Ospite centroIniziale={{ lat: 45.4642, lon: 9.19 }} />)
+		installOsm({ results: [COMO] })
+		render(<Host initialCenter={{ lat: 45.4642, lon: 9.19 }} />)
 
-		expect(mappa().getAttribute('src')).toContain('marker=45.46420,9.19000')
+		expect(map().getAttribute('src')).toContain('marker=45.46420,9.19000')
 
-		scrivi('Via Roma 4 Como')
-		await attendiRicerca()
+		write('Via Roma 4 Como')
+		await attendiSearch()
 
-		expect(mappa().getAttribute('src')).toContain('marker=45.80800,9.08520')
+		expect(map().getAttribute('src')).toContain('marker=45.80800,9.08520')
 	})
 })

@@ -64,7 +64,7 @@ export const LoadingPage = ({ redirect }: { redirect: string | undefined }) => {
 
 	return (
 		<div className="flex h-full items-center justify-center">
-			<Spinner label="Caricamento sessione" />
+			<Spinner label="Loading session" />
 		</div>
 	)
 }

@@ -8,7 +8,7 @@ import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/tokenSto
 
 import { graphQLError, stubGraphQL } from '../helpers/graphql'
 
-const ADMIN = { infoAdminAfterLogin: { _id: '65f0000000000000000000a1', email: 'operatore@marketplace.it' } }
+const ADMIN = { infoAdminAfterLogin: { _id: '65f0000000000000000000a1', email: 'operator@marketplace.it' } }
 
 const refreshed = (accessToken: string) => ({ data: { refresh: { status: true, accessToken } } })
 
@@ -69,7 +69,7 @@ describe('createGraphQLClient', () => {
 		await client
 			.mutation(
 				LoginAdminDocument,
-				{ email: 'operatore@marketplace.it', password: 'password123', rememberMe: false },
+				{ email: 'operator@marketplace.it', password: 'password123', rememberMe: false },
 				CTX_PUBLIC_AUTHORIZATION
 			)
 			.toPromise()

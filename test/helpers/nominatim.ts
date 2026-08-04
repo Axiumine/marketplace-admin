@@ -8,12 +8,12 @@ export const NOMINATIM_SEARCH = 'https://nominatim.openstreetmap.org/search'
 /** The OSM embed the map frame points at. */
 export const OSM_EMBED = 'https://www.openstreetmap.org/export/embed.html'
 
-export interface RispostaOsm {
+export interface ResponseOsm {
 	/** The parsed array Nominatim answers with. Defaults to no matches. */
-	risultati?: readonly unknown[]
+	results?: readonly unknown[]
 	/** HTTP status. Defaults to 200 — 429 and 503 are what a rate-limited client actually gets. */
 	status?: number
-	/** A raw body, for the answer that is not JSON at all. Wins over `risultati`. */
+	/** A raw body, for the answer that is not JSON at all. Wins over `results`. */
 	body?: string
 	/** Never settles unless the request is aborted, pinning the field in its searching state. */
 	pending?: boolean
@@ -23,7 +23,7 @@ export interface RispostaOsm {
 	 * What makes a slow answer land *after* a fast one that replaced it — the only way to tell a client
 	 * that abandons the request it superseded from one that lets both through in whatever order.
 	 */
-	ritardo?: number
+	delay?: number
 }
 
 /**
@@ -33,7 +33,7 @@ export interface RispostaOsm {
  * coercion in `src/lib/nominatim.ts` exists for exactly this, and a fixture that pre-converted them
  * would leave it untested.
  */
-export const risultatoOsm = (over: Record<string, unknown> = {}) => ({
+export const resultOsm = (over: Record<string, unknown> = {}) => ({
 	place_id: 240109189,
 	display_name: 'Via Roma, 1, Milano, MI, 20121, Italia',
 	lat: '45.46420',
@@ -57,31 +57,31 @@ export const risultatoOsm = (over: Record<string, unknown> = {}) => ({
  * cannot land after the one that replaced it, and a stub that ignored `signal` would answer both and
  * prove the opposite of what the test claims.
  */
-const abortoDi = (signal: AbortSignal | null | undefined): Promise<never> =>
+const abortOf = (signal: AbortSignal | null | undefined): Promise<never> =>
 	new Promise<never>((_, reject) => {
 		if (signal === null || signal === undefined) return
 
-		const rifiuta = () => {
+		const onAbort = () => {
 			reject(new DOMException('The operation was aborted.', 'AbortError'))
 		}
 
-		if (signal.aborted) rifiuta()
-		else signal.addEventListener('abort', rifiuta)
+		if (signal.aborted) onAbort()
+		else signal.addEventListener('abort', onAbort)
 	})
 
-const rispostaDi = (risposta: RispostaOsm): Response =>
-	new Response(risposta.body ?? JSON.stringify(risposta.risultati ?? []), {
-		status: risposta.status ?? 200,
+const responseOf = (response: ResponseOsm): Response =>
+	new Response(response.body ?? JSON.stringify(response.results ?? []), {
+		status: response.status ?? 200,
 		headers: { 'content-type': 'application/json' }
 	})
 
-const consegna = (risposta: RispostaOsm): Promise<Response> =>
-	risposta.ritardo === undefined
-		? Promise.resolve(rispostaDi(risposta))
+const deliver = (response: ResponseOsm): Promise<Response> =>
+	response.delay === undefined
+		? Promise.resolve(responseOf(response))
 		: new Promise<Response>((resolve) => {
 				setTimeout(() => {
-					resolve(rispostaDi(risposta))
-				}, risposta.ritardo)
+					resolve(responseOf(response))
+				}, response.delay)
 			})
 
 export interface OsmStub {
@@ -97,32 +97,32 @@ export interface OsmStub {
  * The last answer in the queue repeats, like the GraphQL helper's: a test that does not care how many
  * times the field re-queries does not have to count.
  */
-export const osmStub = (risposte: RispostaOsm | readonly RispostaOsm[] = {}): OsmStub => {
-	const coda = Array.isArray(risposte) ? [...(risposte as RispostaOsm[])] : [risposte as RispostaOsm]
+export const osmStub = (replies: ResponseOsm | readonly ResponseOsm[] = {}): OsmStub => {
+	const queue = Array.isArray(replies) ? [...(replies as ResponseOsm[])] : [replies as ResponseOsm]
 	const calls: string[] = []
 
 	const rest: RestHandler = (url, init) => {
 		if (!url.startsWith(NOMINATIM_SEARCH)) return undefined
 
 		calls.push(url)
-		const risposta = coda.length > 1 ? (coda.shift() as RispostaOsm) : (coda[0] as RispostaOsm)
-		const aborto = abortoDi(init?.signal)
+		const response = queue.length > 1 ? (queue.shift() as ResponseOsm) : (queue[0] as ResponseOsm)
+		const abortPromise = abortOf(init?.signal)
 
-		return risposta.pending === true ? aborto : Promise.race([consegna(risposta), aborto])
+		return response.pending === true ? abortPromise : Promise.race([deliver(response), abortPromise])
 	}
 
 	return { calls, rest }
 }
 
 /** The same queue installed as the only `fetch` there is, for a test that sends nothing else. */
-export const installaOsm = (risposte: RispostaOsm | readonly RispostaOsm[] = {}): OsmStub => {
-	const stub = osmStub(risposte)
+export const installOsm = (replies: ResponseOsm | readonly ResponseOsm[] = {}): OsmStub => {
+	const stub = osmStub(replies)
 
 	vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) => {
-		const risposta = stub.rest(String(input), init)
-		if (risposta === undefined) throw new Error(`Richiesta non gestita: ${String(input)}`)
+		const response = stub.rest(String(input), init)
+		if (response === undefined) throw new Error(`Unhandled request: ${String(input)}`)
 
-		return Promise.resolve(risposta)
+		return Promise.resolve(response)
 	})
 
 	return stub

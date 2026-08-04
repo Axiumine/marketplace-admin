@@ -12,7 +12,7 @@ exports[`AddressField > announces the wait while the geocoder is answering 1`] =
         class="text-sm font-semibold"
         for=":id-0:"
       >
-        Indirizzo
+        Address
       </label>
       <div
         class="relative"
@@ -37,19 +37,19 @@ exports[`AddressField > announces the wait while the geocoder is answering 1`] =
       <span
         class="sr-only"
       >
-        Ricerca indirizzi in corso
+        Searching addresses
       </span>
     </span>
     <iframe
       class="w-full rounded-box border border-tip"
       height="400"
       src="https://www.openstreetmap.org/export/embed.html?bbox=12.49240,41.89880,12.50040,41.90680&layer=mapnik&marker=41.90280,12.49640"
-      title="Mappa dell'indirizzo"
+      title="Address map"
     />
     <p
       class="text-xs text-tip"
     >
-      Dati cartografici ©
+      Map data ©
        
       <a
         class="underline"
@@ -78,7 +78,7 @@ exports[`AddressField > renders a map of Italy before anything is typed 1`] = `
         class="text-sm font-semibold"
         for=":id-0:"
       >
-        Indirizzo
+        Address
       </label>
       <div
         class="relative"
@@ -96,12 +96,12 @@ exports[`AddressField > renders a map of Italy before anything is typed 1`] = `
       class="w-full rounded-box border border-tip"
       height="400"
       src="https://www.openstreetmap.org/export/embed.html?bbox=12.49240,41.89880,12.50040,41.90680&layer=mapnik&marker=41.90280,12.49640"
-      title="Mappa dell'indirizzo"
+      title="Address map"
     />
     <p
       class="text-xs text-tip"
     >
-      Dati cartografici ©
+      Map data ©
        
       <a
         class="underline"
@@ -130,7 +130,7 @@ exports[`AddressField > reports a geocoder failure instead of pretending there a
         class="text-sm font-semibold"
         for=":id-0:"
       >
-        Indirizzo
+        Address
       </label>
       <div
         class="relative"
@@ -148,18 +148,18 @@ exports[`AddressField > reports a geocoder failure instead of pretending there a
       class="rounded-box border px-4 py-3 text-sm border-app-error bg-app-error/10 text-app-error"
       role="alert"
     >
-      Ricerca degli indirizzi non disponibile
+      Address search unavailable
     </div>
     <iframe
       class="w-full rounded-box border border-tip"
       height="400"
       src="https://www.openstreetmap.org/export/embed.html?bbox=12.49240,41.89880,12.50040,41.90680&layer=mapnik&marker=41.90280,12.49640"
-      title="Mappa dell'indirizzo"
+      title="Address map"
     />
     <p
       class="text-xs text-tip"
     >
-      Dati cartografici ©
+      Map data ©
        
       <a
         class="underline"
@@ -188,7 +188,7 @@ exports[`AddressField > says so when the address matches nothing 1`] = `
         class="text-sm font-semibold"
         for=":id-0:"
       >
-        Indirizzo
+        Address
       </label>
       <div
         class="relative"
@@ -206,18 +206,18 @@ exports[`AddressField > says so when the address matches nothing 1`] = `
       class="text-sm text-tip"
       role="status"
     >
-      Nessun indirizzo trovato
+      No address found
     </p>
     <iframe
       class="w-full rounded-box border border-tip"
       height="400"
       src="https://www.openstreetmap.org/export/embed.html?bbox=12.49240,41.89880,12.50040,41.90680&layer=mapnik&marker=41.90280,12.49640"
-      title="Mappa dell'indirizzo"
+      title="Address map"
     />
     <p
       class="text-xs text-tip"
     >
-      Dati cartografici ©
+      Map data ©
        
       <a
         class="underline"
@@ -246,7 +246,7 @@ exports[`AddressField > shows the suggestions OSM answered with 1`] = `
         class="text-sm font-semibold"
         for=":id-0:"
       >
-        Indirizzo
+        Address
       </label>
       <div
         class="relative"
@@ -289,12 +289,12 @@ exports[`AddressField > shows the suggestions OSM answered with 1`] = `
       class="w-full rounded-box border border-tip"
       height="400"
       src="https://www.openstreetmap.org/export/embed.html?bbox=9.18550,45.46020,9.19350,45.46820&layer=mapnik&marker=45.46420,9.18950"
-      title="Mappa dell'indirizzo"
+      title="Address map"
     />
     <p
       class="text-xs text-tip"
     >
-      Dati cartografici ©
+      Map data ©
        
       <a
         class="underline"

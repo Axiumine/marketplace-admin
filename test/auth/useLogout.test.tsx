@@ -9,8 +9,8 @@ import { getSession } from '@/auth/session'
 import { graphQLError, stubGraphQL } from '../helpers/graphql'
 import { renderRoute } from '../helpers/render'
 
-const esci = async () => {
-	await userEvent.click(screen.getByRole('button', { name: 'Esci' }))
+const logout = async () => {
+	await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
 }
 
 /**
@@ -23,7 +23,7 @@ describe('useLogout', () => {
 		const stub = stubGraphQL({ Logout: { data: { logout: true } } })
 		const { router } = await renderRoute('/home')
 
-		await esci()
+		await logout()
 
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe('/')
@@ -42,7 +42,7 @@ describe('useLogout', () => {
 		stubGraphQL({ Logout: { errors: [graphQLError('Sessione non trovata', undefined, 401)], status: 401 } })
 		const { router } = await renderRoute('/home')
 
-		await esci()
+		await logout()
 
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe('/')
@@ -55,7 +55,7 @@ describe('useLogout', () => {
 		stubGraphQL({ Logout: { networkError: 'offline' } })
 		const { router } = await renderRoute('/home')
 
-		await esci()
+		await logout()
 
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe('/')
