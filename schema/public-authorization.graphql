@@ -1,0 +1,44 @@
+# Endpoint: /public-authorization (marketplace-dev-public-authorization, port 4028)
+#
+# HAND-MAINTAINED SLICE, NOT A DUMP. The seven backend services build their schemas
+# programmatically with graphql-js (`new GraphQLObjectType`), so there is no SDL file anywhere on the
+# platform to copy. Read the resolvers and write the slice by hand; anything that looks like a ready-
+# made SDL for this platform is not one.
+#
+# What is below was read off the resolvers and verified field by field on 2026-08-01:
+#   src/graphQLPublic/schema/mutations.mts
+#   src/graphQLPublic/schema/mutations/loginAdmin.mts
+#   @axiumine/koa-utils/graphQL/schema/types/LoginAppType
+#
+# It contains only what the operator app calls. `login` (the Imprenditore-tier login that shares this
+# endpoint) is deliberately absent: this app never calls it, and codegen only needs to type what the
+# documents in src/api/operations/publicAuthorization/ actually ask for.
+#
+# To re-verify after a backend change, diff against those files. There is no introspection endpoint to
+# pull from — the services only expose introspection to callers holding `x-introspectioncode`, which is
+# a secret and must never reach a browser client or a committed script.
+
+schema {
+	query: QueriesPublic
+	mutation: MutationsPublic
+}
+
+type QueriesPublic {
+	authPublicHello: String!
+}
+
+type MutationsPublic {
+	loginAdmin(email: String!, password: String!, rememberMe: Boolean!): LoginAppType!
+}
+
+"""
+Returned by every login on the platform, which is why it carries the two onboarding fields.
+Both are meaningless for an operator: `loginAdmin` hard-codes `onboardingStep: ''` and
+`onboardingDone: true` because onboarding is an Imprenditore concept — the admin collection has no
+such fields. The operator app must not read them.
+"""
+type LoginAppType {
+	accessToken: String!
+	onboardingStep: String!
+	onboardingDone: Boolean!
+}

@@ -1,0 +1,515 @@
+# Endpoint: /admin-authenticated-resource (marketplace-dev-admin-authenticated-resource, port 4024)
+#
+# Hand-maintained slice — see the header of public-authorization.graphql for why there is no SDL to
+# pull. Verified on 2026-08-02 against every file under src/graphQLApi/schema/ of that service, plus
+# the two shared fragments in marketplace-common (GraphQLIndirizzoBaseFrag, GraphQLPositionFrag).
+#
+# This is the only endpoint that serves domain data to the operator app. Everything the app queries
+# that is not login / refresh / logout goes here.
+#
+# ⚠️ `puntoVendita` and `categoria` were deleted platform-wide on 2026-08-04 — collections, migrations,
+# models, resolvers, the lot. This slice lost `imprenditorePuntiVendita`, the four `puntoVendita*`
+# mutations, every `GraphQLPuntoVendita*`/`GraphQLPVIndirizzo`/`GraphQLPVPosition`/`GraphQLPVContatti`/
+# `GraphQLOrario` type and their inputs, and the `Time` scalar that existed only to serve
+# `GraphQLInputPuntoVenditaOrari`. `azienda` survives untouched; `aziendaDel` no longer has a shop to be
+# refused over, since nothing references a company by id any more.
+
+schema {
+	query: QueriesApi
+	mutation: MutationsApi
+}
+
+"""
+graphql-scalars' DateTime, as mounted by the service. Serialised as an ISO-8601 string.
+"""
+scalar DateTime
+
+"""
+graphql-scalars' Date — a calendar day with no time part (YYYY-MM-DD). Used only for `nascita.data`
+on input; the output type reports the same field as DateTime, which is the schema's own asymmetry and
+not a transcription error.
+"""
+scalar Date
+
+type QueriesApi {
+	"""
+	The authenticated operator's own identity, read straight out of the Redis session — no database
+	round-trip. This is the query that proves a session is live, which is what the app uses it for.
+	"""
+	infoAdminAfterLogin: GraphQLAdminInfoAfterLogin!
+
+	"""
+	One page of the operator table, filtered to the imprenditori that are neither disabled nor
+	soft-deleted. Every argument has a server-side default, so `imprenditoriAttiviTbl { … }` with no
+	arguments is a legal first page.
+	"""
+	imprenditoriAttiviTbl(
+		offset: Int! = 0
+		limit: Int! = 25
+		search: String
+		sortBy: GraphQLImprenditoriTblSortField! = ISCRIZIONE
+		sortDir: GraphQLSortDirection! = DESC
+	): GraphQLImprenditoriAttiviTblPage!
+
+	"""
+	Headline count of imprenditori. Unfiltered — this is NOT `total` from the table page, which is the
+	size of the searched set and changes as the operator types.
+	"""
+	imprenditoriStats: Int!
+
+	"""
+	The imprenditori-over-time series behind the stats chart. Unfiltered on the same terms as
+	`imprenditoriStats`, so the points sum to that number.
+
+	`granularita` is a RESPONSE field, not an argument: the bucket width is a consequence of the range,
+	so `TUTTO` answers one point per month and the two bounded ranges one per day. A client able to ask
+	for day buckets over the whole life of the platform would be asking for a point per day since it
+	opened. Buckets are UTC, and a month bucket is stamped with its own first day — `data` is
+	`YYYY-MM-DD` in both granularities.
+	"""
+	imprenditoriPerPeriodo(periodo: GraphQLPeriodoImprenditori! = TUTTO): GraphQLImprenditoriPerPeriodo!
+
+	imprenditoreById(idImprenditore: ID!): GraphQLImprenditoreById!
+
+	"""
+	The companies belonging to one imprenditore. Filtered on `idImprenditore` **and** on `deleted`, like
+	the shops: since `aziendaDel` became a soft delete the collection does have a deleted-but-present
+	state, and a retired company left in this list would be offered by the shop form's picker and then
+	refused by the write.
+	"""
+	imprenditoreAziende(idImprenditore: ID!): [GraphQLAzienda!]!
+}
+
+type MutationsApi {
+	"""
+	Changes the authenticated operator's OWN password. There is deliberately no `_id` argument: the
+	account is taken from the Redis session, because every operator authenticates against the same
+	collection and the platform has no role field that could tell one from another. Answers 401 for a
+	wrong old password, a disabled/deleted account, or a session naming an account that no longer
+	exists — all four indistinguishable on purpose. 400 if the new password is outside 10..72
+	characters or equal to the old one.
+	"""
+	adminUpdatePwd(passwordOld: String!, passwordNew: String!): Boolean!
+
+	imprenditoreAdd(login: GraphQLInputLogin!, anagrafica: GraphQLInputAnagraficaImprenditore!): Boolean!
+	imprenditoreUpdate(_id: ID!, anagrafica: GraphQLInputAnagraficaImprenditore!): Boolean!
+	imprenditoreDel(_id: ID!): Boolean!
+
+	"""
+	Changes `login.email` — the credential, not `anagrafica.contatti.email`. Its own mutation because it
+	is the only field on the collection with a unique index behind it: answers 409 when the address
+	already belongs to another imprenditore, 400 when it is malformed, 404 when `_id` matches nothing.
+	"""
+	imprenditoreUpdateEmail(_id: ID!, email: String!): Boolean!
+
+	"""
+	The disable switch and the manual-approval gate. Both arguments are required: a partial update
+	cannot express turning a flag *off*, since "leave alone" and "clear it" are the same wire value.
+	`false` REMOVES the field rather than storing false — `waitApprov: { $exists: true }` is how the
+	approval queue is built.
+	"""
+	imprenditoreUpdateStato(_id: ID!, disabled: Boolean!, waitApprov: Boolean!): Boolean!
+
+	"""
+	The three preference fields under `login`. Opposite rule to `imprenditoreUpdateStato`: the two
+	booleans are declared `bool` on the collection and are stored as false, while `onboardingStep` is
+	optional and is removed when blank or omitted.
+	"""
+	imprenditoreUpdatePreferenze(_id: ID!, rememberMe: Boolean!, onboardingDone: Boolean!, onboardingStep: String): Boolean!
+
+	"""
+	The operator's note about the account, at most 2000 characters. Its own mutation because it is not
+	part of the anagrafica — `imprenditoreUpdate` replaces that whole sub-document, and the note sits at
+	the top level of the imprenditore. `note` is `String!` and not nullable on purpose: the empty string
+	is how the note is cleared (the resolver turns it into an `$unset`), so a nullable argument would
+	give "leave it alone" and "remove it" the same wire value. 400 over the cap, 404 on an unknown `_id`.
+	"""
+	imprenditoreUpdateNote(_id: ID!, note: String!): Boolean!
+
+	"""
+	Creates one company under an imprenditore. Answers 409 on either unique index (`piva_unique`,
+	`pec_unique`, both GLOBAL — one partita IVA is one company, whoever registered it), 400 naming the
+	offending path, and 404 when `idImprenditore` names no imprenditore. `Boolean!`, not the new `_id`:
+	the page re-reads `imprenditoreAziende` after a save.
+
+	A company has to exist before a shop can point at it, so this is the first step of adding a shop to
+	an imprenditore who has none — not a side page.
+	"""
+	aziendaAdd(idImprenditore: ID!, azienda: GraphQLInputAzienda!): Boolean!
+
+	"""
+	Rewrites one company's data. Same input object as `aziendaAdd`, minus the owner: `idImprenditore` is
+	neither an argument nor a field of `GraphQLInputAzienda`, so editing a card cannot hand the company —
+	and its shops with it — to another imprenditore. Same 409 / 400, 404 when `_id` matches no company.
+	"""
+	aziendaUpdate(_id: ID!, azienda: GraphQLInputAzienda!): Boolean!
+
+	"""
+	Retires one company — a soft delete: the row keeps its place and gains a `deleted` instant, and every
+	read path filters on it. 404 when `_id` matches no company; a company already retired answers 200
+	again, since the `$set` still matches it.
+
+	⚠️ `piva_unique` and `pec_unique` are plain global unique indexes with no `partialFilterExpression`,
+	so a retired company keeps its partita IVA occupied and the same one cannot be registered again.
+	"""
+	aziendaDel(_id: ID!): Boolean!
+}
+
+type GraphQLAdminInfoAfterLogin {
+	_id: ID!
+	email: String!
+}
+
+"""
+One page of the operator table. `total` is the size of the FILTERED set, not of the collection.
+"""
+type GraphQLImprenditoriAttiviTblPage {
+	items: [GraphQLImprenditoreAttiviTbl!]!
+	total: Int!
+}
+
+"""
+The four columns the table can order by. Value-less on the backend, so the resolver receives the enum
+NAME and maps it to a Mongo path itself. Each one has a matching index in marketplace-db-setup
+(`tbl_attivi_*`); a column not listed here has no index and is refused at schema validation rather
+than turned into a blocking in-memory sort.
+"""
+enum GraphQLImprenditoriTblSortField {
+	ISCRIZIONE
+	NOME
+	COGNOME
+	COMUNE
+}
+
+enum GraphQLSortDirection {
+	ASC
+	DESC
+}
+
+"""
+How far back the stats chart looks. `TUTTO` runs from the month the first imprenditore registered in
+to the current one; the other two are counted back from today, clamped to the target month's length
+(one month before 31 March is 28 February, not 3 March).
+"""
+enum GraphQLPeriodoImprenditori {
+	TUTTO
+	TRE_MESI
+	UN_MESE
+}
+
+"""
+The width of one bucket. Derived from the range by the server — see `imprenditoriPerPeriodo`.
+"""
+enum GraphQLGranularitaPeriodo {
+	GIORNO
+	MESE
+}
+
+type GraphQLImprenditoriPerPeriodo {
+	granularita: GraphQLGranularitaPeriodo!
+	punti: [GraphQLImprenditoriPerPeriodoPunto!]!
+}
+
+type GraphQLImprenditoriPerPeriodoPunto {
+	"""
+	Bucket start, `YYYY-MM-DD`. A plain String and not the `Date` scalar: the service builds it with
+	`$dateToString` in the aggregation, so it is a string on the wire in both granularities.
+	"""
+	data: String!
+
+	"""
+	Registrations in this bucket. Gaps are filled server-side, so an empty bucket is present with `0`
+	rather than absent — the series is contiguous and the client never interpolates.
+	"""
+	totale: Int!
+}
+
+type GraphQLImprenditoreAttiviTbl {
+	_id: ID!
+	iscrizione: DateTime!
+	anagrafica: GraphQLAnagrafica!
+}
+
+type GraphQLAnagrafica {
+	nome: String!
+	cognome: String!
+	indirizzo: GraphQLIndirizzoImprenditoreTbl!
+}
+
+type GraphQLIndirizzoImprenditoreTbl {
+	indirizzo: String!
+	cap: String!
+	comune: String!
+	provincia: String!
+}
+
+type GraphQLImprenditoreById {
+	_id: ID!
+	login: GraphQLImprenditoreLogin!
+	anagrafica: GraphQLAnagraficaImprenditoreById!
+	iscrizione: DateTime!
+	deleted: DateTime
+	disabled: Boolean
+	waitApprov: Boolean
+	"""
+	The operator's free-text note about this account, at most 2000 characters. Absent until one is
+	written; `imprenditoreUpdateNote` removes the field again when the note is cleared.
+	"""
+	note: String
+	resetPwd: GraphQLResetPwd
+}
+
+type GraphQLImprenditoreLogin {
+	email: String!
+	firstLogin: DateTime
+	lastLogin: DateTime
+	onboardingStep: String
+	onboardingDone: Boolean
+	rememberMe: Boolean
+}
+
+type GraphQLAnagraficaImprenditoreById {
+	nome: String!
+	cognome: String!
+	indirizzo: GraphQLIndirizzoImprenditore!
+	nascita: GraphQLDataNascita!
+	contatti: GraphQLImprenditoreContatti!
+}
+
+type GraphQLIndirizzoImprenditore {
+	indirizzo: String!
+	cap: String!
+	comune: String!
+	provincia: String!
+	"""
+	⚠️ **Nullable, unlike the punto vendita's `GraphQLPVPosition!`.** The point was added to the
+	collection by 20260802000300 as an optional field and nothing backfilled it — `collMod` does not
+	re-validate stored documents, and there is nothing to derive a coordinate from without geocoding —
+	so every imprenditore that existed before the migration answers `null` here until an address is
+	picked from the autocomplete and saved.
+	"""
+	position: GraphQLPosizioneImprenditore
+}
+
+"""
+GeoJSON `Point`, same shape as `GraphQLPVPosition` under a name of its own — a GraphQL schema has one
+flat type namespace, so the two tiers cannot share the fragment's output type. `coordinates` is
+[longitude, latitude].
+"""
+type GraphQLPosizioneImprenditore {
+	type: String!
+	coordinates: [Float!]!
+}
+
+type GraphQLDataNascita {
+	data: DateTime!
+}
+
+type GraphQLImprenditoreContatti {
+	email: String!
+	fisso: String
+	cellulare: String!
+}
+
+"""
+Present only while a password reset is pending. The migration declares both members required under a
+strict validator, so the pair is written and cleared as a whole — never one without the other.
+"""
+type GraphQLResetPwd {
+	resetDateReq: DateTime!
+	resetHash: String!
+}
+
+"""
+A company, as its own entity — the `azienda` collection since migration 20260803000000.
+
+`idImprenditore` is exposed rather than kept internal: the operator app reaches a company through its
+owner's detail page, and the field is what a client re-reading one row can check it against.
+
+`cf` and `univoco` are the two nullable fields, matching the collection's `required` array. `cf` is new
+with the extraction and no stored company carries one.
+"""
+type GraphQLAzienda {
+	_id: ID!
+	idImprenditore: ID!
+	ragionesociale: String!
+	piva: String!
+	cf: String
+	referente: String!
+	amministratore: String!
+	univoco: String
+	pec: String!
+	indirizzo: GraphQLAziendaIndirizzo!
+	"""
+	The path of the uploaded visura, not the document. Required, and capped at 1000 characters by the
+	collection — it was the one unbounded string on the embedded shape.
+	"""
+	visura: String!
+}
+
+"""
+The company's legal seat — not the address of any of its shops. Same four fields and the same GeoJSON
+point as `GraphQLPVIndirizzo`, under a name of its own: a GraphQL schema has one flat type namespace,
+so two collections' addresses cannot share one type without a field added to either appearing on both.
+"""
+type GraphQLAziendaIndirizzo {
+	indirizzo: String!
+	cap: String!
+	comune: String!
+	provincia: String!
+	position: GraphQLAziendaPosition!
+}
+
+type GraphQLAziendaPosition {
+	type: String!
+	coordinates: [Float!]!
+}
+
+type GraphQLPVIndirizzo {
+	indirizzo: String!
+	cap: String!
+	comune: String!
+	provincia: String!
+	position: GraphQLPVPosition!
+}
+
+"""
+GeoJSON `Point`. `coordinates` is [longitude, latitude], in that order — not the other way round,
+and not a pair of named fields. Float, because a latitude is not an integer.
+"""
+type GraphQLPVPosition {
+	type: String!
+	coordinates: [Float!]!
+}
+
+type GraphQLPVContatti {
+	cellulare: String!
+	email: String
+	web: String
+	pec: String
+	fisso: String
+}
+
+type GraphQLOrario {
+	giorno: String!
+	da: DateTime!
+	a: DateTime!
+}
+
+input GraphQLInputLogin {
+	email: String!
+	password: String!
+}
+
+input GraphQLInputAnagraficaImprenditore {
+	nome: String!
+	cognome: String!
+	nascita: GraphQLInputNascita!
+	indirizzo: GraphQLInputIndirizzo!
+	contatti: GraphQLInputContatti!
+}
+
+input GraphQLInputNascita {
+	data: Date!
+}
+
+input GraphQLInputIndirizzo {
+	indirizzo: String!
+	cap: String!
+	comune: String!
+	provincia: String!
+	"""
+	⚠️ **Coordinates only and nullable.** No `type` field, like `GraphQLInputPuntoVenditaPosition` —
+	the resolver adds `type: 'Point'`. Nullable because the operator can save an anagrafica whose
+	address was never re-picked. ⚠️ Omitting it does **not** preserve the stored point:
+	`imprenditoreUpdate` `$set`s the whole `anagrafica`, so a save without `position` erases it. Send
+	back the point the query returned whenever the address is left alone.
+	"""
+	position: GraphQLInputIndirizzoPosition
+}
+
+input GraphQLInputIndirizzoPosition {
+	coordinates: [Float!]!
+}
+
+input GraphQLInputContatti {
+	cellulare: String!
+	fisso: String
+	email: String!
+}
+
+"""
+Everything the operator types about a company, in one object — one form and one Save, which is also what
+lets `aziendaUpdate` `$set` the document in a single atomic write.
+
+`_id` and `idImprenditore` are deliberately absent: the first is minted by the service, the second is a
+separate argument on `aziendaAdd` and is nowhere on the update path, so a company cannot be moved to
+another owner by editing its card.
+
+`cf` and `univoco` are the two optional ones, mirroring the collection's `required` array. Both are
+dropped rather than stored empty when blank — sending `null` for them is legal on the wire and the
+service reads it as "not set".
+"""
+input GraphQLInputAzienda {
+	ragionesociale: String!
+	piva: String!
+	cf: String
+	referente: String!
+	amministratore: String!
+	univoco: String
+	pec: String!
+	indirizzo: GraphQLInputAziendaIndirizzo!
+	visura: String!
+}
+
+input GraphQLInputAziendaIndirizzo {
+	indirizzo: String!
+	cap: String!
+	comune: String!
+	provincia: String!
+	position: GraphQLInputAziendaPosition!
+}
+
+"""
+⚠️ **Coordinates only**, for the reason `GraphQLInputPuntoVenditaPosition` gives at length: the GeoJSON
+type has one legal spelling and the service writes the literal.
+"""
+input GraphQLInputAziendaPosition {
+	coordinates: [Float!]!
+}
+
+input GraphQLInputPuntoVenditaIndirizzo {
+	indirizzo: String!
+	cap: String!
+	comune: String!
+	provincia: String!
+	position: GraphQLInputPuntoVenditaPosition!
+}
+
+"""
+⚠️ **Coordinates only.** Unlike the output `GraphQLPVPosition`, this input has no `type` field: the
+value has exactly one legal spelling (`Point`), the collection caps it at 5 characters and the model
+declares it as an enum of one, so accepting it from a client would only be a way to receive `point`
+or `POINT` and fail the write naming a field the operator never saw. The service writes the literal.
+"""
+input GraphQLInputPuntoVenditaPosition {
+	coordinates: [Float!]!
+}
+
+input GraphQLInputPuntoVenditaContatti {
+	cellulare: String!
+	email: String
+	web: String
+	pec: String
+	fisso: String
+}
+
+"""
+One opening slot. `Time` in, `DateTime` out — see the `Time` scalar's own note for the round trip and
+for the timezone designator it insists on.
+"""
+input GraphQLInputPuntoVenditaOrari {
+	giorno: String!
+	da: Time!
+	a: Time!
+}

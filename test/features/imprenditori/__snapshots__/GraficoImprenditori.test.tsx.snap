@@ -1,0 +1,133 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GraficoImprenditori > renders 1`] = `
+<section
+  aria-labelledby=":id-0:"
+  class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+>
+  <div
+    class="mb-2 flex items-center justify-between gap-2"
+  >
+    <h3
+      class="font-bold"
+      id=":id-0:"
+    >
+      Iscrizioni nel tempo
+    </h3>
+    <div
+      class="flex flex-col gap-1"
+    >
+      <label
+        class="text-sm font-semibold"
+        for=":id-1:"
+      >
+        Periodo
+      </label>
+      <div
+        class="relative"
+      >
+        <select
+          aria-invalid="false"
+          class="min-w-52"
+          id=":id-1:"
+        >
+          <option
+            value="TUTTO"
+          >
+            Dal primo iscritto a oggi
+          </option>
+          <option
+            value="TRE_MESI"
+          >
+            Ultimi 3 mesi
+          </option>
+          <option
+            value="UN_MESE"
+          >
+            Ultimo mese
+          </option>
+        </select>
+        <span
+          class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-tip"
+        >
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.75"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="m6 9 6 6 6-6"
+            />
+          </svg>
+        </span>
+      </div>
+    </div>
+  </div>
+  <svg
+    aria-label="Iscrizioni per periodo: 4 in 3 intervalli"
+    class="h-40 w-full"
+    preserveAspectRatio="none"
+    role="img"
+    viewBox="0 0 600 160"
+  >
+    <rect
+      class="fill-third"
+      height="160"
+      width="200"
+      x="0"
+      y="0"
+    >
+      <title>
+        02/05: 3
+      </title>
+    </rect>
+    <rect
+      class="fill-third"
+      height="1"
+      width="200"
+      x="200"
+      y="159"
+    >
+      <title>
+        03/05: 0
+      </title>
+    </rect>
+    <rect
+      class="fill-third"
+      height="53.33333333333333"
+      width="200"
+      x="400"
+      y="106.66666666666667"
+    >
+      <title>
+        04/05: 1
+      </title>
+    </rect>
+  </svg>
+  <div
+    class="flex justify-between pt-1 text-xs text-tip"
+  >
+    <span>
+      02/05
+    </span>
+    <span>
+      04/05
+    </span>
+  </div>
+  <p
+    class="pt-2 text-sm"
+  >
+    Totale nel periodo: 
+    <span
+      class="font-semibold"
+    >
+      4
+    </span>
+  </p>
+</section>
+`;

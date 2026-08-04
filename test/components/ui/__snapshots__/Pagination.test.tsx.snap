@@ -1,0 +1,58 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Pagination > renders 1`] = `
+<div
+  class="flex flex-wrap items-center justify-between gap-4 py-3 text-sm"
+>
+  <p
+    aria-live="polite"
+  >
+    21
+    –
+    40
+     di 
+    41
+  </p>
+  <nav
+    aria-label="Paginazione"
+    class="flex gap-1"
+  >
+    <button
+      aria-label="Pagina precedente"
+      class="rounded-box px-2 py-1 disabled:opacity-40"
+      type="button"
+    >
+      ‹
+    </button>
+    <button
+      aria-label="Pagina 1"
+      class="rounded-box px-2 py-1 "
+      type="button"
+    >
+      1
+    </button>
+    <button
+      aria-current="page"
+      aria-label="Pagina 2"
+      class="rounded-box px-2 py-1 bg-third text-palette-white"
+      type="button"
+    >
+      2
+    </button>
+    <button
+      aria-label="Pagina 3"
+      class="rounded-box px-2 py-1 "
+      type="button"
+    >
+      3
+    </button>
+    <button
+      aria-label="Pagina successiva"
+      class="rounded-box px-2 py-1 disabled:opacity-40"
+      type="button"
+    >
+      ›
+    </button>
+  </nav>
+</div>
+`;

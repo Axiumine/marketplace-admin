@@ -1,0 +1,494 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ImprenditoreAddForm > renders 1`] = `
+<main
+  class="flex-1 overflow-auto p-6"
+>
+  <header
+    class="mb-6 flex flex-col gap-3 border-b border-tip pb-4"
+  >
+    <nav
+      aria-label="Percorso"
+    >
+      <ol
+        class="flex flex-wrap gap-2 text-xs text-tip"
+      >
+        <li
+          class="after:ml-2 after:content-['/'] last:after:content-['']"
+        >
+          <a
+            href="/imprenditori"
+          >
+            Imprenditori
+          </a>
+        </li>
+        <li
+          class="after:ml-2 after:content-['/'] last:after:content-['']"
+        >
+          Aggiungi
+        </li>
+      </ol>
+    </nav>
+    <div
+      class="flex flex-wrap items-center justify-between gap-4"
+    >
+      <h1
+        class="text-2xl font-bold"
+      >
+        Aggiungi imprenditore
+      </h1>
+      <div
+        class="flex gap-2"
+      >
+        <nav
+          aria-label="Sezioni imprenditori"
+          class="flex flex-wrap gap-2"
+        >
+          <a
+            class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm"
+            href="/imprenditori"
+          >
+            Stats
+          </a>
+          <a
+            class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm"
+            href="/p/imprenditori/gestione-imprenditori"
+          >
+            Gestione
+          </a>
+          <a
+            aria-current="page"
+            class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm bg-third text-palette-white"
+            data-status="active"
+            href="/p/imprenditori/aggiungi-imprenditore"
+          >
+            Aggiungi
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+  <form
+    class="grid max-w-3xl gap-6 xl:max-w-[97.5rem] xl:grid-cols-2 xl:items-start"
+  >
+    <div
+      class="flex flex-col gap-6"
+    >
+      <fieldset
+        class="grid gap-4 md:grid-cols-2"
+      >
+        <legend
+          class="font-bold"
+        >
+          Credenziali di accesso
+        </legend>
+        <div
+          class="md:col-span-2"
+        >
+          <div
+            class="flex flex-col gap-1"
+          >
+            <label
+              class="text-sm font-semibold"
+              for=":id-0:"
+            >
+              Email
+            </label>
+            <div
+              class="relative"
+            >
+              <input
+                aria-invalid="false"
+                autocomplete="off"
+                class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+                id=":id-0:"
+                name="email"
+                type="email"
+              />
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-1:"
+          >
+            Password
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              autocomplete="new-password"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-10"
+              id=":id-1:"
+              maxlength="72"
+              name="password"
+              type="password"
+            />
+            <span
+              class="absolute inset-y-0 right-1 flex items-center"
+            >
+              <button
+                aria-label="Mostra password"
+                class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third"
+                title="Mostra password"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+                  />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  />
+                </svg>
+              </button>
+            </span>
+          </div>
+        </div>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-2:"
+          >
+            Ripeti password
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              autocomplete="new-password"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-10"
+              id=":id-2:"
+              maxlength="72"
+              name="confermaPassword"
+              type="password"
+            />
+            <span
+              class="absolute inset-y-0 right-1 flex items-center"
+            >
+              <button
+                aria-label="Mostra password"
+                class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third"
+                title="Mostra password"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"
+                  />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                  />
+                </svg>
+              </button>
+            </span>
+          </div>
+        </div>
+      </fieldset>
+      <fieldset
+        class="grid gap-4 md:grid-cols-2"
+      >
+        <legend
+          class="font-bold"
+        >
+          Anagrafica
+        </legend>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-3:"
+          >
+            Nome
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+              id=":id-3:"
+              name="nome"
+            />
+          </div>
+        </div>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-4:"
+          >
+            Cognome
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+              id=":id-4:"
+              name="cognome"
+            />
+          </div>
+        </div>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-5:"
+          >
+            Data di nascita
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+              id=":id-5:"
+              max="2008-08-02"
+              name="dataNascita"
+              type="date"
+            />
+          </div>
+        </div>
+      </fieldset>
+      <fieldset
+        class="grid gap-4 md:grid-cols-2"
+      >
+        <legend
+          class="font-bold"
+        >
+          Contatti
+        </legend>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-6:"
+          >
+            Cellulare
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+              id=":id-6:"
+              name="cellulare"
+              type="tel"
+            />
+          </div>
+        </div>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-7:"
+          >
+            Fisso
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+              id=":id-7:"
+              name="fisso"
+              type="tel"
+            />
+          </div>
+        </div>
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-8:"
+          >
+            Email di contatto
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+              id=":id-8:"
+              name="contattoEmail"
+              type="email"
+            />
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <fieldset
+      class="grid gap-4 md:grid-cols-2"
+    >
+      <legend
+        class="font-bold"
+      >
+        Indirizzo
+      </legend>
+      <div
+        class="flex flex-col gap-2 md:col-span-2"
+      >
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-9:"
+          >
+            Indirizzo
+          </label>
+          <div
+            class="relative"
+          >
+            <input
+              aria-invalid="false"
+              autocomplete="off"
+              class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+              id=":id-9:"
+              name="indirizzo"
+              value=""
+            />
+          </div>
+        </div>
+        <iframe
+          class="w-full rounded-box border border-tip"
+          height="400"
+          src="https://www.openstreetmap.org/export/embed.html?bbox=12.49240,41.89880,12.50040,41.90680&layer=mapnik&marker=41.90280,12.49640"
+          title="Mappa dell'indirizzo"
+        />
+        <p
+          class="text-xs text-tip"
+        >
+          Dati cartografici ©
+           
+          <a
+            class="underline"
+            href="https://www.openstreetmap.org/copyright"
+            rel="noreferrer"
+            target="_blank"
+          >
+            OpenStreetMap
+          </a>
+           
+          contributors
+        </p>
+      </div>
+      <div
+        class="flex flex-col gap-1"
+      >
+        <label
+          class="text-sm font-semibold"
+          for=":id-10:"
+        >
+          CAP
+        </label>
+        <div
+          class="relative"
+        >
+          <input
+            aria-invalid="false"
+            class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+            id=":id-10:"
+            inputmode="numeric"
+            maxlength="5"
+            name="cap"
+          />
+        </div>
+      </div>
+      <div
+        class="flex flex-col gap-1"
+      >
+        <label
+          class="text-sm font-semibold"
+          for=":id-11:"
+        >
+          Comune
+        </label>
+        <div
+          class="relative"
+        >
+          <input
+            aria-invalid="false"
+            class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+            id=":id-11:"
+            name="comune"
+          />
+        </div>
+      </div>
+      <div
+        class="flex flex-col gap-1"
+      >
+        <label
+          class="text-sm font-semibold"
+          for=":id-12:"
+        >
+          Provincia
+        </label>
+        <div
+          class="relative"
+        >
+          <input
+            aria-invalid="false"
+            class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+            id=":id-12:"
+            maxlength="2"
+            name="provincia"
+          />
+        </div>
+      </div>
+    </fieldset>
+    <div
+      class="col-span-full flex justify-end"
+    >
+      <button
+        class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-pomodoro px-[30px]"
+        type="submit"
+      >
+        Crea imprenditore
+      </button>
+    </div>
+  </form>
+</main>
+`;
