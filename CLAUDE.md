@@ -1,8 +1,8 @@
 # marketplace-admin
 
 Platform-operator SPA (`Admin` tier) for Marketplace. Vite + React + TypeScript. Read the parent
-workspace's `/media/nvme/websites/fullstack-marketplace-blueprint/CLAUDE.md` first — this is one of ten repos and almost
-nothing here is changeable on its own.
+workspace's `/media/nvme/websites/fullstack-marketplace-blueprint/CLAUDE.md` first — this is one of fourteen sub-repos and
+almost nothing here is changeable on its own.
 
 ⚠️ **Language: everything is English — identifiers, UI text, form labels, comments, routes.** This
 reverses the rule this file carried until 2026-08-04, when the whole platform was renamed on the
@@ -17,7 +17,7 @@ locale** `formatDateTime` renders with, which is a market choice and not a name.
 
 ## Do not trust `schema/*.graphql`
 
-The platform has **no SDL**. All seven backend services build their schema programmatically with
+The platform has **no SDL**. All nine backend services build their schema programmatically with
 graphql-js. The four files under `schema/` are hand-written slices, kept only because
 graphql-codegen needs a schema to type documents against.
 
@@ -77,7 +77,8 @@ That is what lets a page be rendered in a test without a router assertion in the
   quotes, `trailingComma: "none"`, `printWidth: 129`, `useTabs: true`. The backend services and
   `marketplace-common` now carry that file byte for byte, `useTabs` included — it used to be missing
   there, so prettier reindented with spaces what eslint then demanded back as tabs and whichever ran
-  last won. `lint` runs `eslint --fix . && prettier --write .` in all ten repos and `lint:check` runs
+  last won. `lint` runs `eslint --fix . && prettier --write .` in all thirteen repos that have a lint
+  config — every sub-repo but `marketplace-db-setup` — and `lint:check` runs
   both read-only; the scope is the **whole tree**, not `src/`, which is how test files and configs
   drifted unnoticed for as long as they did. What is out of scope lives in `.prettierignore`, and
   markdown is in there on purpose: `proseWrap: "never"` would flatten every hand-wrapped paragraph in
@@ -105,7 +106,7 @@ That is what lets a page be rendered in a test without a router assertion in the
   failure: on the wrong node the push used to die at step 1 with `The engine "node" is incompatible
   with this module`, printed under the banner about type errors, which is not what had gone wrong. If
   nvm is absent or the version is not installed it blocks with the `nvm install` line instead of
-  letting yarn report nonsense. All ten repos carry the same block now; it started in
+  letting yarn report nonsense. All fourteen sub-repos carry the same block now; it started in
   `marketplace-common`'s *pre-commit*, which is where it was copied from.
 - **Never commit on `main`.** Branch first: `git switch -c <type>/<slug>`. Merging is the user's call.
 - **Delete the branch once it is merged.** `git branch -d <slug>`, right after the merge. `-d`, never
