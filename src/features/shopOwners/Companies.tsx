@@ -11,20 +11,20 @@ import { messageOf } from '@/api/errors'
 import { CompanyAddDocument, CompanyDelDocument, CompanyUpdateDocument } from '@/api/operations/adminResource/mutations'
 import { ShopOwnerCompaniesDocument } from '@/api/operations/adminResource/queries'
 import { AddressField } from '@/components/ui/AddressField'
+import { AddressMap } from '@/components/ui/AddressMap'
 import { Alert } from '@/components/ui/Alert'
 import { EditableRow } from '@/components/ui/EditableRow'
 import { IconButton } from '@/components/ui/IconButton'
-import { IconTrash, IconPlus } from '@/components/ui/icons'
+import { IconPlus, IconTrash } from '@/components/ui/icons'
 import { Infobox } from '@/components/ui/Infobox'
-import { AddressMap } from '@/components/ui/AddressMap'
 import { Spinner } from '@/components/ui/Spinner'
 import { TextField } from '@/components/ui/TextField'
 import { Toast } from '@/components/ui/Toast'
 import { ToastValidation } from '@/components/ui/ToastValidation'
-import { coordinate, SHAPE_EMAIL, EMPTY_ADDRESS, ADDRESS_MESSAGE, required } from '@/lib/fields'
-import { formatAddress, handleNull, emptyInNull } from '@/lib/format'
-import { coordinatesText, addressError, composedAddress, mapPoint } from '@/lib/address'
+import { addressError, composedAddress, coordinatesText, mapPoint } from '@/lib/address'
 import { writeAddress } from '@/lib/addressForm'
+import { ADDRESS_MESSAGE, coordinate, EMPTY_ADDRESS, required, SHAPE_EMAIL } from '@/lib/fields'
+import { emptyInNull, formatAddress, handleNull } from '@/lib/format'
 import type { FoundAddress } from '@/lib/nominatim'
 
 import type { RegisterSection } from './saving'
@@ -94,7 +94,7 @@ export const companySchema = z
 		 * at the bottom, which is the only place the six fields below and this one have to agree.
 		 */
 		addressComplete: z.string(),
-		street: required('Street', MAX_ADDRESS),
+		street: required('Address', MAX_ADDRESS),
 		postalCode: z.string().regex(/^\d{5}$/, 'The postal code must be 5 digits'),
 		city: required('City', MAX_CITY),
 		province: z
@@ -394,7 +394,13 @@ const FormCompany = ({
 							/>
 						</EditableRow>
 						<EditableRow label="VAT number" value={company?.vatNumber} openInitial={isNew}>
-							<TextField label="VAT number" inputMode="numeric" maxLength={11} error={errors.vatNumber?.message} {...register('vatNumber')} />
+							<TextField
+								label="VAT number"
+								inputMode="numeric"
+								maxLength={11}
+								error={errors.vatNumber?.message}
+								{...register('vatNumber')}
+							/>
 						</EditableRow>
 						<EditableRow label="Tax code" value={handleNull(company?.taxCode)} openInitial={isNew}>
 							<TextField label="Tax code" maxLength={TAX_CODE_LENGTH} error={errors.taxCode?.message} {...register('taxCode')} />
@@ -424,10 +430,21 @@ const FormCompany = ({
 							/>
 						</EditableRow>
 						<EditableRow label="Certified email" value={company?.certifiedEmail} openInitial={isNew}>
-							<TextField label="Certified email" type="email" maxLength={MAX_EMAIL} error={errors.certifiedEmail?.message} {...register('certifiedEmail')} />
+							<TextField
+								label="Certified email"
+								type="email"
+								maxLength={MAX_EMAIL}
+								error={errors.certifiedEmail?.message}
+								{...register('certifiedEmail')}
+							/>
 						</EditableRow>
 						<EditableRow label="Registry extract" value={company?.registryExtract} openInitial={isNew}>
-							<TextField label="Registry extract" maxLength={MAX_REGISTRY_EXTRACT} error={errors.registryExtract?.message} {...register('registryExtract')} />
+							<TextField
+								label="Registry extract"
+								maxLength={MAX_REGISTRY_EXTRACT}
+								error={errors.registryExtract?.message}
+								{...register('registryExtract')}
+							/>
 						</EditableRow>
 					</Infobox>
 

@@ -9,17 +9,17 @@ describe('Alert', () => {
 	// thing in this component that can be wrong.
 	it('announces an error assertively', () => {
 		render(<Alert tone="error">Invalid credentials</Alert>)
-		expect(screen.getByRole('alert')).toHaveTextContent('Invalid credentialse')
+		expect(screen.getByRole('alert')).toHaveTextContent('Invalid credentials')
 	})
 
 	it('announces a success politely', () => {
 		render(<Alert tone="success">Password updated</Alert>)
-		expect(screen.getByRole('status')).toHaveTextContent('Password aggiornata')
+		expect(screen.getByRole('status')).toHaveTextContent('Password updated')
 	})
 
 	it('announces information politely', () => {
-		render(<Alert tone="info">No dato</Alert>)
-		expect(screen.getByRole('status')).toHaveTextContent('Nessun dato')
+		render(<Alert tone="info">No data</Alert>)
+		expect(screen.getByRole('status')).toHaveTextContent('No data')
 	})
 
 	it.each(['error', 'success', 'info'] as const)('renders the %s tone', (tone) => {

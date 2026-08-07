@@ -60,8 +60,7 @@ const Host = ({
 }
 
 /** The composed line the shop panel writes back — street, postal code, city and province code, on one line. */
-const composed = (address: FoundAddress) =>
-	`${address.street}, ${address.postalCode} ${address.city} (${address.province})`
+const composed = (address: FoundAddress) => `${address.street}, ${address.postalCode} ${address.city} (${address.province})`
 
 // Fake timers throughout: the debounce is the component's whole rhythm, and waiting 700 ms of wall
 // clock per assertion would make this file the slowest in the suite for no added confidence.
@@ -84,7 +83,7 @@ const attendiSearch = async () => {
 	})
 }
 
-const map = () => screen.getByTitle("Address map")
+const map = () => screen.getByTitle('Address map')
 
 describe('AddressField', () => {
 	it('renders a map of Italy before anything is typed', () => {
@@ -192,7 +191,7 @@ describe('AddressField', () => {
 		write('Via Inesistente 99')
 		await attendiSearch()
 
-		expect(screen.getByRole('status')).toHaveTextContent('Nessun address trovato')
+		expect(screen.getByRole('status')).toHaveTextContent('No address found')
 		expect(screen.queryByRole('list')).not.toBeInTheDocument()
 		expect(container).toMatchSnapshot()
 	})

@@ -61,18 +61,18 @@ describe('Pagination', () => {
 
 	it('reports the visible range and the total', () => {
 		setup({ page: 2 })
-		expect(screen.getByText('21–40 di 41')).toBeInTheDocument()
+		expect(screen.getByText('21–40 of 41')).toBeInTheDocument()
 	})
 
 	it('reports a short last page honestly', () => {
 		setup({ page: 3 })
-		expect(screen.getByText('41–41 di 41')).toBeInTheDocument()
+		expect(screen.getByText('41–41 of 41')).toBeInTheDocument()
 	})
 
-	// Not "1–0 di 0": the first row of an empty set is not row one.
+	// Not "1–0 of 0": the first row of an empty set is not row one.
 	it('reports zero for an empty result set', () => {
 		setup({ total: 0 })
-		expect(screen.getByText('0–0 di 0')).toBeInTheDocument()
+		expect(screen.getByText('0–0 of 0')).toBeInTheDocument()
 	})
 
 	it('marks the current page for assistive technology', () => {

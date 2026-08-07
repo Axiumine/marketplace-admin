@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ToastValidazione > renders 1`] = `
+exports[`ToastValidation > renders 1`] = `
 <div
   class="pointer-events-auto overflow-hidden rounded-box border shadow-lg border-app-error bg-palette-white text-app-error"
   role="alert"

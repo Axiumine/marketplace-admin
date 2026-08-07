@@ -6,13 +6,13 @@ import { getSession } from '@/auth/session'
 import { AppShell } from '@/components/layout/AppShell'
 import type { ShopOwnersQuery } from '@/features/shopOwners/TblShopOwners'
 import { AddShopOwnerPage } from '@/pages/AddShopOwnerPage'
-import { ManageShopOwnersPage } from '@/pages/ManageShopOwnersPage'
 import { HomePage } from '@/pages/HomePage'
+import { LoadingPage } from '@/pages/LoadingPage'
+import { LoginPage } from '@/pages/LoginPage'
+import { ManageShopOwnersPage } from '@/pages/ManageShopOwnersPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { ShopOwnerDetailPage } from '@/pages/ShopOwnerDetailPage'
 import { ShopOwnersPage } from '@/pages/ShopOwnersPage'
-import { LoadingPage } from '@/pages/LoadingPage'
-import { LoginPage } from '@/pages/LoginPage'
 
 /** The page size a URL that says nothing about paging gets. */
 export const DEFAULT_PAGE_SIZE = 20

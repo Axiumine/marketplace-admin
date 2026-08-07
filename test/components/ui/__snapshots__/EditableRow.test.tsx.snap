@@ -66,16 +66,16 @@ exports[`EditableRow > renders with a bin 1`] = `
   <span
     class="text-tip"
   >
-    monday
+    lunedì
   </span>
   <span
     class="flex items-center gap-1 text-right"
   >
     11:30 – 14:30
     <button
-      aria-label="Change monday"
+      aria-label="Change lunedì"
       class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      title="Change monday"
+      title="Change lunedì"
       type="button"
     >
       <svg
@@ -97,9 +97,9 @@ exports[`EditableRow > renders with a bin 1`] = `
       </svg>
     </button>
     <button
-      aria-label="Delete monday"
+      aria-label="Delete lunedì"
       class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      title="Delete monday"
+      title="Delete lunedì"
       type="button"
     >
       <svg

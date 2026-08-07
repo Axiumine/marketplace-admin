@@ -27,7 +27,7 @@ describe('SettingsPage', () => {
 		await renderRoute('/settings')
 
 		expect(screen.getByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument()
-		expect(screen.getByRole('heading', { name: 'Cambio password', level: 2 })).toBeInTheDocument()
+		expect(screen.getByRole('heading', { name: 'Change password', level: 2 })).toBeInTheDocument()
 	})
 
 	it('renders', async () => {
@@ -145,7 +145,7 @@ describe('PasswordChangeForm', () => {
 		await submit()
 
 		// `status`, not `alert`: success is announced politely, without interrupting the screen reader.
-		expect(await screen.findByRole('status')).toHaveTextContent('Password aggiornata')
+		expect(await screen.findByRole('status')).toHaveTextContent('Password updated')
 		expect(screen.getByLabelText('Current password')).toHaveValue('')
 		expect(screen.getByLabelText('New password')).toHaveValue('')
 		expect(screen.getByLabelText('Repeat the new password')).toHaveValue('')
@@ -185,7 +185,7 @@ describe('PasswordChangeForm', () => {
 
 		await fillIn(CURRENT, NEW, NEW)
 		await submit()
-		expect(await screen.findByRole('status')).toHaveTextContent('Password aggiornata')
+		expect(await screen.findByRole('status')).toHaveTextContent('Password updated')
 
 		await fillIn(NEW, THIRD, THIRD)
 		await submit()
@@ -196,7 +196,7 @@ describe('PasswordChangeForm', () => {
 		expect(screen.getByLabelText('Repeat the new password')).toHaveValue(THIRD)
 	})
 
-	// GraphQL allows a response to carry data *and* errors. Announcing "Password aggiornata" next to a
+	// GraphQL allows a response to carry data *and* errors. Announcing "Password updated" next to a
 	// red alert would leave the operator to guess which half is true.
 	it('does not confirm when the answer carries an error alongside the data', async () => {
 		stubGraphQL({
@@ -212,7 +212,7 @@ describe('PasswordChangeForm', () => {
 		await submit()
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('The current password is not correct')
-		expect(screen.queryByText('Password aggiornata')).not.toBeInTheDocument()
+		expect(screen.queryByText('Password updated')).not.toBeInTheDocument()
 		expect(screen.getByLabelText('Current password')).toHaveValue(CURRENT)
 	})
 
@@ -228,7 +228,7 @@ describe('PasswordChangeForm', () => {
 		await waitFor(() => {
 			expect(screen.getByLabelText('Current password')).toHaveValue(CURRENT)
 		})
-		expect(screen.queryByText('Password aggiornata')).not.toBeInTheDocument()
+		expect(screen.queryByText('Password updated')).not.toBeInTheDocument()
 		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 	})
 })

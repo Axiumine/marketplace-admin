@@ -1,8 +1,8 @@
 import { PageHeader } from '@/components/layout/PageHeader'
-import { ShopOwnerPersonalData } from '@/features/shopOwners/ShopOwnerPersonalData'
 import { Companies } from '@/features/shopOwners/Companies'
 import { MenuShopOwners } from '@/features/shopOwners/MenuShopOwners'
 import { SaveChanges, useDiscardWarning, useSaving } from '@/features/shopOwners/saving'
+import { ShopOwnerPersonalData } from '@/features/shopOwners/ShopOwnerPersonalData'
 
 /**
  * The two sections of the shopOwner detail: the personalData, then the companies.

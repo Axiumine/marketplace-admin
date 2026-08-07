@@ -89,8 +89,8 @@ describe('shopOwnerDetailSchema — fields obbligatori', () => {
 	it('names the field that was emptied', () => {
 		expect(messages({ firstName: '   ' })).toEqual(['First name is required'])
 		expect(messages({ lastName: '' })).toEqual(['Last name is required'])
-		expect(messages({ address: '' })).toEqual(["Address is required", "Select the address from the list"])
-		expect(messages({ city: '' })).toEqual(['City is required', "Select the address from the list"])
+		expect(messages({ street: '' })).toEqual(['Address is required', 'Select the address from the list'])
+		expect(messages({ city: '' })).toEqual(['City is required', 'Select the address from the list'])
 		expect(messages({ mobile: '' })).toEqual(['Mobile is required'])
 	})
 
@@ -102,13 +102,13 @@ describe('shopOwnerDetailSchema — fields obbligatori', () => {
 		expect(messages({ firstName: 'M'.repeat(101) })).toEqual(['First name cannot exceed 100 characters'])
 		expect(messages({ lastName: 'R'.repeat(101) })).toEqual(['Last name cannot exceed 100 characters'])
 		// ⚠️ 250 here and 100 on the shop — same field name, same fragment, two collections.
-		expect(messages({ address: 'V'.repeat(251) })).toEqual([
-			"Address cannot exceed 250 characters",
-			"Select the address from the list"
+		expect(messages({ street: 'V'.repeat(251) })).toEqual([
+			'Address cannot exceed 250 characters',
+			'Select the address from the list'
 		])
 		expect(messages({ city: 'M'.repeat(101) })).toEqual([
 			'City cannot exceed 100 characters',
-			"Select the address from the list"
+			'Select the address from the list'
 		])
 		expect(messages({ mobile: '3'.repeat(13) })).toEqual(['Mobile cannot exceed 12 characters'])
 	})
@@ -123,8 +123,8 @@ describe('shopOwnerDetailSchema — email', () => {
 	})
 
 	it("caps both at the collection's length", () => {
-		expect(messages({ emailLogin: EMAIL_TOO_LONG })).toEqual(["L'email di accesso cannot exceed 250 characters"])
-		expect(messages({ contactEmail: EMAIL_TOO_LONG })).toEqual(["L'email di contatto cannot exceed 250 characters"])
+		expect(messages({ emailLogin: EMAIL_TOO_LONG })).toEqual(['The login email cannot exceed 250 characters'])
+		expect(messages({ contactEmail: EMAIL_TOO_LONG })).toEqual(['The contact email cannot exceed 250 characters'])
 	})
 })
 
@@ -136,7 +136,7 @@ describe('shopOwnerDetailSchema — data di birth', () => {
 	it('refuses someone who turns eighteen tomorrow', () => {
 		today('2026-08-02T12:00:00Z')
 
-		expect(messages({ birthDate: '2008-08-03' })).toEqual(["The shop owner must be of age (at least 18)"])
+		expect(messages({ birthDate: '2008-08-03' })).toEqual(['The shop owner must be of age (at least 18)'])
 	})
 
 	it('accepts someone who turns eighteen today', () => {
@@ -153,14 +153,14 @@ describe('shopOwnerDetailSchema — CAP e province', () => {
 	 * after the page approved it.
 	 */
 	it('refuses a CAP with anything either side of the five digits', () => {
-		expect(messages({ postalCode: 'a12345' })).toEqual(['The postal code must be 5 digits', "Select the address from the list"])
-		expect(messages({ postalCode: '12345a' })).toEqual(['The postal code must be 5 digits', "Select the address from the list"])
-		expect(messages({ postalCode: '1234' })).toEqual(['The postal code must be 5 digits', "Select the address from the list"])
+		expect(messages({ postalCode: 'a12345' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
+		expect(messages({ postalCode: '12345a' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
+		expect(messages({ postalCode: '1234' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
 	})
 
 	it('refuses a province with anything either side of the two letters', () => {
-		expect(messages({ province: '1MI' })).toEqual(['The province is the 2-letter code', "Select the address from the list"])
-		expect(messages({ province: 'MI1' })).toEqual(['The province is the 2-letter code', "Select the address from the list"])
+		expect(messages({ province: '1MI' })).toEqual(['The province is the 2-letter code', 'Select the address from the list'])
+		expect(messages({ province: 'MI1' })).toEqual(['The province is the 2-letter code', 'Select the address from the list'])
 	})
 
 	// The value the form keeps is the value that gets written, so the upper-casing has to survive the
@@ -184,7 +184,7 @@ describe('shopOwnerDetailSchema — fields facoltativi', () => {
 	})
 
 	it("caps the onboarding step at the collection's length", () => {
-		expect(messages({ onboardingStep: '12345' })).toEqual(['Il passo onboarding cannot exceed 4 characters'])
+		expect(messages({ onboardingStep: '12345' })).toEqual(['The onboarding step cannot exceed 4 characters'])
 	})
 })
 
@@ -202,17 +202,17 @@ describe('shopOwnerDetailSchema — fields facoltativi', () => {
  */
 describe('shopOwnerDetailSchema — address composto', () => {
 	it('refuses a line that is not the address the fields under it spell out', () => {
-		expect(messages({ addressComplete: 'Via Roma 2, 20100 Milano (MI)' })).toEqual(["Select the address from the list"])
-		expect(messages({ addressComplete: 'Via Roma 1' })).toEqual(["Select the address from the list"])
-		expect(messages({ addressComplete: '' })).toEqual(["Select the address from the list"])
+		expect(messages({ addressComplete: 'Via Roma 2, 20100 Milano (MI)' })).toEqual(['Select the address from the list'])
+		expect(messages({ addressComplete: 'Via Roma 1' })).toEqual(['Select the address from the list'])
+		expect(messages({ addressComplete: '' })).toEqual(['Select the address from the list'])
 	})
 
 	// Whichever of the four moved, the line stops matching — the rule is the whole address and not the
 	// street half of it.
 	it('refuses a line left behind by any one of the four fields', () => {
-		expect(messages({ postalCode: '20121' })).toEqual(["Select the address from the list"])
-		expect(messages({ city: 'Roma' })).toEqual(["Select the address from the list"])
-		expect(messages({ province: 'RM' })).toEqual(["Select the address from the list"])
+		expect(messages({ postalCode: '20121' })).toEqual(['Select the address from the list'])
+		expect(messages({ city: 'Roma' })).toEqual(['Select the address from the list'])
+		expect(messages({ province: 'RM' })).toEqual(['Select the address from the list'])
 	})
 
 	// It is reported on the box, because the box is where the operator can do something about it: the

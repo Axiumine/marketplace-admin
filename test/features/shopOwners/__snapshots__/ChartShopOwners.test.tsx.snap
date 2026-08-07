@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`GraficoShop owners > renders 1`] = `
+exports[`ChartShopOwners > renders 1`] = `
 <section
   aria-labelledby=":id-0:"
   class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "

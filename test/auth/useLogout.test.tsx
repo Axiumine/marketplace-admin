@@ -10,7 +10,7 @@ import { graphQLError, stubGraphQL } from '../helpers/graphql'
 import { renderRoute } from '../helpers/render'
 
 const logout = async () => {
-	await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+	await userEvent.click(screen.getByRole('button', { name: 'Logout' }))
 }
 
 /**

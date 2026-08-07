@@ -162,6 +162,8 @@ describe('messageOf', () => {
 	})
 
 	it('falls back to the generic line for a transport failure', () => {
-		expect(messageOf(new CombinedError({ networkError: new Error('offline') }))).toBe('Error while communicating with the server')
+		expect(messageOf(new CombinedError({ networkError: new Error('offline') }))).toBe(
+			'Error while communicating with the server'
+		)
 	})
 })

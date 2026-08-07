@@ -32,7 +32,7 @@ exports[`AppShell > renders 1`] = `
             class="block rounded-box px-3 py-2 text-sm "
             href="/shopOwners"
           >
-            Shop owners
+            ShopOwners
           </a>
         </li>
         <li>
@@ -56,7 +56,7 @@ exports[`AppShell > renders 1`] = `
           class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-secondary text-palette-bg hover:bg-primary px-4"
           type="button"
         >
-          Sign out
+          Logout
         </button>
       </div>
     </nav>
@@ -89,7 +89,7 @@ exports[`AppShell > renders 1`] = `
             <h2
               class="font-bold"
             >
-              Shop owners
+              ShopOwners
             </h2>
             <p
               class="text-sm text-tip"

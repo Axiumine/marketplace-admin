@@ -12,7 +12,7 @@ import { FormSubmit } from '@/components/ui/FormSubmit'
 import { PasswordField } from '@/components/ui/PasswordField'
 import { TextField } from '@/components/ui/TextField'
 import { Toast } from '@/components/ui/Toast'
-import { maxBirthDate, isAdult, MIN_AGE } from '@/lib/isAdult'
+import { isAdult, maxBirthDate, MIN_AGE } from '@/lib/isAdult'
 import type { FoundAddress } from '@/lib/nominatim'
 
 /** Same bounds as the password-change form, and for the same reason: bcrypt truncates at 72 bytes. */
@@ -49,7 +49,7 @@ export const shopOwnerSchema = z
 		birthDate: z.iso
 			.date('Enter a valid date of birth')
 			.refine((data) => isAdult(data, new Date()), `The shop owner must be of age (at least ${MIN_AGE})`),
-		street: required('Street'),
+		street: required('Address'),
 		postalCode: z.string().regex(/^\d{5}$/, 'The postal code must be 5 digits'),
 		city: required('City'),
 		province: z
@@ -213,12 +213,7 @@ export const ShopOwnerAddForm = () => {
 					<legend className="font-bold">Contacts</legend>
 					<TextField label="Mobile" type="tel" error={errors.mobile?.message} {...register('mobile')} />
 					<TextField label="Landline" type="tel" error={errors.landline?.message} {...register('landline')} />
-					<TextField
-						label="Contact email"
-						type="email"
-						error={errors.contactEmail?.message}
-						{...register('contactEmail')}
-					/>
+					<TextField label="Contact email" type="email" error={errors.contactEmail?.message} {...register('contactEmail')} />
 				</fieldset>
 
 				{state.error === undefined ? null : <Toast tone="error">{messageOf(state.error)}</Toast>}
@@ -234,7 +229,13 @@ export const ShopOwnerAddForm = () => {
 					onSelect={applyAddress}
 					{...register('street')}
 				/>
-				<TextField label="Postal code" inputMode="numeric" maxLength={5} error={errors.postalCode?.message} {...register('postalCode')} />
+				<TextField
+					label="Postal code"
+					inputMode="numeric"
+					maxLength={5}
+					error={errors.postalCode?.message}
+					{...register('postalCode')}
+				/>
 				<TextField label="City" error={errors.city?.message} {...register('city')} />
 				<TextField label="Province" maxLength={2} error={errors.province?.message} {...register('province')} />
 			</fieldset>

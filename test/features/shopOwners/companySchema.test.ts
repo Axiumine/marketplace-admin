@@ -65,7 +65,7 @@ describe('companySchema — fields obbligatori', () => {
 		expect(messages({ legalName: '  ' })).toEqual(['Legal name is required'])
 		expect(messages({ registryExtract: '' })).toEqual(['Registry extract is required'])
 		expect(messages({ contactPerson: '' })).toEqual(['Contact person is required'])
-		expect(messages({ administrator: '' })).toEqual(["Administrator is required"])
+		expect(messages({ administrator: '' })).toEqual(['Administrator is required'])
 	})
 
 	/*
@@ -81,15 +81,15 @@ describe('companySchema — fields obbligatori', () => {
 	it('caps each field where its own collection does', () => {
 		expect(messages({ legalName: 'P'.repeat(101) })).toEqual(['Legal name cannot exceed 100 characters'])
 		expect(messages({ contactPerson: 'R'.repeat(51) })).toEqual(['Contact person cannot exceed 50 characters'])
-		expect(messages({ administrator: 'A'.repeat(51) })).toEqual(["Administrator cannot exceed 50 characters"])
+		expect(messages({ administrator: 'A'.repeat(51) })).toEqual(['Administrator cannot exceed 50 characters'])
 		expect(messages({ registryExtract: 'v'.repeat(1001) })).toEqual(['Registry extract cannot exceed 1000 characters'])
-		expect(messages({ address: 'V'.repeat(101) })).toEqual([
-			"Address cannot exceed 100 characters",
-			"Select the address from the list"
+		expect(messages({ street: 'V'.repeat(101) })).toEqual([
+			'Address cannot exceed 100 characters',
+			'Select the address from the list'
 		])
 		expect(messages({ city: 'M'.repeat(101) })).toEqual([
 			'City cannot exceed 100 characters',
-			"Select the address from the list"
+			'Select the address from the list'
 		])
 	})
 
@@ -131,8 +131,8 @@ describe('companySchema — identificativi fiscali', () => {
 	// Blank is how the code is removed — the SDI recipient code is optional on the collection.
 	it('accepts an empty codice uniqueCode and refuses a malformed one', () => {
 		expect(messages({ uniqueCode: '' })).toEqual([])
-		expect(messages({ uniqueCode: '-ABC1234' })).toEqual(['The unique code is 7 characters alfanumerici'])
-		expect(messages({ uniqueCode: 'ABC1234-' })).toEqual(['The unique code is 7 characters alfanumerici'])
+		expect(messages({ uniqueCode: '-ABC1234' })).toEqual(['The unique code is 7 alphanumeric characters'])
+		expect(messages({ uniqueCode: 'ABC1234-' })).toEqual(['The unique code is 7 alphanumeric characters'])
 	})
 
 	it('trims the codice uniqueCode before matching it', () => {
@@ -167,13 +167,13 @@ describe('companySchema — CAP e province', () => {
 	// The composed line comes back with each of these for the reason above: a CAP that is not five digits
 	// is also a CAP the line in the box no longer spells out.
 	it('refuses a CAP with anything either side of the five digits', () => {
-		expect(messages({ postalCode: 'a12345' })).toEqual(['The postal code must be 5 digits', "Select the address from the list"])
-		expect(messages({ postalCode: '12345a' })).toEqual(['The postal code must be 5 digits', "Select the address from the list"])
+		expect(messages({ postalCode: 'a12345' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
+		expect(messages({ postalCode: '12345a' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
 	})
 
 	it('refuses a province with anything either side of the two letters', () => {
-		expect(messages({ province: '1MI' })).toEqual(['The province is the 2-letter code', "Select the address from the list"])
-		expect(messages({ province: 'MI1' })).toEqual(['The province is the 2-letter code', "Select the address from the list"])
+		expect(messages({ province: '1MI' })).toEqual(['The province is the 2-letter code', 'Select the address from the list'])
+		expect(messages({ province: 'MI1' })).toEqual(['The province is the 2-letter code', 'Select the address from the list'])
 	})
 
 	it('trims and upper-cases the province', () => {
@@ -191,17 +191,17 @@ describe('companySchema — CAP e province', () => {
  */
 describe('companySchema — address composto', () => {
 	it('refuses a line that is not the address the fields under it spell out', () => {
-		expect(messages({ addressComplete: 'Via Roma 2, 20100 Milano (MI)' })).toEqual(["Select the address from the list"])
-		expect(messages({ addressComplete: 'Via Roma 1' })).toEqual(["Select the address from the list"])
-		expect(messages({ addressComplete: '' })).toEqual(["Select the address from the list"])
+		expect(messages({ addressComplete: 'Via Roma 2, 20100 Milano (MI)' })).toEqual(['Select the address from the list'])
+		expect(messages({ addressComplete: 'Via Roma 1' })).toEqual(['Select the address from the list'])
+		expect(messages({ addressComplete: '' })).toEqual(['Select the address from the list'])
 	})
 
 	// Whichever of the four moved, the line stops matching — the rule is the whole address and not the
 	// street half of it.
 	it('refuses a line left behind by any one of the four fields', () => {
-		expect(messages({ postalCode: '20121' })).toEqual(["Select the address from the list"])
-		expect(messages({ city: 'Roma' })).toEqual(["Select the address from the list"])
-		expect(messages({ province: 'RM' })).toEqual(["Select the address from the list"])
+		expect(messages({ postalCode: '20121' })).toEqual(['Select the address from the list'])
+		expect(messages({ city: 'Roma' })).toEqual(['Select the address from the list'])
+		expect(messages({ province: 'RM' })).toEqual(['Select the address from the list'])
 	})
 
 	// It is reported on the box, because the box is where the operator can do something about it: the

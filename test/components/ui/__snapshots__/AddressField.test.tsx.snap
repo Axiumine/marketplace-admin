@@ -261,7 +261,7 @@ exports[`AddressField > shows the suggestions OSM answered with 1`] = `
       </div>
     </div>
     <ul
-      aria-label="Indirizzi trovati"
+      aria-label="Addresses found"
       class="rounded-box border border-tip bg-white"
     >
       <li

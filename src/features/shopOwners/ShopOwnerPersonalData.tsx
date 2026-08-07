@@ -17,29 +17,29 @@ import {
 } from '@/api/operations/adminResource/mutations'
 import { ShopOwnerByIdDocument } from '@/api/operations/adminResource/queries'
 import { AddressField } from '@/components/ui/AddressField'
+import { AddressMap } from '@/components/ui/AddressMap'
 import { Alert } from '@/components/ui/Alert'
 import { CheckboxField } from '@/components/ui/CheckboxField'
 import { EditableRow } from '@/components/ui/EditableRow'
 import { Infobox, InfoRow } from '@/components/ui/Infobox'
-import { AddressMap } from '@/components/ui/AddressMap'
 import { Spinner } from '@/components/ui/Spinner'
 import { TextareaField } from '@/components/ui/TextareaField'
 import { TextField } from '@/components/ui/TextField'
 import { Toast } from '@/components/ui/Toast'
 import { ToastValidation } from '@/components/ui/ToastValidation'
+import { addressError, composedAddress, mapPoint } from '@/lib/address'
+import { writeAddress } from '@/lib/addressForm'
 import {
-	formatDate,
+	emptyInNull,
 	formatAddress,
+	formatDate,
 	handleNull,
 	handleNullBoolYN,
 	handleNullDate,
 	handleNullHash,
-	toDateInput,
-	emptyInNull
+	toDateInput
 } from '@/lib/format'
-import { addressError, composedAddress, mapPoint } from '@/lib/address'
-import { writeAddress } from '@/lib/addressForm'
-import { maxBirthDate, isAdult, MIN_AGE } from '@/lib/isAdult'
+import { isAdult, maxBirthDate, MIN_AGE } from '@/lib/isAdult'
 import type { FoundAddress } from '@/lib/nominatim'
 
 import type { RegisterSection } from './saving'
@@ -140,7 +140,7 @@ export const shopOwnerDetailSchema = z
 		 * checked instead by the composite rule at the bottom.
 		 */
 		addressComplete: z.string(),
-		street: required('Street', MAX_ADDRESS),
+		street: required('Address', MAX_ADDRESS),
 		postalCode: z.string().regex(/^\d{5}$/, 'The postal code must be 5 digits'),
 		city: required('City', MAX_CITY),
 		// Upper-cased by the schema rather than on the way to the wire, so the value the form keeps is the
@@ -180,7 +180,7 @@ export const shopOwnerDetailSchema = z
 	 * the address *does* change, a point comes with it.
 	 */
 	.refine((values) => values.addressComplete === formatAddress(values), {
-		message: "Select the address from the list",
+		message: 'Select the address from the list',
 		path: ['addressComplete']
 	})
 
@@ -458,10 +458,20 @@ const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner
 							/>
 						</EditableRow>
 						<EditableRow label="First name" value={personalData.firstName}>
-							<TextField label="First name" maxLength={MAX_FIRST_NAME} error={errors.firstName?.message} {...register('firstName')} />
+							<TextField
+								label="First name"
+								maxLength={MAX_FIRST_NAME}
+								error={errors.firstName?.message}
+								{...register('firstName')}
+							/>
 						</EditableRow>
 						<EditableRow label="Last name" value={personalData.lastName}>
-							<TextField label="Last name" maxLength={MAX_LAST_NAME} error={errors.lastName?.message} {...register('lastName')} />
+							<TextField
+								label="Last name"
+								maxLength={MAX_LAST_NAME}
+								error={errors.lastName?.message}
+								{...register('lastName')}
+							/>
 						</EditableRow>
 						{/* `max` greys out the disallowed half of the picker. It is a hint, not the check: a
 						    typed or pasted date reaches zod regardless, which is where the rule lives. */}
@@ -639,7 +649,13 @@ const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner
  * they sound. A label with a permanently empty cell beside it reads as missing data rather than as a
  * missing field, so do not add one before the resolver can answer it.
  */
-export const ShopOwnerPersonalData = ({ idShopOwner, registerSection }: { idShopOwner: string; registerSection: RegisterSection }) => {
+export const ShopOwnerPersonalData = ({
+	idShopOwner,
+	registerSection
+}: {
+	idShopOwner: string
+	registerSection: RegisterSection
+}) => {
 	const [result] = useQuery({
 		query: ShopOwnerByIdDocument,
 		variables: { idShopOwner },

@@ -1,8 +1,8 @@
 import type { ChangeEventHandler, InputHTMLAttributes, Ref } from 'react'
 import { useEffect, useState } from 'react'
 
-import { Alert } from '@/components/ui/Alert'
 import { AddressMap } from '@/components/ui/AddressMap'
+import { Alert } from '@/components/ui/Alert'
 import { Spinner } from '@/components/ui/Spinner'
 import { TextField } from '@/components/ui/TextField'
 import type { FoundAddress } from '@/lib/nominatim'

@@ -11,7 +11,7 @@ import { Alert } from '@/components/ui/Alert'
 import { Pagination } from '@/components/ui/Pagination'
 import { Spinner } from '@/components/ui/Spinner'
 import { TextField } from '@/components/ui/TextField'
-import { formatDate, formatAddress } from '@/lib/format'
+import { formatAddress, formatDate } from '@/lib/format'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 
 /** How long the search box waits after the last keystroke before it costs a round-trip. */

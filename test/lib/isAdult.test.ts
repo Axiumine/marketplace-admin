@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { maxBirthDate, isAdult, MIN_AGE } from '@/lib/isAdult'
+import { isAdult, maxBirthDate, MIN_AGE } from '@/lib/isAdult'
 
 describe('maxBirthDate', () => {
 	it('is the same calendar day, eighteen years earlier', () => {

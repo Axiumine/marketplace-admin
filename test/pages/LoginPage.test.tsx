@@ -37,7 +37,7 @@ describe('LoginPage', () => {
 		stubGraphQL({})
 		await renderRoute('/', signedOut)
 
-		expect(screen.getByText(/Il recovery standalone non è available per gli account operator/)).toBeInTheDocument()
+		expect(screen.getByText(/Standalone recovery is not available for operator accounts/)).toBeInTheDocument()
 		expect(screen.queryByRole('button', { name: /Recupera/ })).not.toBeInTheDocument()
 	})
 
@@ -82,7 +82,7 @@ describe('LoginPage', () => {
 	// No minimum length on the password: the rules live on the backend, and refusing to even try an
 	// existing password because it is "too short" locks out anyone whose account predates the policy.
 	it('sends a short password rather than rejecting it locally', async () => {
-		const stub = stubGraphQL({ LoginAdmin: { errors: [graphQLError('Invalid credentialse', undefined, 400)], status: 400 } })
+		const stub = stubGraphQL({ LoginAdmin: { errors: [graphQLError('Invalid credentials', undefined, 400)], status: 400 } })
 		await renderRoute('/', signedOut)
 
 		await fillIn('operator@marketplace.it', 'corta')
@@ -137,7 +137,7 @@ describe('LoginPage', () => {
 	it('reports the backend error and stays put', async () => {
 		stubGraphQL({
 			LoginAdmin: {
-				errors: [graphQLError('Invalid credentialse', 'Email o password non corrette', 400)],
+				errors: [graphQLError('Invalid credentials', 'Email o password non corrette', 400)],
 				status: 400
 			}
 		})
@@ -161,7 +161,7 @@ describe('LoginPage', () => {
 		await fillIn('operator@marketplace.it', 'password123')
 		await submit()
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Invalid credentialse')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Invalid credentials')
 		expect(getAccessToken()).toBeNull()
 		expect(router.state.location.pathname).toBe('/')
 	})

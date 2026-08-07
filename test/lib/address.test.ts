@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { coordinatesText, addressError, composedAddress, mapPoint } from '@/lib/address'
+import { addressError, composedAddress, coordinatesText, mapPoint } from '@/lib/address'
 
 /**
  * A GeoJSON Point is `[longitude, latitude]` — longitude first. Every mapping UI and every human writes
@@ -97,13 +97,13 @@ describe('addressError', () => {
 	 * form, which is the failure the whole helper exists to prevent.
 	 */
 	it.each([
-		['street', "Address is required"],
+		['street', 'Address is required'],
 		['postalCode', 'The postal code must be 5 digits'],
 		['city', 'City is required'],
 		['province', 'The province is the 2-letter code'],
 		['latitude', 'Latitude is not a number'],
 		['longitude', 'Longitude is outside -180..180'],
-		['addressComplete', "Select the address from the list"]
+		['addressComplete', 'Select the address from the list']
 	])('shows the message of a broken %s', (field, message) => {
 		expect(addressError({ [field]: { message } })).toBe(message)
 	})
@@ -120,21 +120,21 @@ describe('addressError', () => {
 		expect(
 			addressError({
 				postalCode: { message: 'The postal code must be 5 digits' },
-				addressComplete: { message: "Select the address from the list" }
+				addressComplete: { message: 'Select the address from the list' }
 			})
 		).toBe('The postal code must be 5 digits')
 	})
 
 	// Between two broken fields the list order decides, and it is the order the box reads top to bottom.
 	it('shows the first broken field when more than one is', () => {
-		expect(
-			addressError({ city: { message: 'City is required' }, street: { message: "Address is required" } })
-		).toBe("Address is required")
+		expect(addressError({ city: { message: 'City is required' }, street: { message: 'Address is required' } })).toBe(
+			'Address is required'
+		)
 	})
 
 	// An error object with no message of its own still counts as the one that is broken — the search stops
 	// there rather than walking on to a later field and describing that instead.
 	it('is nothing for a broken field that carries no message', () => {
-		expect(addressError({ postalCode: {}, addressComplete: { message: "Select the address from the list" } })).toBeUndefined()
+		expect(addressError({ postalCode: {}, addressComplete: { message: 'Select the address from the list' } })).toBeUndefined()
 	})
 })

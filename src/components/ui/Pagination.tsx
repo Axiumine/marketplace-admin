@@ -40,7 +40,7 @@ export const Pagination = ({
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-4 py-3 text-sm">
 			<p aria-live="polite">
-				{firstRow}–{lastRow} di {total}
+				{firstRow}–{lastRow} of {total}
 			</p>
 
 			<nav aria-label="Pagination" className="flex gap-1">

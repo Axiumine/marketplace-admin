@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useState } from 'react'
 
 import { IconButton } from './IconButton'
-import { IconTrash, IconPen } from './icons'
+import { IconPen, IconTrash } from './icons'
 
 /**
  * An `InfoRow` that turns into its own editor.

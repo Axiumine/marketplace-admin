@@ -61,7 +61,7 @@ describe('LoadingPage', () => {
 
 	it('honours a same-site redirect target', async () => {
 		stubGraphQL({ InfoAdminAfterLogin: signedIn })
-		const { router } = await renderRoute('/loading?redirect=%2Fimpostazioni', { session: null })
+		const { router } = await renderRoute('/loading?redirect=%2Fsettings', { session: null })
 
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe('/settings')

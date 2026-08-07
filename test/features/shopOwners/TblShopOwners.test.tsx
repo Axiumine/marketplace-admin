@@ -53,7 +53,7 @@ describe('TblShopOwners', () => {
 		await renderRoute(MANAGE)
 
 		expect(screen.getByText('Loading shop owners')).toBeInTheDocument()
-		expect(screen.queryByText('Nessun shopOwner trovato.')).not.toBeInTheDocument()
+		expect(screen.queryByText('No shopOwner found.')).not.toBeInTheDocument()
 	})
 
 	it('renders a row per shopOwner', async () => {
@@ -103,7 +103,7 @@ describe('TblShopOwners', () => {
 		stubGraphQL({ ShopOwnersActiveTbl: page([]) })
 		await renderRoute(MANAGE)
 
-		expect(await screen.findByText('Nessun shopOwner trovato.')).toBeInTheDocument()
+		expect(await screen.findByText('No shopOwner found.')).toBeInTheDocument()
 	})
 
 	it('reports a failure', async () => {
@@ -237,7 +237,7 @@ describe('TblShopOwners', () => {
 		stubGraphQL({ ShopOwnersActiveTbl: page([rossi, bianchi], 41) })
 		await renderRoute(MANAGE)
 
-		expect(await screen.findByText('1–20 di 41')).toBeInTheDocument()
+		expect(await screen.findByText('1–20 of 41')).toBeInTheDocument()
 	})
 
 	it('renders', async () => {

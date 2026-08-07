@@ -25,7 +25,10 @@ describe('messaggiDaCorreggere', () => {
 	// One line per box, in the order react-hook-form stores them — the toast is read top to bottom beside
 	// a form that is read the same way.
 	it('lists every field that is wrong', () => {
-		const tree = { firstName: { message: 'First name is required' }, certifiedEmail: { message: 'The certified email is not a valid address' } }
+		const tree = {
+			firstName: { message: 'First name is required' },
+			certifiedEmail: { message: 'The certified email is not a valid address' }
+		}
 
 		expect(messagesToFix(errors(tree))).toEqual(['First name is required', 'The certified email is not a valid address'])
 	})
@@ -91,7 +94,7 @@ describe('messaggiDaCorreggere', () => {
 	it('reports the broken field rather than the composite rule that broke with it', () => {
 		const tree = {
 			postalCode: { message: 'The postal code must be 5 digits' },
-			addressComplete: { message: "Select the address from the list" }
+			addressComplete: { message: 'Select the address from the list' }
 		}
 
 		expect(messagesToFix(errors(tree))).toEqual(['The postal code must be 5 digits'])
@@ -99,7 +102,10 @@ describe('messaggiDaCorreggere', () => {
 
 	// The address line comes first, and the fields the operator can actually see follow it.
 	it('puts the address ahead of the rest', () => {
-		const tree = { firstName: { message: 'First name is required' }, postalCode: { message: 'The postal code must be 5 digits' } }
+		const tree = {
+			firstName: { message: 'First name is required' },
+			postalCode: { message: 'The postal code must be 5 digits' }
+		}
 
 		expect(messagesToFix(errors(tree))).toEqual(['The postal code must be 5 digits', 'First name is required'])
 	})

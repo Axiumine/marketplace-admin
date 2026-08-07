@@ -6,7 +6,7 @@ exports[`TextField > renders 1`] = `
 >
   <label
     class="text-sm font-semibold"
-    for="campo-email"
+    for="field-email"
   >
     Email
   </label>
@@ -16,7 +16,7 @@ exports[`TextField > renders 1`] = `
     <input
       aria-invalid="false"
       class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
-      id="campo-email"
+      id="field-email"
     />
   </div>
 </div>
@@ -28,7 +28,7 @@ exports[`TextField > renders with a trailing slot 1`] = `
 >
   <label
     class="text-sm font-semibold"
-    for="campo-email"
+    for="field-email"
   >
     Email
   </label>
@@ -38,7 +38,7 @@ exports[`TextField > renders with a trailing slot 1`] = `
     <input
       aria-invalid="false"
       class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-10"
-      id="campo-email"
+      id="field-email"
     />
     <span
       class="absolute inset-y-0 right-1 flex items-center"
@@ -59,7 +59,7 @@ exports[`TextField > renders with an error 1`] = `
 >
   <label
     class="text-sm font-semibold"
-    for="campo-email"
+    for="field-email"
   >
     Email
   </label>
@@ -67,15 +67,15 @@ exports[`TextField > renders with an error 1`] = `
     class="relative"
   >
     <input
-      aria-describedby="campo-email-error"
+      aria-describedby="field-email-error"
       aria-invalid="true"
       class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border-2 bg-app-error/10 pr-3"
-      id="campo-email"
+      id="field-email"
     />
   </div>
   <span
     class="text-xs text-app-error"
-    id="campo-email-error"
+    id="field-email-error"
   >
     Enter a valid email address
   </span>
