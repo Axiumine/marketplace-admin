@@ -6,7 +6,7 @@ import { FormSubmit } from '@/components/ui/FormSubmit'
 describe('FormSubmit', () => {
 	it('submits the form it ends', () => {
 		render(<FormSubmit>Create shopOwner</FormSubmit>)
-		expect(screen.getByRole('button', { name: 'Crea shopOwner' })).toHaveAttribute('type', 'submit')
+		expect(screen.getByRole('button', { name: 'Create shopOwner' })).toHaveAttribute('type', 'submit')
 	})
 
 	// The button is `inline-flex`: as the direct child of a flex column it would be stretched to the
@@ -17,13 +17,13 @@ describe('FormSubmit', () => {
 
 		const row = container.firstChild
 		expect(row).toHaveClass('col-span-full', 'flex', 'justify-end')
-		expect(screen.getByRole('button', { name: 'Crea shopOwner' })).toHaveClass('px-[30px]')
+		expect(screen.getByRole('button', { name: 'Create shopOwner' })).toHaveClass('px-[30px]')
 	})
 
 	it('is idle until the form says otherwise', () => {
 		render(<FormSubmit>Create shopOwner</FormSubmit>)
 
-		expect(screen.getByRole('button', { name: 'Crea shopOwner' })).toBeEnabled()
+		expect(screen.getByRole('button', { name: 'Create shopOwner' })).toBeEnabled()
 		expect(screen.queryByRole('status')).not.toBeInTheDocument()
 	})
 

@@ -81,7 +81,7 @@ describe('TextareaField', () => {
 
 		const area = screen.getByLabelText('Notes')
 		expect(area).toHaveAttribute('maxlength', '2000')
-		expect(area).toHaveAttribute('placeholder', "Notes about the account")
+		expect(area).toHaveAttribute('placeholder', 'Notes about the account')
 	})
 
 	// Every class is asserted absent in the other state: the two pairs set two properties, so a box
@@ -115,8 +115,8 @@ describe('TextareaField', () => {
 
 		rerender(<TextareaField label="Notes" id="field-note" remaining={1985} />)
 
-		expect(screen.getByText('1985 characters rimanenti')).toBeInTheDocument()
-		expect(screen.getByLabelText('Notes')).toHaveAttribute('aria-describedby', 'field-note-rimanenti')
+		expect(screen.getByText('1985 characters remaining')).toBeInTheDocument()
+		expect(screen.getByLabelText('Notes')).toHaveAttribute('aria-describedby', 'field-note-remaining')
 	})
 
 	// `0` is a count, not a missing one — the box is exactly full and that is the moment the number matters
@@ -124,7 +124,7 @@ describe('TextareaField', () => {
 	it('shows a count of zero', () => {
 		render(<TextareaField label="Notes" remaining={0} />)
 
-		expect(screen.getByText('0 characters rimanenti')).toBeInTheDocument()
+		expect(screen.getByText('0 characters remaining')).toBeInTheDocument()
 	})
 
 	// The number changes while the operator types and nothing else on screen reports it, so it has to be
@@ -132,7 +132,7 @@ describe('TextareaField', () => {
 	it('announces the count as it changes', () => {
 		render(<TextareaField label="Notes" remaining={12} />)
 
-		expect(screen.getByText('12 characters rimanenti')).toHaveAttribute('aria-live', 'polite')
+		expect(screen.getByText('12 characters remaining')).toHaveAttribute('aria-live', 'polite')
 	})
 
 	// Both ids, in one attribute: the message says what is wrong and the count says how far past the cap it
@@ -140,7 +140,7 @@ describe('TextareaField', () => {
 	it('describes the textarea by its error and its count together', () => {
 		render(<TextareaField label="Notes" id="field-note" error="The notes cannot exceed 2000 characters" remaining={-3} />)
 
-		expect(screen.getByLabelText('Notes')).toHaveAttribute('aria-describedby', 'field-note-error field-note-rimanenti')
+		expect(screen.getByLabelText('Notes')).toHaveAttribute('aria-describedby', 'field-note-error field-note-remaining')
 	})
 
 	it('renders', () => {

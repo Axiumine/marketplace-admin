@@ -6,14 +6,14 @@ exports[`TextareaField > renders 1`] = `
 >
   <label
     class="text-sm font-semibold"
-    for="campo-note"
+    for="field-note"
   >
     Notes
   </label>
   <textarea
     aria-invalid="false"
     class="w-full resize-y rounded-box border-tip px-3 py-2 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white"
-    id="campo-note"
+    id="field-note"
     rows="5"
   />
   <div
@@ -28,15 +28,15 @@ exports[`TextareaField > renders with a count 1`] = `
 >
   <label
     class="text-sm font-semibold"
-    for="campo-note"
+    for="field-note"
   >
     Notes
   </label>
   <textarea
-    aria-describedby="campo-note-rimanenti"
+    aria-describedby="field-note-remaining"
     aria-invalid="false"
     class="w-full resize-y rounded-box border-tip px-3 py-2 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white"
-    id="campo-note"
+    id="field-note"
     rows="5"
   />
   <div
@@ -45,7 +45,7 @@ exports[`TextareaField > renders with a count 1`] = `
     <span
       aria-live="polite"
       class="ml-auto text-xs text-tip"
-      id="campo-note-rimanenti"
+      id="field-note-remaining"
     >
       1985
        characters remaining
@@ -60,15 +60,15 @@ exports[`TextareaField > renders with an error 1`] = `
 >
   <label
     class="text-sm font-semibold"
-    for="campo-note"
+    for="field-note"
   >
     Notes
   </label>
   <textarea
-    aria-describedby="campo-note-error"
+    aria-describedby="field-note-error"
     aria-invalid="true"
     class="w-full resize-y rounded-box border-tip px-3 py-2 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border-2 bg-app-error/10"
-    id="campo-note"
+    id="field-note"
     rows="5"
   />
   <div
@@ -76,7 +76,7 @@ exports[`TextareaField > renders with an error 1`] = `
   >
     <span
       class="text-xs text-app-error"
-      id="campo-note-error"
+      id="field-note-error"
     >
       The notes cannot exceed 2000 characters
     </span>

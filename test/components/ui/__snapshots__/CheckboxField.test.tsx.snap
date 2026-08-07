@@ -6,12 +6,12 @@ exports[`CheckboxField > renders 1`] = `
 >
   <input
     class="h-4 w-4 rounded-box border border-tip accent-third"
-    id="campo-disabled"
+    id="field-disabled"
     type="checkbox"
   />
   <label
     class="text-sm font-semibold"
-    for="campo-disabled"
+    for="field-disabled"
   >
     Disabled
   </label>

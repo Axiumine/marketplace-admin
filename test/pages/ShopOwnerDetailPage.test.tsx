@@ -206,15 +206,60 @@ describe('ShopOwnerDetailPage — dopo il saving', () => {
 		await screen.findByRole('heading', { name: 'Shop owner info' })
 		await dirty()
 
+		// Only the company row is opened here — `dirty()` has already opened *and* edited the personalData's
+		// First name, so its pen is gone by this point and clicking it again could only ever fail. It used
+		// to be clicked a second time regardless, which is why this test has never passed.
 		await userEvent.click(screen.getByRole('button', { name: 'Change Legal name' }))
-		await userEvent.click(screen.getByRole('button', { name: 'Change firstName' }))
 		expect(screen.getByLabelText('Legal name')).toBeInTheDocument()
 
 		await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
 		expect(await screen.findByRole('button', { name: 'Change Legal name' })).toBeInTheDocument()
-		expect(screen.getByRole('button', { name: 'Change firstName' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Change First name' })).toBeInTheDocument()
 		expect(screen.queryByLabelText('Legal name')).not.toBeInTheDocument()
+	})
+
+	/*
+	 * A section nobody touched is not merely nothing to send — it is nothing to *validate* either.
+	 *
+	 * These forms are seeded from whatever the collection already holds, and the rules they enforce are
+	 * younger than some of the rows: this `personalData` carries a three-letter province and no street,
+	 * which the address card refuses outright. Validating it anyway would fail the page's save while the
+	 * operator was editing a company, on a card they never opened and cannot see the error on — and the
+	 * companies come after the personalData in the save loop, so the write they *did* ask for is the one
+	 * that never leaves.
+	 *
+	 * The clean section short-circuits to `true` before `handleSubmit` is reached, which is the whole of
+	 * why the assertions below are about the company's write and not the shopOwner's.
+	 */
+	it('saves a company without validating a personalData the operator never opened', async () => {
+		const stub = stubGraphQL({
+			...withCompanies,
+			ShopOwnerById: {
+				data: {
+					shopOwnerById: {
+						...withCompanies.ShopOwnerById.data.shopOwnerById,
+						personalData: {
+							...withCompanies.ShopOwnerById.data.shopOwnerById.personalData,
+							address: { street: '', postalCode: '2010', city: '', province: 'MIL' }
+						}
+					}
+				}
+			},
+			CompanyUpdate: { data: { companyUpdate: true } }
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByRole('heading', { name: 'Shop owner info' })
+
+		await userEvent.click(screen.getByRole('button', { name: 'Change Legal name' }))
+		fireEvent.change(screen.getByLabelText('Legal name'), { target: { value: 'Rossi Mario S.p.A.' } })
+		await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+		expect(await screen.findByRole('button', { name: 'Change Legal name' })).toBeInTheDocument()
+		expect(stub.calls.map((call) => call.operationName)).toContain('CompanyUpdate')
+		expect(stub.calls.map((call) => call.operationName).filter((name) => name.startsWith('ShopOwnerUpdate'))).toEqual([])
+		expect(screen.queryByText('Address is required')).not.toBeInTheDocument()
 	})
 
 	// Only a save that went all the way through. A page left half-written still holds edits, and closing
@@ -228,7 +273,7 @@ describe('ShopOwnerDetailPage — dopo il saving', () => {
 
 		await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Saving non riuscito')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
 		expect(screen.getByLabelText('First name')).toHaveValue('Marione')
 	})
 })

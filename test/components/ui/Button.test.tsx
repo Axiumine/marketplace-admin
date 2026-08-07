@@ -21,7 +21,7 @@ describe('Button', () => {
 		const onClick = vi.fn()
 		render(<Button onClick={onClick}>Logout</Button>)
 
-		await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
+		await userEvent.click(screen.getByRole('button', { name: 'Logout' }))
 		expect(onClick).toHaveBeenCalledTimes(1)
 	})
 

@@ -67,7 +67,7 @@ describe('ChartShopOwners', () => {
 		stubGraphQL({ ...stats, ShopOwnersPerPeriod: threeMonths })
 		await renderRoute('/shopOwners')
 
-		expect(await screen.findByText('Totale nel period:')).toBeInTheDocument()
+		expect(await screen.findByText('Total in period:')).toBeInTheDocument()
 		expect(screen.getByText('4')).toBeInTheDocument()
 	})
 
@@ -129,7 +129,7 @@ describe('ChartShopOwners', () => {
 		stubGraphQL({ ...stats, ShopOwnersPerPeriod: series('MONTH', []) })
 		await renderRoute('/shopOwners')
 
-		expect(await screen.findByText('Nessuna registeredAt nel period selezionato.')).toBeInTheDocument()
+		expect(await screen.findByText('No sign-ups in the selected period.')).toBeInTheDocument()
 		expect(screen.queryByRole('img', { name: /Registrations per period/ })).not.toBeInTheDocument()
 	})
 
@@ -139,7 +139,7 @@ describe('ChartShopOwners', () => {
 		stubGraphQL({ ...stats, ShopOwnersPerPeriod: {} })
 		await renderRoute('/shopOwners')
 
-		expect(await screen.findByText('Nessuna registeredAt nel period selezionato.')).toBeInTheDocument()
+		expect(await screen.findByText('No sign-ups in the selected period.')).toBeInTheDocument()
 	})
 
 	it('reports a failure instead of an empty chart', async () => {

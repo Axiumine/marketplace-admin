@@ -172,12 +172,7 @@ export const useDiscardWarning = (changed: boolean) => {
  * changes. Without that indirection the effect would re-run per character and the page would re-render
  * with it.
  */
-export const useSavableSection = (
-	id: string,
-	register: RegisterSection,
-	changed: boolean,
-	save: () => Promise<boolean>
-) => {
+export const useSavableSection = (id: string, register: RegisterSection, changed: boolean, save: () => Promise<boolean>) => {
 	const saveRef = useRef(save)
 
 	useEffect(() => {

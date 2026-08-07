@@ -2,8 +2,8 @@ import * as Label from '@radix-ui/react-label'
 import type { ReactNode, Ref, SelectHTMLAttributes } from 'react'
 import { useId } from 'react'
 
-import { IconArrowGiu } from '@/components/ui/icons'
 import { FIELD_TO_FIX, FIELD_VALID } from '@/components/ui/fieldStatus'
+import { IconArrowGiu } from '@/components/ui/icons'
 
 interface SelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
 	label: string

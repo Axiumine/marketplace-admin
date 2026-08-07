@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import type { FieldErrors } from 'react-hook-form'
 import { describe, expect, it } from 'vitest'
 
-import { VALIDATION_HEADER, ToastValidation } from '@/components/ui/ToastValidation'
+import { ToastValidation, VALIDATION_HEADER } from '@/components/ui/ToastValidation'
 
 /** See `formErrors.test.ts`: `FieldErrors` is the untyped error map, and an object literal needs the cast. */
 const errors = (tree: Record<string, unknown>): FieldErrors => tree as unknown as FieldErrors
@@ -20,7 +20,10 @@ describe('ToastValidation', () => {
 	it('lists what has to be corrected', () => {
 		render(
 			<ToastValidation
-				errors={errors({ firstName: { message: 'First name is required' }, certifiedEmail: { message: 'The certified email is not a valid address' } })}
+				errors={errors({
+					firstName: { message: 'First name is required' },
+					certifiedEmail: { message: 'The certified email is not a valid address' }
+				})}
 			/>
 		)
 
@@ -52,7 +55,10 @@ describe('ToastValidation', () => {
 	it('shrinks as the fields are corrected, and goes away with the last of them', () => {
 		const { rerender } = render(
 			<ToastValidation
-				errors={errors({ firstName: { message: 'First name is required' }, certifiedEmail: { message: 'The certified email is not a valid address' } })}
+				errors={errors({
+					firstName: { message: 'First name is required' },
+					certifiedEmail: { message: 'The certified email is not a valid address' }
+				})}
 			/>
 		)
 
@@ -60,7 +66,9 @@ describe('ToastValidation', () => {
 
 		rerender(<ToastValidation errors={errors({ certifiedEmail: { message: 'The certified email is not a valid address' } })} />)
 
-		expect(screen.getAllByRole('listitem').map((riga) => riga.textContent)).toEqual(['The certified email is not a valid address'])
+		expect(screen.getAllByRole('listitem').map((riga) => riga.textContent)).toEqual([
+			'The certified email is not a valid address'
+		])
 
 		rerender(<ToastValidation errors={errors({})} />)
 
@@ -70,7 +78,10 @@ describe('ToastValidation', () => {
 	it('renders', () => {
 		render(
 			<ToastValidation
-				errors={errors({ firstName: { message: 'First name is required' }, certifiedEmail: { message: 'The certified email is not a valid address' } })}
+				errors={errors({
+					firstName: { message: 'First name is required' },
+					certifiedEmail: { message: 'The certified email is not a valid address' }
+				})}
 			/>
 		)
 		expect(screen.getByRole('alert')).toMatchSnapshot()

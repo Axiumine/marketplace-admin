@@ -1,6 +1,6 @@
 import { PageHeader } from '@/components/layout/PageHeader'
-import { ShopOwnerAddForm } from '@/features/shopOwners/ShopOwnerAddForm'
 import { MenuShopOwners } from '@/features/shopOwners/MenuShopOwners'
+import { ShopOwnerAddForm } from '@/features/shopOwners/ShopOwnerAddForm'
 
 export const AddShopOwnerPage = () => (
 	<>

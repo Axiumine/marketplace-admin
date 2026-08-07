@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Personal dataShop owner > renders 1`] = `
+exports[`ShopOwnerPersonalData > renders 1`] = `
 <main
   class="flex-1 overflow-auto p-6"
 >
@@ -19,7 +19,7 @@ exports[`Personal dataShop owner > renders 1`] = `
           <a
             href="/shopOwners"
           >
-            Shop owners
+            ShopOwners
           </a>
         </li>
         <li
@@ -50,7 +50,7 @@ exports[`Personal dataShop owner > renders 1`] = `
         class="flex gap-2"
       >
         <nav
-          aria-label="Shop owner sections"
+          aria-label="Sections shopOwners"
           class="flex flex-wrap gap-2"
         >
           <a
@@ -82,7 +82,7 @@ exports[`Personal dataShop owner > renders 1`] = `
       <h2
         class="mb-2 text-lg font-bold"
       >
-        Personal data
+        PersonalData
       </h2>
       <div
         class="grid gap-4 md:grid-cols-3"
@@ -98,7 +98,7 @@ exports[`Personal dataShop owner > renders 1`] = `
               class="font-bold"
               id=":id-0:"
             >
-              Shop owner
+              ShopOwner
             </h3>
           </div>
           <div
@@ -708,7 +708,7 @@ exports[`Personal dataShop owner > renders 1`] = `
             <span
               class="flex items-center gap-1 text-right"
             >
-              Yes
+              Sì
               <button
                 aria-label="Change Onboarding complete"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
@@ -857,50 +857,6 @@ exports[`Personal dataShop owner > renders 1`] = `
     class="text-tip"
   >
     No company registered.
-  </p>
-  <div
-    class="mt-8 mb-2 flex items-center justify-between gap-2"
-  >
-    <h2
-      class="text-lg font-bold"
-    >
-      Shops
-    </h2>
-    <button
-      aria-label="Add shop"
-      class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
-      disabled=""
-      title="Add shop"
-      type="button"
-    >
-      <svg
-        aria-hidden="true"
-        class="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="1.75"
-        viewBox="0 0 24 24"
-      >
-        <path
-          d="M12 5v14"
-        />
-        <path
-          d="M5 12h14"
-        />
-      </svg>
-    </button>
-  </div>
-  <p
-    class="text-tip mb-2 text-sm"
-  >
-    Register a company first: every shop names one.
-  </p>
-  <p
-    class="text-tip"
-  >
-    No shop registered.
   </p>
   <div
     class="mt-8 flex items-center justify-end gap-4"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { searchAddresses, DELTA_BBOX, MAX_RESULTS, urlMap } from '@/lib/nominatim'
+import { DELTA_BBOX, MAX_RESULTS, searchAddresses, urlMap } from '@/lib/nominatim'
 
 import { installOsm, NOMINATIM_SEARCH, OSM_EMBED, resultOsm } from '../helpers/nominatim'
 
@@ -88,7 +88,7 @@ describe('searchAddresses', () => {
 	// Nominatim omits `address` entirely for some matches. Every field is then empty and the operator
 	// fills them — which is a usable form, unlike a crash.
 	it('survives a result with no address block at all', async () => {
-		installOsm({ results: [resultOsm({ street: undefined })] })
+		installOsm({ results: [resultOsm({ address: undefined })] })
 
 		const [found] = await search()
 		expect(found).toMatchObject({ street: '', postalCode: '', city: '', province: '' })

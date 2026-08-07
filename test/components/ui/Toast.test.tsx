@@ -75,7 +75,7 @@ describe('Toast', () => {
 		)
 
 		expect(screen.getByRole('alert')).toHaveTextContent('Save failed.')
-		expect(screen.getAllByRole('status').map((node) => node.textContent)).toEqual(['Changes saved.', 'No changes.'])
+		expect(screen.getAllByRole('status').map((node) => node.textContent)).toEqual(['Changes saved.', 'No change.'])
 	})
 
 	/*
@@ -181,7 +181,7 @@ describe('Toast', () => {
 		render(<Toast tone="info">No change.</Toast>)
 
 		expect(bar(screen.getByRole('status'))).toBeNull()
-		expect(screen.getByText('No changes.')).toBeInTheDocument()
+		expect(screen.getByText('No change.')).toBeInTheDocument()
 	})
 
 	// The third tone's colours, which the two snapshots below never see. Opaque like the others — a toast

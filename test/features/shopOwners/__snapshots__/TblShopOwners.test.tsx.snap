@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`TblShop owners > renders 1`] = `
+exports[`TblShopOwners > renders 1`] = `
 <main
   class="flex-1 overflow-auto p-6"
 >
@@ -19,7 +19,7 @@ exports[`TblShop owners > renders 1`] = `
           <a
             href="/shopOwners"
           >
-            Shop owners
+            ShopOwners
           </a>
         </li>
         <li
@@ -41,7 +41,7 @@ exports[`TblShop owners > renders 1`] = `
         class="flex gap-2"
       >
         <nav
-          aria-label="Shop owner sections"
+          aria-label="Sections shopOwners"
           class="flex flex-wrap gap-2"
         >
           <a
@@ -78,7 +78,7 @@ exports[`TblShop owners > renders 1`] = `
         class="text-sm font-semibold"
         for=":id-0:"
       >
-        Search shop owner
+        Search shopOwner
       </label>
       <div
         class="relative"
@@ -133,7 +133,7 @@ exports[`TblShop owners > renders 1`] = `
                 class="font-bold"
                 type="button"
               >
-                Registration
+                RegisteredAt
               </button>
             </th>
             <th

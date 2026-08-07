@@ -148,7 +148,7 @@ describe('ShopOwnerPersonalData', () => {
 		await renderRoute(DETAIL)
 
 		expect(screen.getByText('Loading shop owner')).toBeInTheDocument()
-		expect(screen.queryByText('ShopOwner non trovato.')).not.toBeInTheDocument()
+		expect(screen.queryByText('Shop owner not found.')).not.toBeInTheDocument()
 	})
 
 	it('shows the personal details', async () => {
@@ -208,7 +208,7 @@ describe('ShopOwnerPersonalData', () => {
 		await screen.findByText('Mario')
 		expect(screen.queryByTitle('Map of Mario Rossi')).not.toBeInTheDocument()
 		expect(
-			box('Address').getByText("Position unavailable: change the address and pick it from the list to add one.")
+			box('Address').getByText('Position unavailable: change the address and pick it from the list to add one.')
 		).toBeInTheDocument()
 	})
 
@@ -304,7 +304,7 @@ describe('ShopOwnerPersonalData', () => {
 		})
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByText('ShopOwner non trovato.')).toBeInTheDocument()
+		expect(await screen.findByText('Shop owner not found.')).toBeInTheDocument()
 	})
 
 	// A different shape from the one above and a different branch: `null` for the field is the service
@@ -317,7 +317,7 @@ describe('ShopOwnerPersonalData', () => {
 		})
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByText('ShopOwner non trovato.')).toBeInTheDocument()
+		expect(await screen.findByText('Shop owner not found.')).toBeInTheDocument()
 	})
 
 	it('renders', async () => {
@@ -861,7 +861,7 @@ const HINT = 'Via Roma, 1, Milano, MI, 20121, Italia'
 const PICKED = 'Via Roma 1, 20121 Milano (MI)'
 
 /** The map `AddressField` brings with it, which follows what is being typed rather than what is stored. */
-const mapEditor = () => screen.queryByTitle("Address map")
+const mapEditor = () => screen.queryByTitle('Address map')
 
 /**
  * Every refusal the address box can be showing, and the reason they are asserted as a set.
@@ -872,13 +872,13 @@ const mapEditor = () => screen.queryByTitle("Address map")
  * the only assertion that says the pick cleared the field it was really about.
  */
 const MESSAGES_ADDRESS = [
-	"Address is required",
+	'Address is required',
 	'The postal code must be 5 digits',
 	'City is required',
 	'The province is the 2-letter code',
 	'Latitude is outside -90..90',
 	'Longitude is outside -180..180',
-	"Select the address from the list"
+	'Select the address from the list'
 ]
 
 /**
@@ -939,7 +939,7 @@ describe('ShopOwnerPersonalData — address', () => {
 		await open('Address')
 
 		expect(
-			screen.queryByText("Position unavailable: change the address and pick it from the list to add one.")
+			screen.queryByText('Position unavailable: change the address and pick it from the list to add one.')
 		).not.toBeInTheDocument()
 		expect(mapEditor()).toBeInTheDocument()
 	})
@@ -950,10 +950,7 @@ describe('ShopOwnerPersonalData — address', () => {
 	 * where the record had none.
 	 */
 	it('writes the picked address and its coordinates, longitude first on the wire', async () => {
-		const stub = stubNetwork(
-			{ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } },
-			{ results: [resultOsm()] }
-		)
+		const stub = stubNetwork({ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } }, { results: [resultOsm()] })
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mario')
@@ -990,10 +987,7 @@ describe('ShopOwnerPersonalData — address', () => {
 	 * on screen. The message is on the box, because the fields it is really about have no input at all.
 	 */
 	it('refuses an address that was typed but never picked', async () => {
-		const stub = stubNetwork(
-			{ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } },
-			{ results: [resultOsm()] }
-		)
+		const stub = stubNetwork({ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } }, { results: [resultOsm()] })
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mario')
@@ -1001,7 +995,7 @@ describe('ShopOwnerPersonalData — address', () => {
 		fireEvent.change(field(), { target: { value: 'Via Roma 1 Milano' } })
 		await userEvent.click(save())
 
-		expect(await page().findByText("Select the address from the list")).toBeInTheDocument()
+		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
 		expect(writes(stub)).toEqual([])
 	})
 
@@ -1018,12 +1012,12 @@ describe('ShopOwnerPersonalData — address', () => {
 		fireEvent.change(field(), { target: { value: 'Via Roma 1 Milano' } })
 		await userEvent.click(save())
 
-		expect(await page().findByText("Select the address from the list")).toBeInTheDocument()
+		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
 
 		fireEvent.click(await hintOsm(HINT))
 
 		await waitFor(() => {
-			expect(page().queryByText("Select the address from the list")).not.toBeInTheDocument()
+			expect(page().queryByText('Select the address from the list')).not.toBeInTheDocument()
 		})
 		expect(field()).toHaveValue(PICKED)
 	})
@@ -1046,7 +1040,7 @@ describe('ShopOwnerPersonalData — address', () => {
 		await userEvent.click(save())
 
 		// The first of the six, which is all the box can say about them.
-		expect(await page().findByText("Address is required")).toBeInTheDocument()
+		expect(await page().findByText('Address is required')).toBeInTheDocument()
 
 		fireEvent.click(await hintOsm(HINT))
 
@@ -1252,11 +1246,11 @@ describe('ShopOwnerPersonalData — note', () => {
 		await screen.findByText('Mario')
 		await open('Notes')
 
-		expect(box('Notes').getByText('1976 characters rimanenti')).toBeInTheDocument()
+		expect(box('Notes').getByText('1976 characters remaining')).toBeInTheDocument()
 
 		fireEvent.change(areaNote(), { target: { value: 'Memo' } })
 
-		expect(box('Notes').getByText('1996 characters rimanenti')).toBeInTheDocument()
+		expect(box('Notes').getByText('1996 characters remaining')).toBeInTheDocument()
 	})
 
 	// Past the cap the count goes negative rather than sticking at zero: `maxLength` stops typing but not a
@@ -1269,7 +1263,7 @@ describe('ShopOwnerPersonalData — note', () => {
 		await open('Notes')
 		fireEvent.change(areaNote(), { target: { value: 'n'.repeat(2001) } })
 
-		expect(box('Notes').getByText('-1 characters rimanenti')).toBeInTheDocument()
+		expect(box('Notes').getByText('-1 characters remaining')).toBeInTheDocument()
 	})
 
 	it('reports the backend refusal of the note write', async () => {

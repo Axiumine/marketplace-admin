@@ -57,7 +57,7 @@ const fillIn = async (override: Partial<Record<keyof typeof VALID, string>> = {}
 }
 
 const submit = async () => {
-	await userEvent.click(screen.getByRole('button', { name: 'Crea shopOwner' }))
+	await userEvent.click(screen.getByRole('button', { name: 'Create shopOwner' }))
 }
 
 /**
@@ -238,7 +238,7 @@ describe('ShopOwnerAddForm', () => {
 		['First name', '   ', 'First name is required'],
 		['Last name', '', 'Last name is required'],
 		['Date of birth', '', 'Enter a valid date of birth'],
-		['Address', '', "Address is required"],
+		['Address', '', 'Address is required'],
 		['Postal code', '2010', 'The postal code must be 5 digits'],
 		['City', '', 'City is required'],
 		['Province', 'M', 'The province is the 2-letter code'],
@@ -308,7 +308,7 @@ describe('ShopOwnerAddForm', () => {
 	it('reports the backend error and stays on the form', async () => {
 		stubNetwork({
 			ShopOwnerAdd: {
-				errors: [graphQLError('Email già registrata', "Address è già in uso", 412)],
+				errors: [graphQLError('Email già registrata', 'Address è già in uso', 412)],
 				status: 412
 			}
 		})
@@ -317,7 +317,7 @@ describe('ShopOwnerAddForm', () => {
 		await fillIn()
 		await submit()
 
-		expect(await screen.findByRole('alert')).toHaveTextContent("Address è già in uso")
+		expect(await screen.findByRole('alert')).toHaveTextContent('Address è già in uso')
 		expect(router.state.location.pathname).toBe(ADD)
 		// Nothing typed is thrown away: twelve fields is a lot to re-enter because one of them collided.
 		expect(screen.getByLabelText('First name')).toHaveValue('Mario')
@@ -405,10 +405,7 @@ describe('ShopOwnerAddForm', () => {
 	 * catching.
 	 */
 	it('fills the whole address from one OpenStreetMap answer', async () => {
-		const stub = stubNetwork(
-			{ ShopOwnerAdd: { data: { shopOwnerAdd: true } }, ...emptyTable },
-			{ results: [resultOsm()] }
-		)
+		const stub = stubNetwork({ ShopOwnerAdd: { data: { shopOwnerAdd: true } }, ...emptyTable }, { results: [resultOsm()] })
 		await renderRoute(ADD)
 
 		await fillIn({ Address: 'via roma milano', 'Postal code': '', City: '', Province: '' })
@@ -424,7 +421,7 @@ describe('ShopOwnerAddForm', () => {
 		await waitFor(() => {
 			expect(addCalls(stub)).toHaveLength(1)
 		})
-		expect((stub.calls[0]?.variables.personalData as { street: unknown }).street).toEqual({
+		expect((stub.calls[0]?.variables.personalData as { address: unknown }).address).toEqual({
 			street: 'Via Roma 1',
 			postalCode: '20121',
 			city: 'Milano',
@@ -447,7 +444,7 @@ describe('ShopOwnerAddForm', () => {
 		fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'ponte ticino' } })
 		fireEvent.click(await hintOsm('Ponte sul Ticino, Pavia, Italia'))
 
-		expect(await screen.findByText("Address is required")).toBeInTheDocument()
+		expect(await screen.findByText('Address is required')).toBeInTheDocument()
 		expect(screen.getByText('The postal code must be 5 digits')).toBeInTheDocument()
 		expect(screen.getByText('City is required')).toBeInTheDocument()
 		expect(screen.getByText('The province is the 2-letter code')).toBeInTheDocument()
@@ -461,7 +458,7 @@ describe('ShopOwnerAddForm', () => {
 		await renderRoute(ADD)
 
 		await submit()
-		expect(await screen.findByText("Address is required")).toBeInTheDocument()
+		expect(await screen.findByText('Address is required')).toBeInTheDocument()
 		expect(screen.getByText('The postal code must be 5 digits')).toBeInTheDocument()
 		expect(screen.getByText('City is required')).toBeInTheDocument()
 		expect(screen.getByText('The province is the 2-letter code')).toBeInTheDocument()
@@ -470,7 +467,7 @@ describe('ShopOwnerAddForm', () => {
 		fireEvent.click(await hintOsm('Via Roma, 1, Milano, MI, 20121, Italia'))
 
 		await waitFor(() => {
-			expect(screen.queryByText("Address is required")).not.toBeInTheDocument()
+			expect(screen.queryByText('Address is required')).not.toBeInTheDocument()
 		})
 		expect(screen.queryByText('The postal code must be 5 digits')).not.toBeInTheDocument()
 		expect(screen.queryByText('City is required')).not.toBeInTheDocument()
@@ -487,7 +484,7 @@ describe('ShopOwnerAddForm', () => {
 		await submit()
 
 		await waitFor(() => {
-			expect(screen.getByRole('button', { name: 'Crea shopOwner' })).toBeEnabled()
+			expect(screen.getByRole('button', { name: 'Create shopOwner' })).toBeEnabled()
 		})
 		expect(router.state.location.pathname).toBe(ADD)
 	})

@@ -66,7 +66,7 @@ export const coordinate = (label: string, limit: number) =>
  * spell out. It is also what makes the pick the only way a position ever moves — there is no longer a
  * box to type a latitude into.
  */
-export const ADDRESS_MESSAGE = "Select the address from the list"
+export const ADDRESS_MESSAGE = 'Select the address from the list'
 
 /**
  * The address half of a blank card, for the two forms that can open one.

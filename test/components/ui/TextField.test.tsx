@@ -83,7 +83,7 @@ describe('TextField', () => {
 
 		expect(screen.getByLabelText('Email')).toHaveClass('pr-10')
 		expect(screen.getByLabelText('Email')).not.toHaveClass('pr-3')
-		expect(screen.getByRole('button', { name: 'Occhio' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Eye' })).toBeInTheDocument()
 	})
 
 	// The red message is small text under a box, and on a thirteen-field form the eye still has to find

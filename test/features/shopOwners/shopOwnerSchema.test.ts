@@ -46,7 +46,7 @@ describe('shopOwnerSchema — data di birth', () => {
 	it('refuses someone who turns eighteen tomorrow', () => {
 		today('2026-08-02T12:00:00Z')
 
-		expect(messages('2008-08-03')).toEqual(["The shop owner must be of age (at least 18)"])
+		expect(messages('2008-08-03')).toEqual(['The shop owner must be of age (at least 18)'])
 	})
 
 	it('accepts someone who turns eighteen today', () => {

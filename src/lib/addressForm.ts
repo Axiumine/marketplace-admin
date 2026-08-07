@@ -7,15 +7,7 @@ import type { FoundAddress } from '@/lib/nominatim'
  * The seven boxes an address occupies in every form on the detail page — the one the operator can see
  * and the six behind it — named once so the write and the revalidation can never disagree about the set.
  */
-export const FIELDS_ADDRESS = [
-	'addressComplete',
-	'street',
-	'postalCode',
-	'city',
-	'province',
-	'latitude',
-	'longitude'
-] as const
+export const FIELDS_ADDRESS = ['addressComplete', 'street', 'postalCode', 'city', 'province', 'latitude', 'longitude'] as const
 
 /** The address slice of a form's values. Every form that edits one has these seven, plus its own. */
 export type ValuesAddress = Record<(typeof FIELDS_ADDRESS)[number], string>

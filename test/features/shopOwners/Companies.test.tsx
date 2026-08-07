@@ -146,7 +146,7 @@ const mask = () => screen.queryByText('It will be deleted on save.')?.parentElem
 const map = (name = 'Rossi Mario S.r.l.') => screen.queryByTitle(`Map of ${name}`)
 
 /** The map `AddressField` brings with it, which follows what is being typed rather than what is stored. */
-const mapEditor = () => screen.queryByTitle("Address map")
+const mapEditor = () => screen.queryByTitle('Address map')
 
 /**
  * Every test that opens the address row stubs the geocoder as well as GraphQL — typing into that row is
@@ -180,13 +180,13 @@ const reads = (stub: GraphQLStub, name: string) => stub.calls.filter((call) => c
  * "no field behind the box is still refused" has to name all seven and find none of them.
  */
 const MESSAGES_ADDRESS = [
-	"Address is required",
+	'Address is required',
 	'The postal code must be 5 digits',
 	'City is required',
 	'The province is the 2-letter code',
 	'Latitude must be a number',
 	'Longitude must be a number',
-	"Select the address from the list"
+	'Select the address from the list'
 ]
 
 const OK = { CompanyUpdate: { data: { companyUpdate: true } } }
@@ -205,14 +205,14 @@ describe('Companies', () => {
 		await renderRoute(DETAIL)
 
 		expect(screen.getByText('Loading companies')).toBeInTheDocument()
-		expect(screen.queryByText('Nessuna company registrata.')).not.toBeInTheDocument()
+		expect(screen.queryByText('No company registered.')).not.toBeInTheDocument()
 	})
 
 	it('says so when the shopOwner has none', async () => {
 		stubGraphQL(companies([]))
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByText('Nessuna company registrata.')).toBeInTheDocument()
+		expect(await screen.findByText('No company registered.')).toBeInTheDocument()
 	})
 
 	/*
@@ -227,7 +227,7 @@ describe('Companies', () => {
 		})
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByText('Nessuna company registrata.')).toBeInTheDocument()
+		expect(await screen.findByText('No company registered.')).toBeInTheDocument()
 	})
 
 	// The section's own failure, and the personalData above it still on screen: three independent queries,
@@ -241,7 +241,7 @@ describe('Companies', () => {
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Companies non disponibili')
 		expect(screen.getByText('Mario')).toBeInTheDocument()
-		expect(screen.queryByText('Nessuna company registrata.')).not.toBeInTheDocument()
+		expect(screen.queryByText('No company registered.')).not.toBeInTheDocument()
 	})
 
 	it('shows every field the collection holds', async () => {
@@ -524,7 +524,7 @@ describe('Companies — modifica', () => {
 	it.each([
 		['Legal name', 'Legal name is required'],
 		['Contact person', 'Contact person is required'],
-		['Administrator', "Administrator is required"],
+		['Administrator', 'Administrator is required'],
 		['Registry extract', 'Registry extract is required']
 	])('refuses a blank %s', async (field, message) => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK })
@@ -542,7 +542,7 @@ describe('Companies — modifica', () => {
 	it.each([
 		['VAT number', '1234567890', 'The VAT number is 11 digits'],
 		['Tax code', '1234567890', 'The tax code is 11 characters'],
-		['Unique code', 'ABC12', 'The unique code is 7 characters alfanumerici'],
+		['Unique code', 'ABC12', 'The unique code is 7 alphanumeric characters'],
 		// Something the `type="email"` box itself accepts: jsdom runs the HTML validator too, and a value it
 		// refuses never reaches the schema this line is about.
 		['Certified email', 'chiocciola@', 'The certified email is not a valid address']
@@ -565,7 +565,7 @@ describe('Companies — modifica', () => {
 	it.each([
 		['Legal name', 101, 'Legal name cannot exceed 100 characters'],
 		['Contact person', 51, 'Contact person cannot exceed 50 characters'],
-		['Administrator', 51, "Administrator cannot exceed 50 characters"],
+		['Administrator', 51, 'Administrator cannot exceed 50 characters'],
 		['Registry extract', 1001, 'Registry extract cannot exceed 1000 characters']
 	])('refuses an over-long %s', async (field, length, message) => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK })
@@ -671,12 +671,12 @@ describe('Companies — sede legale', () => {
 		fireEvent.change(addressBox(), { target: { value: 'Via Roma 2, 20121 Milano (MI)' } })
 		await userEvent.click(save())
 
-		expect(await page().findByText("Select the address from the list")).toBeInTheDocument()
+		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
 
 		fireEvent.click(await hintOsm(HINT))
 
 		await waitFor(() => {
-			expect(page().queryByText("Select the address from the list")).toBeNull()
+			expect(page().queryByText('Select the address from the list')).toBeNull()
 		})
 	})
 
@@ -717,7 +717,7 @@ describe('Companies — sede legale', () => {
 		fireEvent.change(addressBox(), { target: { value: 'Via Roma 2, 20121 Milano (MI)' } })
 		await userEvent.click(save())
 
-		expect(await page().findByText("Select the address from the list")).toBeInTheDocument()
+		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
 		expect(writes(stub)).toEqual([])
 	})
 })
@@ -770,7 +770,11 @@ describe('Companies — eliminazione', () => {
 
 		const title = await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
 
-		expect(title).not.toHaveClass('line-through')
+		// The whole class list, not just the absence of `line-through`. The queued state is expressed by
+		// what the ternary adds, so its *empty* alternative is as much a part of the rule as the struck
+		// branch — and an alternative that quietly gained a class would leave every "not struck through"
+		// assertion passing while the heading rendered as something else entirely.
+		expect(title.className.trim()).toBe('text-lg font-bold')
 
 		await userEvent.click(trash())
 
@@ -909,7 +913,7 @@ describe('Companies — new company', () => {
 	})
 
 	/*
-	 * "Nessuna company registrata." is about the collection, and an open card is the answer to it — the two
+	 * "No company registered." is about the collection, and an open card is the answer to it — the two
 	 * on screen together would be the page contradicting itself.
 	 *
 	 * The card counts as a pending change from the moment it appears, before a character is typed: it is a
@@ -919,13 +923,13 @@ describe('Companies — new company', () => {
 		stubNetwork(companies([]))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		expect(save()).toBeDisabled()
 
 		await add()
 
 		expect(screen.getByRole('heading', { name: NEW, level: 3 })).toBeInTheDocument()
-		expect(screen.queryByText('Nessuna company registrata.')).not.toBeInTheDocument()
+		expect(screen.queryByText('No company registered.')).not.toBeInTheDocument()
 		expect(save()).toBeEnabled()
 	})
 
@@ -952,7 +956,7 @@ describe('Companies — new company', () => {
 		stubNetwork(companies([]))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 
 		expect(box('Company data', NEW).getByLabelText('Legal name')).toHaveValue('')
@@ -971,7 +975,7 @@ describe('Companies — new company', () => {
 		stubNetwork(companies([]))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 
 		expect(within(newCard()).queryByTitle(/^Map of /)).toBeNull()
@@ -984,12 +988,12 @@ describe('Companies — new company', () => {
 		stubNetwork(companies([]))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await userEvent.click(within(newCard()).getByRole('button', { name: 'Cancel new company' }))
 
 		expect(screen.queryByRole('heading', { name: NEW, level: 3 })).toBeNull()
-		expect(screen.getByText('Nessuna company registrata.')).toBeInTheDocument()
+		expect(screen.getByText('No company registered.')).toBeInTheDocument()
 		expect(save()).toBeDisabled()
 	})
 
@@ -1002,11 +1006,13 @@ describe('Companies — new company', () => {
 		stubNetwork(companies([]))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await add()
 
-		fireEvent.change(within(newCards()[1] as HTMLElement).getByLabelText('Contact person'), { target: { value: 'Anna Bianchi' } })
+		fireEvent.change(within(newCards()[1] as HTMLElement).getByLabelText('Contact person'), {
+			target: { value: 'Anna Bianchi' }
+		})
 		await userEvent.click(within(newCards()[0] as HTMLElement).getByRole('button', { name: 'Cancel new company' }))
 
 		expect(newCards()).toHaveLength(1)
@@ -1023,14 +1029,14 @@ describe('Companies — new company', () => {
 		const stub = stubNetwork({ ...companies([]), ...OK_ADD })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await userEvent.click(save())
 
 		expect(await page().findByText('Legal name is required')).toBeInTheDocument()
 		expect(page().getByText('The VAT number is 11 digits')).toBeInTheDocument()
 		expect(page().getByText('Registry extract is required')).toBeInTheDocument()
-		expect(page().getByText("Address is required")).toBeInTheDocument()
+		expect(page().getByText('Address is required')).toBeInTheDocument()
 		expect(adds(stub)).toEqual([])
 		expect(screen.queryByText('Changes saved.')).not.toBeInTheDocument()
 	})
@@ -1051,7 +1057,7 @@ describe('Companies — new company', () => {
 		stubNetwork({ ...companies([]), ...OK_ADD }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await userEvent.click(save())
 
@@ -1064,7 +1070,7 @@ describe('Companies — new company', () => {
 
 		expect(warning).toHaveTextContent(VALIDATION_HEADER)
 		expect(rows()).toContain('Legal name is required')
-		expect(rows().filter((riga) => MESSAGES_ADDRESS.includes(riga))).toEqual(["Address is required"])
+		expect(rows().filter((riga) => MESSAGES_ADDRESS.includes(riga))).toEqual(['Address is required'])
 		expect(legalName()).toHaveClass('border-2', 'bg-app-error/10')
 
 		write('Company data', 'Legal name', 'Pizzeria Nuova S.r.l.', NEW)
@@ -1075,7 +1081,7 @@ describe('Companies — new company', () => {
 		expect(legalName()).toHaveClass('border', 'bg-white')
 		// The rest of the list stays: one corrected box is not a saved form, and a toast that emptied itself
 		// on the first fix would say the save is ready when it is not.
-		expect(rows()).toContain("Address is required")
+		expect(rows()).toContain('Address is required')
 	})
 
 	/*
@@ -1090,17 +1096,17 @@ describe('Companies — new company', () => {
 		stubNetwork({ ...companies([]), ...OK_ADD }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await userEvent.click(save())
 
-		expect(await page().findByText("Address is required")).toBeInTheDocument()
+		expect(await page().findByText('Address is required')).toBeInTheDocument()
 
 		fireEvent.change(box('Registered office', NEW).getByLabelText('Address'), { target: { value: 'Via Roma 1 Milano' } })
 		fireEvent.click(await hintOsm(HINT))
 
 		await waitFor(() => {
-			expect(screen.queryByText("Address is required")).toBeNull()
+			expect(screen.queryByText('Address is required')).toBeNull()
 		})
 		for (const message of MESSAGES_ADDRESS) expect(screen.queryByText(message)).toBeNull()
 	})
@@ -1111,7 +1117,7 @@ describe('Companies — new company', () => {
 		const stub = stubNetwork({ ...companies([]), ...OK_ADD }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await fill()
 
@@ -1152,7 +1158,7 @@ describe('Companies — new company', () => {
 		stubNetwork({ ...companies([]), CompanyAdd: { data: { companyAdd: false } } }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await fill()
 		await userEvent.click(save())
@@ -1178,12 +1184,14 @@ describe('Companies — new company', () => {
 		)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Nessuna company registrata.')
+		await screen.findByText('No company registered.')
 		await add()
 		await fill()
 		await userEvent.click(save())
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('VAT number or Certified email already registered by another company')
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'VAT number or Certified email already registered by another company'
+		)
 		expect(screen.getByRole('heading', { name: NEW, level: 3 })).toBeInTheDocument()
 	})
 

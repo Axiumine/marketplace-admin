@@ -93,7 +93,7 @@ describe('SideMenu', () => {
 
 		expect(screen.queryByText(ADMIN.email)).not.toBeInTheDocument()
 		expect(screen.getByRole('navigation', { name: 'Main menu' })).toBeInTheDocument()
-		expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+		expect(screen.getByRole('button', { name: 'Logout' })).toBeInTheDocument()
 	})
 
 	it('renders', async () => {
