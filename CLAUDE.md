@@ -91,11 +91,10 @@ That is what lets a page be rendered in a test without a router assertion in the
 - **Never read, echo or commit a secret file.** `.env` is git-ignored and the pre-commit hook refuses
   it; `env` (no dot) is the committed template and is safe. To inspect `.env`, print key names only:
   `grep -oE '^[A-Za-z_0-9]+' .env`.
-- **Remote is `git@github.com:Marketplace-Org/marketplace-admin.git`** (private), `main` tracking
-  `origin/main`. It was local-only until that decision was reversed; the whole history was scanned for
-  secrets before the first push and nothing needed purging. ⚠️ **`Marketplace-Org/marketplace.admin`, with a
-  dot, is a different and dead repo** — the old Nuxt operator SPA, deleted locally but never removed
-  from the org. One character apart. Do not push to it.
+- **This repo has no remote.** `git remote` is empty and there is no `remote.*` key in its config, so
+  nothing here has ever been published and `main` tracks nothing. Where it gets published, and under
+  which org, is the user's call and has not been made. It is **push-on-request**: never run `git push`
+  unless the user asked for it in that message.
 - **The pre-push hook selects node itself**, ahead of its five gates. It reads `engines.node` from
   `package.json` — never a hard-coded version — and sources nvm to switch if the current node does not
   satisfy it. Necessary because every gate shells out to yarn and yarn's `engines` check is a hard
