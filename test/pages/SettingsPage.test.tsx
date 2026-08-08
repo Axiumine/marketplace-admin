@@ -8,7 +8,7 @@ import { MAX_PWD_LENGTH } from '@/features/settings/PasswordChangeForm'
 import { graphQLError, stubGraphQL } from '../helpers/graphql'
 import { renderRoute } from '../helpers/render'
 
-const CURRENT = 'password-vecchia'
+const CURRENT = 'password-old'
 const NEW = 'password-new'
 
 const fillIn = async (current: string, newPwd: string, repeat: string) => {
@@ -62,7 +62,7 @@ describe('PasswordChangeForm', () => {
 		const stub = stubGraphQL({})
 		await renderRoute('/settings')
 
-		await fillIn(CURRENT, 'corta', 'corta')
+		await fillIn(CURRENT, 'short', 'short')
 		await submit()
 
 		expect(await screen.findByText('The new password must be at least 10 characters')).toBeInTheDocument()
@@ -95,7 +95,7 @@ describe('PasswordChangeForm', () => {
 		const stub = stubGraphQL({})
 		await renderRoute('/settings')
 
-		await fillIn(CURRENT, NEW, `${NEW}-diversa`)
+		await fillIn(CURRENT, NEW, `${NEW}-different`)
 		await submit()
 
 		expect(await screen.findByText('The two passwords do not match')).toBeInTheDocument()

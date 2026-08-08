@@ -1,6 +1,6 @@
 {
 	"name": "marketplace-admin",
-	"description": "Marketplace — pannello operatore di piattaforma (Admin)",
+	"description": "Marketplace — platform operator panel (Admin)",
 	"license": "UNLICENSED",
 	"author": "Giovanni Manzoni <dev@giovannimanzoni.com> (https://www.giovannimanzoni.com)",
 	"repository": {

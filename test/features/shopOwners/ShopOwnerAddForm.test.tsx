@@ -30,19 +30,19 @@ const stubNetwork = (replies: GraphQLReplies, osm: ResponseOsm | readonly Respon
 
 /** A form that passes every check. Individual tests override one field to exercise one rule. */
 const VALID = {
-	Email: 'mario@rossi.it',
-	Password: 'password-lunga',
-	'Repeat password': 'password-lunga',
-	'First name': 'Mario',
-	'Last name': 'Rossi',
+	Email: 'mark@rivers.test',
+	Password: 'password-long',
+	'Repeat password': 'password-long',
+	'First name': 'Mark',
+	'Last name': 'Rivers',
 	'Date of birth': '1980-06-15',
-	Address: 'Via Roma 1',
-	'Postal code': '20100',
-	City: 'Milano',
-	Province: 'MI',
+	Address: '1 Main Street',
+	'Postal code': '02109',
+	City: 'Boston',
+	Province: 'MA',
 	Mobile: '3331234567',
 	Landline: '021234567',
-	'Contact email': 'contatto@rossi.it'
+	'Contact email': 'contact@rivers.test'
 }
 
 const fillIn = async (override: Partial<Record<keyof typeof VALID, string>> = {}) => {
@@ -106,7 +106,7 @@ const addCalls = (stub: { calls: readonly { operationName: string }[] }) =>
 describe('ShopOwnerAddForm', () => {
 	it('renders', async () => {
 		// The clock is frozen for the `max` on the date of birth, which is otherwise whatever day the suite
-		// happens to run on — see `OGGI`.
+		// happens to run on — see `TODAY`.
 		freezeClock()
 		stubNetwork({})
 		await renderRoute(ADD)
@@ -141,13 +141,13 @@ describe('ShopOwnerAddForm', () => {
 		})
 		expect(stub.calls[0]?.url).toBe(ENDPOINT.adminResource)
 		expect(stub.calls[0]?.variables).toEqual({
-			login: { email: 'mario@rossi.it', password: 'password-lunga' },
+			login: { email: 'mark@rivers.test', password: 'password-long' },
 			personalData: {
-				firstName: 'Mario',
-				lastName: 'Rossi',
+				firstName: 'Mark',
+				lastName: 'Rivers',
 				birth: { date: '1980-06-15' },
-				address: { street: 'Via Roma 1', postalCode: '20100', city: 'Milano', province: 'MI' },
-				contacts: { mobile: '3331234567', landline: '021234567', email: 'contatto@rossi.it' }
+				address: { street: '1 Main Street', postalCode: '02109', city: 'Boston', province: 'MA' },
+				contacts: { mobile: '3331234567', landline: '021234567', email: 'contact@rivers.test' }
 			}
 		})
 	})
@@ -185,13 +185,13 @@ describe('ShopOwnerAddForm', () => {
 		const stub = stubNetwork({ ShopOwnerAdd: { data: { shopOwnerAdd: true } }, ...emptyTable })
 		await renderRoute(ADD)
 
-		await fillIn({ Province: 'mi' })
+		await fillIn({ Province: 'ma' })
 		await submit()
 
 		await waitFor(() => {
 			expect(addCalls(stub)).toHaveLength(1)
 		})
-		expect((stub.calls[0]?.variables.personalData as { address: { province: string } }).address.province).toBe('MI')
+		expect((stub.calls[0]?.variables.personalData as { address: { province: string } }).address.province).toBe('MA')
 	})
 
 	/*
@@ -205,13 +205,13 @@ describe('ShopOwnerAddForm', () => {
 		const stub = stubNetwork({ ShopOwnerAdd: { data: { shopOwnerAdd: true } }, ...emptyTable })
 		await renderRoute(ADD)
 
-		await fillIn({ Province: ' mi ' })
+		await fillIn({ Province: ' ma ' })
 		await submit()
 
 		await waitFor(() => {
 			expect(addCalls(stub)).toHaveLength(1)
 		})
-		expect((stub.calls[0]?.variables.personalData as { address: { province: string } }).address.province).toBe('MI')
+		expect((stub.calls[0]?.variables.personalData as { address: { province: string } }).address.province).toBe('MA')
 	})
 
 	// `landline` has no format rule to fail, so an untrimmed landline is accepted and stored with its
@@ -230,11 +230,11 @@ describe('ShopOwnerAddForm', () => {
 	})
 
 	it.each([
-		// `mario@rossi`, not `mario@`: the field is `type="email"`, so a value with no domain at all fails
+		// `mark@rivers`, not `mark@`: the field is `type="email"`, so a value with no domain at all fails
 		// the browser's own check and the form never submits — there is nothing of this app's to assert.
 		// A missing TLD is the gap between the two validators, and the branch that belongs to zod.
-		['Email', 'mario@rossi', 'Enter a valid email address'],
-		['Password', 'corta', 'The password must be at least 10 characters'],
+		['Email', 'mark@rivers', 'Enter a valid email address'],
+		['Password', 'short', 'The password must be at least 10 characters'],
 		['First name', '   ', 'First name is required'],
 		['Last name', '', 'Last name is required'],
 		['Date of birth', '', 'Enter a valid date of birth'],
@@ -243,7 +243,7 @@ describe('ShopOwnerAddForm', () => {
 		['City', '', 'City is required'],
 		['Province', 'M', 'The province is the 2-letter code'],
 		['Mobile', '', 'Mobile is required'],
-		['Contact email', 'contatto@rossi', 'Enter a valid contact email address']
+		['Contact email', 'contact@rivers', 'Enter a valid contact email address']
 	])('refuses a bad %s without a round-trip', async (label, value, message) => {
 		const stub = stubNetwork({})
 		await renderRoute(ADD)
@@ -268,9 +268,9 @@ describe('ShopOwnerAddForm', () => {
 		expect(stub.calls).toHaveLength(0)
 	})
 
-	// A CAP of five letters is five characters and not a postcode. The regex is digits, and the test
+	// A postal code of five letters is five characters and not a postcode. The regex is digits, and the test
 	// exists because `.length === 5` is the mistake it is easy to make.
-	it('refuses a five-character CAP that is not five digits', async () => {
+	it('refuses a five-character postal code that is not five digits', async () => {
 		const stub = stubNetwork({})
 		await renderRoute(ADD)
 
@@ -308,7 +308,7 @@ describe('ShopOwnerAddForm', () => {
 	it('reports the backend error and stays on the form', async () => {
 		stubNetwork({
 			ShopOwnerAdd: {
-				errors: [graphQLError('Email già registrata', 'Address è già in uso', 412)],
+				errors: [graphQLError('Email already registered', 'Address already in use', 412)],
 				status: 412
 			}
 		})
@@ -317,10 +317,10 @@ describe('ShopOwnerAddForm', () => {
 		await fillIn()
 		await submit()
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Address è già in uso')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Address already in use')
 		expect(router.state.location.pathname).toBe(ADD)
 		// Nothing typed is thrown away: twelve fields is a lot to re-enter because one of them collided.
-		expect(screen.getByLabelText('First name')).toHaveValue('Mario')
+		expect(screen.getByLabelText('First name')).toHaveValue('Mark')
 	})
 
 	/*
@@ -334,7 +334,7 @@ describe('ShopOwnerAddForm', () => {
 		const stub = stubNetwork({})
 		await renderRoute(ADD)
 
-		await fillIn({ 'Repeat password': 'password-diversa' })
+		await fillIn({ 'Repeat password': 'password-different' })
 		await submit()
 
 		expect(await screen.findByText('The two passwords do not match')).toBeInTheDocument()
@@ -351,7 +351,7 @@ describe('ShopOwnerAddForm', () => {
 		await waitFor(() => {
 			expect(addCalls(stub)).toHaveLength(1)
 		})
-		expect(stub.calls[0]?.variables.login).toEqual({ email: 'mario@rossi.it', password: 'password-lunga' })
+		expect(stub.calls[0]?.variables.login).toEqual({ email: 'mark@rivers.test', password: 'password-long' })
 	})
 
 	/*
@@ -364,7 +364,7 @@ describe('ShopOwnerAddForm', () => {
 	 * none to read. The zod half is asserted in `shopOwnerSchema.test.ts`, where it is reachable.
 	 *
 	 * The clock is fixed for these two because the rule is a boundary and a boundary needs a known
-	 * "today" — the same `OGGI` the snapshot is pinned to.
+	 * "today" — the same `TODAY` the snapshot is pinned to.
 	 */
 	it('will not submit a date of birth the calendar puts out of range', async () => {
 		freezeClock()
@@ -408,13 +408,13 @@ describe('ShopOwnerAddForm', () => {
 		const stub = stubNetwork({ ShopOwnerAdd: { data: { shopOwnerAdd: true } }, ...emptyTable }, { results: [resultOsm()] })
 		await renderRoute(ADD)
 
-		await fillIn({ Address: 'via roma milano', 'Postal code': '', City: '', Province: '' })
-		fireEvent.click(await hintOsm('Via Roma, 1, Milano, MI, 20121, Italia'))
+		await fillIn({ Address: 'main street boston', 'Postal code': '', City: '', Province: '' })
+		fireEvent.click(await hintOsm('Main Street, 1, Boston, MA, 02108, USA'))
 
-		expect(screen.getByLabelText('Address')).toHaveValue('Via Roma 1')
-		expect(screen.getByLabelText('Postal code')).toHaveValue('20121')
-		expect(screen.getByLabelText('City')).toHaveValue('Milano')
-		expect(screen.getByLabelText('Province')).toHaveValue('MI')
+		expect(screen.getByLabelText('Address')).toHaveValue('1 Main Street')
+		expect(screen.getByLabelText('Postal code')).toHaveValue('02108')
+		expect(screen.getByLabelText('City')).toHaveValue('Boston')
+		expect(screen.getByLabelText('Province')).toHaveValue('MA')
 
 		await submit()
 
@@ -422,27 +422,27 @@ describe('ShopOwnerAddForm', () => {
 			expect(addCalls(stub)).toHaveLength(1)
 		})
 		expect((stub.calls[0]?.variables.personalData as { address: unknown }).address).toEqual({
-			street: 'Via Roma 1',
-			postalCode: '20121',
-			city: 'Milano',
-			province: 'MI'
+			street: '1 Main Street',
+			postalCode: '02108',
+			city: 'Boston',
+			province: 'MA'
 		})
 	})
 
 	/*
 	 * Not every point OpenStreetMap can find is an address. A bridge, a hamlet, a motorway junction —
-	 * they match a search and answer with no street and no CAP, and the form fills four boxes with
+	 * they match a search and answer with no street and no postal code, and the form fills four boxes with
 	 * nothing.
 	 *
 	 * Saying so at the pick rather than at submit is the difference between one correction and a form
 	 * that looked accepted until the operator pressed the button.
 	 */
 	it('says at once when the picked point is not a street address', async () => {
-		stubNetwork({}, { results: [resultOsm({ address: undefined, display_name: 'Ponte sul Ticino, Pavia, Italia' })] })
+		stubNetwork({}, { results: [resultOsm({ address: undefined, display_name: 'Riverside Bridge, Concord, USA' })] })
 		await renderRoute(ADD)
 
 		fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'ponte ticino' } })
-		fireEvent.click(await hintOsm('Ponte sul Ticino, Pavia, Italia'))
+		fireEvent.click(await hintOsm('Riverside Bridge, Concord, USA'))
 
 		expect(await screen.findByText('Address is required')).toBeInTheDocument()
 		expect(screen.getByText('The postal code must be 5 digits')).toBeInTheDocument()
@@ -452,7 +452,7 @@ describe('ShopOwnerAddForm', () => {
 
 	// A pick is a correction, and a correction that leaves the old red text under the boxes reads as
 	// rejected. All four are re-checked as they are written, which is also what says out loud that OSM
-	// answered without a CAP when it does.
+	// answered without a postal code when it does.
 	it('clears the address errors a failed submit left behind', async () => {
 		stubNetwork({}, { results: [resultOsm()] })
 		await renderRoute(ADD)
@@ -463,8 +463,8 @@ describe('ShopOwnerAddForm', () => {
 		expect(screen.getByText('City is required')).toBeInTheDocument()
 		expect(screen.getByText('The province is the 2-letter code')).toBeInTheDocument()
 
-		fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'via roma milano' } })
-		fireEvent.click(await hintOsm('Via Roma, 1, Milano, MI, 20121, Italia'))
+		fireEvent.change(screen.getByLabelText('Address'), { target: { value: 'main street boston' } })
+		fireEvent.click(await hintOsm('Main Street, 1, Boston, MA, 02108, USA'))
 
 		await waitFor(() => {
 			expect(screen.queryByText('Address is required')).not.toBeInTheDocument()

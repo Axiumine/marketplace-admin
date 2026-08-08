@@ -3,8 +3,8 @@
 Marketplace platform-operator panel (`Admin` tier). Vite + React SPA, TypeScript strict.
 
 **Operator tier only.** It logs in through `loginAdmin` and manages *shopOwners*. The shop-owner
-(`ShopOwner`) and customer (`Utente`) frontends are separate apps that do not exist yet — this is
-what they should be copied from, not a shell to add their routes into.
+(`ShopOwner`) and customer (`User`) frontends are separate apps — this is what they were copied
+from, not a shell to add their routes into.
 
 ## Stack
 
@@ -102,7 +102,7 @@ schema slices; it describes nothing that exists.
 | `/shopOwners` | counters + section menu |
 | `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
 | `/p/shopOwners/add-shopOwner` | create form |
-| `/p/shopOwners/id/$_id` | detail — personalData + punti vendita |
+| `/p/shopOwners/id/$_id` | detail — personalData + companies |
 
 Everything except `/` and `/loading` is behind a pathless guarded route. An empty session redirects to
 `/loading`, not to `/`: only a round-trip can tell "never signed in" from "signed in and reloaded".
@@ -125,7 +125,7 @@ they guard against all render as a working screen.
   a collection with no upper bound. `?pageSize=` is clamped in `router.tsx` for the same reason.
 - **`deleted` is a timestamp, not a flag.** Its presence is the soft delete, so it is tested with
   `!= null`. Compared against `true` — or passed through `handleNullBoolYN` — it is false for every
-  value the field can hold, and a deleted account reads "Eliminato: No" with no tint.
+  value the field can hold, and a deleted account reads "Deleted: No" with no tint.
 - **Every optional field goes through `handleNull`.** A dash means "not given"; a blank space beside a
   label means "this broke", and an operator cannot tell that apart from a field that failed to load.
 - **Never render a label for a field the collection does not have.** `shopOwner` has no `account`
@@ -133,12 +133,11 @@ they guard against all render as a working screen.
 - **`adminUpdatePwd` takes no id.** The account is the one the Redis session names. The platform has no
   role field, so an id supplied by a browser would be a way for any operator to set another operator's
   password.
-- **Operator password recovery is a note, not a form.** The platform's recovery pair
-  (`resetPasswordAccesso`, `aggiornaLoginPassword`) resolves against the `shopOwner` collection and
-  answers "not found" for every `admin`. A recovery form here would be a dead end that reads to the
-  operator as a problem with their own credentials.
-- **One statistic on the shopOwners page, because one query answers one.** Counters for "email da
-  confermare", "confermati", "disabilitati" and "eliminati" all read naturally and none has a resolver.
+- **Operator password recovery is a note, not a form.** No service exposes a recovery mutation for the
+  `admin` collection at all, so a recovery form here would be a dead end that reads to the operator as
+  a problem with their own credentials.
+- **One statistic on the shopOwners page, because one query answers one.** Counters for "email to
+  confirm", "confirmed", "disabled" and "deleted" all read naturally and none has a resolver.
   Add the backend query first — a placeholder counter is indistinguishable on screen from a broken one.
 - **Route paths are singular where the route is singular** (`…/add-shopOwner`). The plural
   reads better next to its section and serves no page; `to` is typed against the router's own union so

@@ -5,7 +5,7 @@ import { TblShopOwners } from '@/features/shopOwners/TblShopOwners'
 
 /**
  * The table page. It owns nothing: the query state comes from the URL and goes back to the URL, which
- * is what makes "page 3, sorted by city, searching «rossi»" a link an operator can bookmark or send.
+ * is what makes "page 3, sorted by city, searching «rivers»" a link an operator can bookmark or send.
  */
 export const ManageShopOwnersPage = ({
 	query,

@@ -112,7 +112,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="flex items-center gap-1 text-right"
             >
-              mario@rossi.it
+              mark@rivers.test
               <button
                 aria-label="Change Login email"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
@@ -150,7 +150,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="flex items-center gap-1 text-right"
             >
-              Mario
+              Mark
               <button
                 aria-label="Change First name"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
@@ -188,7 +188,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="flex items-center gap-1 text-right"
             >
-              Rossi
+              Rivers
               <button
                 aria-label="Change Last name"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
@@ -340,7 +340,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="flex items-center gap-1 text-right"
             >
-              contatto@rossi.it
+              contact@rivers.test
               <button
                 aria-label="Change Contact email"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
@@ -393,7 +393,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="flex items-center gap-1 text-right"
             >
-              Via Roma 1, 20100 Milano (MI)
+              1 Main Street, 02109 Boston (MA)
               <button
                 aria-label="Change Address"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
@@ -613,7 +613,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="text-right"
             >
-              1 febbraio 2026 alle ore 08:05:45
+              1 February 2026 at 08:05:45
             </span>
           </div>
           <div
@@ -627,7 +627,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="text-right"
             >
-              2 febbraio 2026 alle ore 09:00:00
+              2 February 2026 at 09:00:00
             </span>
           </div>
           <div
@@ -641,7 +641,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="text-right"
             >
-              1 marzo 2026 alle ore 18:30:00
+              1 March 2026 at 18:30:00
             </span>
           </div>
         </section>
@@ -708,7 +708,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             <span
               class="flex items-center gap-1 text-right"
             >
-              Sì
+              Yes
               <button
                 aria-label="Change Onboarding complete"
                 class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
@@ -862,7 +862,7 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
     class="mt-8 flex items-center justify-end gap-4"
   >
     <button
-      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-pomodoro px-[30px]"
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-tomato px-[30px]"
       disabled=""
       type="button"
     >

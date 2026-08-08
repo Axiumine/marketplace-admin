@@ -11,7 +11,7 @@ import { Spinner } from '@/components/ui/Spinner'
  * The shopOwners headline count.
  *
  * One row, because `shopOwnersStats` is the only counter the admin-resource service exposes. The
- * obvious companions — email da confermare, confermati, disabilitati, eliminati — have no query behind
+ * obvious companions — email to confirm, confirmed, disabled, deleted — have no query behind
  * them, and a commented-out row is indistinguishable on screen from one that broke. Add the resolver
  * first, then the row.
  */

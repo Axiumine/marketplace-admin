@@ -1,4 +1,4 @@
-/** Italian age of majority. An shopOwner signs contracts, so the platform has no under-18 accounts. */
+/** The age of majority. A shopOwner signs contracts, so the platform has no under-18 accounts. */
 export const MIN_AGE = 18
 
 /**

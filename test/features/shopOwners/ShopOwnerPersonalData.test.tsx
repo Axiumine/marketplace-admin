@@ -30,7 +30,7 @@ const shopOwner = {
 	disabled: false,
 	waitApprov: false,
 	login: {
-		email: 'mario@rossi.it',
+		email: 'mark@rivers.test',
 		firstLogin: '2026-02-02T09:00:00.000Z',
 		lastLogin: '2026-03-01T18:30:00.000Z',
 		// A string, not a number: `login.onboardingStep` is `GraphQLString` on the resolver and
@@ -41,14 +41,14 @@ const shopOwner = {
 		rememberMe: false
 	},
 	personalData: {
-		firstName: 'Mario',
-		lastName: 'Rossi',
+		firstName: 'Mark',
+		lastName: 'Rivers',
 		birth: { date: '1980-06-15T00:00:00.000Z' },
-		contacts: { email: 'contatto@rossi.it', landline: null, mobile: '3331234567' },
+		contacts: { email: 'contact@rivers.test', landline: null, mobile: '3331234567' },
 		// ⚠️ No `position`, which is the *normal* state of an shopOwner: the field was added as optional
 		// by `alter-shopOwner-position` and nothing backfilled it, unlike a shop where it is
-		// required. The fixture with a point is `conPosition` below, and it is the exception here.
-		address: { street: 'Via Roma 1', postalCode: '20100', city: 'Milano', province: 'MI', position: null }
+		// required. The fixture with a point is `withPosition` below, and it is the exception here.
+		address: { street: '1 Main Street', postalCode: '02109', city: 'Boston', province: 'MA', position: null }
 	},
 	// The operator's own note about the account. Absent until one is written — `shopOwnerUpdateNote`
 	// `$unset`s the key rather than storing an empty string.
@@ -57,10 +57,10 @@ const shopOwner = {
 }
 
 /** The same shopOwner with the coordinates an address pick would have left behind. */
-const conPosition = {
+const withPosition = {
 	personalData: {
 		...shopOwner.personalData,
-		address: { ...shopOwner.personalData.address, position: { type: 'Point', coordinates: [9.19, 45.4642] } }
+		address: { ...shopOwner.personalData.address, position: { type: 'Point', coordinates: [-71.06, 42.3601] } }
 	}
 }
 
@@ -69,7 +69,7 @@ const conPosition = {
  *
  * Not a contrived shape: the address rules arrived with this card, the collection validator is looser
  * than they are, and the coordinates were added by a migration that backfilled nothing — so a record
- * written before any of that can hold no street, a four-digit CAP, no city, a sigla that is three
+ * written before any of that can hold no street, a four-digit postal code, no city, a province code that is three
  * letters and a point that is nowhere. It is the only way to get all six refusals on screen together,
  * which is what the pick then has to clear.
  */
@@ -105,7 +105,7 @@ const rowValue = (title: string, label: string): string => {
  * ⚠️ `deleted` is a **timestamp**, not a flag — `IShopOwnerSchema.deleted?: Date`, exposed as
  * `DateTime`. Its presence is the soft delete, so it is tested with `!= null`. Comparing it against
  * `true`, or rendering it through `handleNullBoolYN`, is false for every value the field can hold: a
- * deleted account then reads "Eliminato: No" and never gets its grey tint. The cases below pin each
+ * deleted account then reads "Deleted: No" and never gets its grey tint. The cases below pin each
  * state to its class so that mistake cannot pass.
  */
 describe('accountStatusClass', () => {
@@ -119,7 +119,7 @@ describe('accountStatusClass', () => {
 		)
 	})
 
-	// Deleted wins over disabled: an account that is both is gone, and "disabilitato" understates it.
+	// Deleted wins over disabled: an account that is both is gone, and "disabled" understates it.
 	it('prefers deleted over disabled', () => {
 		expect(accountStatusClass({ deleted: '2026-04-01T00:00:00.000Z', disabled: true, waitApprov: true })).toBe('account-deleted')
 	})
@@ -133,7 +133,7 @@ describe('accountStatusClass', () => {
 	})
 
 	// The empty object is the case a bare trailing `else` gets wrong: reaching the yellow that way also
-	// catches an account with nothing set, painting a perfectly active shopOwner "in attesa".
+	// catches an account with nothing set, painting a perfectly active shopOwner "pending".
 	it('treats missing fields as nothing wrong', () => {
 		expect(accountStatusClass({})).toBe('')
 	})
@@ -155,11 +155,11 @@ describe('ShopOwnerPersonalData', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByText('Mario')).toBeInTheDocument()
-		expect(box('ShopOwner').getByText('Rossi')).toBeInTheDocument()
+		expect(await screen.findByText('Mark')).toBeInTheDocument()
+		expect(box('ShopOwner').getByText('Rivers')).toBeInTheDocument()
 		expect(box('ShopOwner').getByText('15/06/1980')).toBeInTheDocument()
 		expect(box('ShopOwner').getByText('3331234567')).toBeInTheDocument()
-		expect(box('ShopOwner').getByText('contatto@rossi.it')).toBeInTheDocument()
+		expect(box('ShopOwner').getByText('contact@rivers.test')).toBeInTheDocument()
 	})
 
 	// A dash says "not given"; an empty cell says "something broke". Every optional field on this page
@@ -169,7 +169,7 @@ describe('ShopOwnerPersonalData', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(rowValue('ShopOwner', 'Landline')).toBe('---')
 	})
 
@@ -179,20 +179,20 @@ describe('ShopOwnerPersonalData', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
-		expect(rowValue('Address', 'Address')).toBe('Via Roma 1, 20100 Milano (MI)')
+		await screen.findByText('Mark')
+		expect(rowValue('Address', 'Address')).toBe('1 Main Street, 02109 Boston (MA)')
 		expect(box('Address').queryByText('Postal code')).not.toBeInTheDocument()
-		expect(box('Address').queryByText('Città')).not.toBeInTheDocument()
+		expect(box('Address').queryByText('City')).not.toBeInTheDocument()
 	})
 
-	// The marker, not the frame: an embed without one is a picture of Milan, which is true of every
+	// The marker, not the frame: an embed without one is a picture of the city, which is true of every
 	// shopOwner in the city and says nothing about this one.
 	it('draws the position as a map named after the shopOwner', async () => {
-		stubGraphQL(detail(conPosition))
+		stubGraphQL(detail(withPosition))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
-		expect(screen.getByTitle('Map of Mario Rossi')).toHaveAttribute('src', expect.stringContaining('marker=45.46420,9.19000'))
+		await screen.findByText('Mark')
+		expect(screen.getByTitle('Map of Mark Rivers')).toHaveAttribute('src', expect.stringContaining('marker=42.36010,-71.06000'))
 	})
 
 	/*
@@ -205,8 +205,8 @@ describe('ShopOwnerPersonalData', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
-		expect(screen.queryByTitle('Map of Mario Rossi')).not.toBeInTheDocument()
+		await screen.findByText('Mark')
+		expect(screen.queryByTitle('Map of Mark Rivers')).not.toBeInTheDocument()
 		expect(
 			box('Address').getByText('Position unavailable: change the address and pick it from the list to add one.')
 		).toBeInTheDocument()
@@ -216,30 +216,30 @@ describe('ShopOwnerPersonalData', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(rowValue('Account status', 'Disabled')).toBe('No')
 		expect(rowValue('Account status', 'Deleted on')).toBe('---')
-		expect(rowValue('Account status', 'Registered')).toBe('1 febbraio 2026 alle ore 08:05:45')
-		expect(rowValue('Account status', 'First login')).toBe('2 febbraio 2026 alle ore 09:00:00')
-		expect(rowValue('Account status', 'Last login')).toBe('1 marzo 2026 alle ore 18:30:00')
+		expect(rowValue('Account status', 'Registered')).toBe('1 February 2026 at 08:05:45')
+		expect(rowValue('Account status', 'First login')).toBe('2 February 2026 at 09:00:00')
+		expect(rowValue('Account status', 'Last login')).toBe('1 March 2026 at 18:30:00')
 	})
 
 	it('tints the box of a deleted account', async () => {
 		stubGraphQL(detail({ deleted: '2026-04-01T12:00:00.000Z' }))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(screen.getByRole('region', { name: 'Account status' })).toHaveClass('account-deleted')
-		expect(rowValue('Account status', 'Deleted on')).toBe('1 aprile 2026 alle ore 12:00:00')
+		expect(rowValue('Account status', 'Deleted on')).toBe('1 April 2026 at 12:00:00')
 	})
 
 	it('shows the onboarding preferences', async () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(rowValue('Preferences', 'Remember me at login')).toBe('No')
-		expect(rowValue('Preferences', 'Onboarding complete')).toBe('Sì')
+		expect(rowValue('Preferences', 'Onboarding complete')).toBe('Yes')
 		expect(rowValue('Preferences', 'Onboarding step')).toBe('3')
 	})
 
@@ -253,26 +253,26 @@ describe('ShopOwnerPersonalData', () => {
 		)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(rowValue('Password', 'Recovery hash')).toBe('abcdefghijklmnopqrst...')
-		expect(rowValue('Password', 'Reset request')).toBe('1 maggio 2026 alle ore 07:00:00')
+		expect(rowValue('Password', 'Reset request')).toBe('1 May 2026 at 07:00:00')
 	})
 
 	// The note is the operator's own, and every shopOwner starts without one — a dash, so the empty card
 	// reads as "nothing written here" rather than as a card that failed to render.
 	it('shows the note, and a dash when there is none', async () => {
-		stubGraphQL(detail({ notes: 'Chiamare prima delle 18.\nRichiamato il 3/4.' }))
+		stubGraphQL(detail({ notes: 'Call before 6pm.\nCalled back on 3/4.' }))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
-		expect(rowValue('Notes', 'Notes')).toBe('Chiamare prima delle 18.\nRichiamato il 3/4.')
+		await screen.findByText('Mark')
+		expect(rowValue('Notes', 'Notes')).toBe('Call before 6pm.\nCalled back on 3/4.')
 	})
 
 	it('renders a missing note as a dash, not as a gap', async () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(rowValue('Notes', 'Notes')).toBe('---')
 	})
 
@@ -280,19 +280,19 @@ describe('ShopOwnerPersonalData', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(rowValue('Password', 'Recovery hash')).toBe('---')
 		expect(rowValue('Password', 'Reset request')).toBe('---')
 	})
 
 	it('reports a failure', async () => {
 		stubGraphQL({
-			ShopOwnerById: { errors: [graphQLError('Errore', 'Scheda non disponibile', 500)], status: 500 },
+			ShopOwnerById: { errors: [graphQLError('Error', 'Record unavailable', 500)], status: 500 },
 			ShopOwnerCompanies: { data: { shopOwnerCompanies: [] } }
 		})
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Scheda non disponibile')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Record unavailable')
 	})
 
 	// `shopOwnerById` is nullable: an `_id` that matches nothing answers `null` without an error, and
@@ -324,7 +324,7 @@ describe('ShopOwnerPersonalData', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(screen.getByRole('main')).toMatchSnapshot()
 	})
 })
@@ -350,7 +350,7 @@ const save = () => screen.getByRole('button', { name: 'Save' })
  */
 const REFUSALS: readonly (readonly [string, string, string, Record<string, boolean>])[] = [
 	['First name', 'Marco', 'ShopOwnerUpdate', { shopOwnerUpdate: false }],
-	['Login email', 'new@rossi.it', 'ShopOwnerUpdateEmail', { shopOwnerUpdateEmail: false }],
+	['Login email', 'new@rivers.test', 'ShopOwnerUpdateEmail', { shopOwnerUpdateEmail: false }],
 	['Onboarding step', '2', 'ShopOwnerUpdatePreferences', { shopOwnerUpdatePreferences: false }]
 ]
 
@@ -369,16 +369,16 @@ const writeNames = (stub: GraphQLStub) => writes(stub).map((call) => call.operat
  * email would fail the save *after* the email had already been written, with nothing to roll it back.
  * The assertions below are on the exact list of operations sent, for that reason.
  */
-describe('ShopOwnerPersonalData — modifica', () => {
+describe('ShopOwnerPersonalData — editing', () => {
 	it('turns a row into its editor, seeded with the stored value', async () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('First name')
 
-		expect(screen.getByLabelText('First name')).toHaveValue('Mario')
-		expect(box('ShopOwner').queryByText('Mario')).not.toBeInTheDocument()
+		expect(screen.getByLabelText('First name')).toHaveValue('Mark')
+		expect(box('ShopOwner').queryByText('Mark')).not.toBeInTheDocument()
 	})
 
 	// `onboardingStep` is the one nullable field of the form. A null has to seed an empty box, not the
@@ -387,7 +387,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		stubGraphQL(detail({ login: { ...shopOwner.login, onboardingStep: null } }))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Onboarding step')
 
 		expect(screen.getByLabelText('Onboarding step')).toHaveValue('')
@@ -400,7 +400,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Born on')
 
 		expect(screen.getByLabelText('Born on')).toHaveValue('1980-06-15')
@@ -411,7 +411,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('First name')
 		write('First name', 'Marco')
 		await userEvent.click(save())
@@ -424,21 +424,21 @@ describe('ShopOwnerPersonalData — modifica', () => {
 					_id: ID,
 					personalData: {
 						firstName: 'Marco',
-						lastName: 'Rossi',
+						lastName: 'Rivers',
 						birth: { date: '1980-06-15' },
 						// ⚠️ `position: null` and not an absent key. The mutation `$set`s the whole personalData,
 						// so the point travels on every save of it — this shopOwner has none, and `null` is
 						// what says so. An omitted key here would be a save that erases a point the record had.
 						address: {
-							street: 'Via Roma 1',
-							postalCode: '20100',
-							city: 'Milano',
-							province: 'MI',
+							street: '1 Main Street',
+							postalCode: '02109',
+							city: 'Boston',
+							province: 'MA',
 							position: null
 						},
 						// The landline is absent on this shopOwner and stays absent: `null`, never `''`,
 						// which the collection would accept as a real number of no digits.
-						contacts: { mobile: '3331234567', landline: null, email: 'contatto@rossi.it' }
+						contacts: { mobile: '3331234567', landline: null, email: 'contact@rivers.test' }
 					}
 				}
 			})
@@ -454,7 +454,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Landline')
 		write('Landline', '')
 		await userEvent.click(save())
@@ -469,10 +469,10 @@ describe('ShopOwnerPersonalData — modifica', () => {
 	// `$set`s the whole personalData, so a payload that dropped it would erase the coordinates of every
 	// shopOwner whose phone number was ever corrected.
 	it('carries the stored position through a save about something else', async () => {
-		const stub = stubGraphQL({ ...detail(conPosition), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } })
+		const stub = stubGraphQL({ ...detail(withPosition), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('First name')
 		write('First name', 'Marco')
 		await userEvent.click(save())
@@ -480,7 +480,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		await screen.findByText('Changes saved.')
 		expect(writes(stub)[0]?.variables).toMatchObject({
 			// Longitude first — the pair is GeoJSON on the wire, whatever order the boxes hold it in.
-			personalData: { address: { position: { coordinates: [9.19, 45.4642] } } }
+			personalData: { address: { position: { coordinates: [-71.06, 42.3601] } } }
 		})
 	})
 
@@ -490,16 +490,16 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdateEmail: { data: { shopOwnerUpdateEmail: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Login email')
-		write('Login email', 'new@rossi.it')
+		write('Login email', 'new@rivers.test')
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
 		expect(writes(stub)).toEqual([
 			expect.objectContaining({
 				operationName: 'ShopOwnerUpdateEmail',
-				variables: { _id: ID, email: 'new@rossi.it' }
+				variables: { _id: ID, email: 'new@rivers.test' }
 			})
 		])
 	})
@@ -508,7 +508,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Disabled')
 		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
 		await userEvent.click(save())
@@ -528,7 +528,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Onboarding step')
 		write('Onboarding step', '')
 		await userEvent.click(save())
@@ -552,11 +552,11 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Last name')
-		write('Last name', 'Bianchi')
+		write('Last name', 'White')
 		await open('Login email')
-		write('Login email', 'new@rossi.it')
+		write('Login email', 'new@rivers.test')
 		await open('Awaiting approval')
 		await userEvent.click(screen.getByRole('checkbox', { name: 'Awaiting approval' }))
 		await open('Remember me at login')
@@ -577,7 +577,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('First name')
 		write('First name', 'Marco')
 
@@ -589,7 +589,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('First name')
 		write('First name', '   ')
 		await userEvent.click(save())
@@ -613,7 +613,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('First name')
 		write('First name', '   ')
 		await userEvent.click(save())
@@ -637,16 +637,16 @@ describe('ShopOwnerPersonalData — modifica', () => {
 	it('shows the backend refusal', async () => {
 		stubGraphQL({
 			...detail(),
-			ShopOwnerUpdateEmail: { errors: [graphQLError('Errore', 'Email già presente', 409)], status: 409 }
+			ShopOwnerUpdateEmail: { errors: [graphQLError('Error', 'Email already registered', 409)], status: 409 }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Login email')
-		write('Login email', 'presa@rossi.it')
+		write('Login email', 'taken@rivers.test')
 		await userEvent.click(save())
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Email già presente')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Email already registered')
 		expect(screen.queryByText('Changes saved.')).not.toBeInTheDocument()
 	})
 
@@ -654,7 +654,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		stubGraphQL({ ...detail(), [operation]: { data } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open(label)
 		write(label, value)
 		await userEvent.click(save())
@@ -666,7 +666,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		stubGraphQL({ ...detail(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: false } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Disabled')
 		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
 		await userEvent.click(save())
@@ -684,7 +684,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Disabled')
 		await open('Awaiting approval')
 		await open('Remember me at login')
@@ -712,7 +712,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Disabled')
 		await open('Awaiting approval')
 		await open('Remember me at login')
@@ -732,16 +732,16 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Mobile')
 		write('Mobile', '3339998877')
 		await open('Contact email')
-		write('Contact email', 'nuovo@rossi.it')
+		write('Contact email', 'updated@rivers.test')
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
 		expect(writes(stub)[0]?.variables).toMatchObject({
-			personalData: { contacts: { mobile: '3339998877', email: 'nuovo@rossi.it' } }
+			personalData: { contacts: { mobile: '3339998877', email: 'updated@rivers.test' } }
 		})
 	})
 
@@ -749,7 +749,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Onboarding complete')
 		await userEvent.click(screen.getByRole('checkbox', { name: 'Onboarding complete' }))
 		await userEvent.click(save())
@@ -775,46 +775,46 @@ describe('ShopOwnerPersonalData — modifica', () => {
 	it('reports the backend refusal of the personalData write', async () => {
 		stubGraphQL({
 			...detail(),
-			ShopOwnerUpdate: { errors: [graphQLError('Errore', 'PersonalData non aggiornabile', 500)], status: 500 }
+			ShopOwnerUpdate: { errors: [graphQLError('Error', 'PersonalData not updatable', 500)], status: 500 }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('First name')
 		write('First name', 'Marco')
 		await userEvent.click(save())
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('PersonalData non aggiornabile')
+		expect(await screen.findByRole('alert')).toHaveTextContent('PersonalData not updatable')
 	})
 
 	it('reports the backend refusal of the account flags', async () => {
 		stubGraphQL({
 			...detail(),
-			ShopOwnerUpdateStatus: { errors: [graphQLError('Errore', 'Status non aggiornabile', 500)], status: 500 }
+			ShopOwnerUpdateStatus: { errors: [graphQLError('Error', 'Status not updatable', 500)], status: 500 }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Disabled')
 		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
 		await userEvent.click(save())
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Status non aggiornabile')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Status not updatable')
 	})
 
 	it('reports the backend refusal of the preferences write', async () => {
 		stubGraphQL({
 			...detail(),
-			ShopOwnerUpdatePreferences: { errors: [graphQLError('Errore', 'Preferences non aggiornabili', 500)], status: 500 }
+			ShopOwnerUpdatePreferences: { errors: [graphQLError('Error', 'Preferences not updatable', 500)], status: 500 }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Onboarding step')
 		write('Onboarding step', '2')
 		await userEvent.click(save())
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Preferences non aggiornabili')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Preferences not updatable')
 	})
 
 	/*
@@ -829,7 +829,7 @@ describe('ShopOwnerPersonalData — modifica', () => {
 
 		const reads = () => stub.calls.filter((call) => call.operationName === 'ShopOwnerById')
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		expect(reads()).toHaveLength(1)
 
 		await open('First name')
@@ -855,10 +855,10 @@ const stubNetwork = (replies: GraphQLReplies, osm: ResponseOsm | readonly Respon
 const hintOsm = (firstName: string) => screen.findByRole('button', { name: firstName }, { timeout: SEARCH_DEBOUNCE_MS + 2000 })
 
 /** What `osmResult()` answers with, as the suggestion list spells it out. */
-const HINT = 'Via Roma, 1, Milano, MI, 20121, Italia'
+const HINT = 'Main Street, 1, Boston, MA, 02108, USA'
 
 /** The same answer once picked, as the box spells it out. */
-const PICKED = 'Via Roma 1, 20121 Milano (MI)'
+const PICKED = '1 Main Street, 02108 Boston (MA)'
 
 /** The map `AddressField` brings with it, which follows what is being typed rather than what is stored. */
 const mapEditor = () => screen.queryByTitle('Address map')
@@ -900,42 +900,42 @@ describe('ShopOwnerPersonalData — address', () => {
 		stubNetwork(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
 
-		expect(field()).toHaveValue('Via Roma 1, 20100 Milano (MI)')
+		expect(field()).toHaveValue('1 Main Street, 02109 Boston (MA)')
 		expect(box('Address').queryByLabelText('Postal code')).not.toBeInTheDocument()
 		expect(box('Address').queryByLabelText('City')).not.toBeInTheDocument()
 		expect(box('Address').queryByLabelText('Province')).not.toBeInTheDocument()
-		expect(box('Address').queryByLabelText('Latitudine')).not.toBeInTheDocument()
+		expect(box('Address').queryByLabelText('Latitude')).not.toBeInTheDocument()
 	})
 
 	// Two maps of two different places stacked in one card is worse than either: the editor's follows what
 	// is being typed, the stored one is where the shopOwner lives now, and nothing on screen would say
 	// which is which. The stored one steps aside for as long as the editor is open.
 	it('hands the map over to the editor while the row is open', async () => {
-		stubNetwork(detail(conPosition))
+		stubNetwork(detail(withPosition))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
-		expect(screen.getByTitle('Map of Mario Rossi')).toBeInTheDocument()
+		await screen.findByText('Mark')
+		expect(screen.getByTitle('Map of Mark Rivers')).toBeInTheDocument()
 		expect(mapEditor()).not.toBeInTheDocument()
 
 		await open('Address')
 
-		expect(screen.queryByTitle('Map of Mario Rossi')).not.toBeInTheDocument()
-		// Framed on the shopOwner, not on the middle of Italy: the card was drawing this exact point a
+		expect(screen.queryByTitle('Map of Mark Rivers')).not.toBeInTheDocument()
+		// Framed on the shopOwner, not on the middle of the country: the card was drawing this exact point a
 		// moment ago, and an editor that opens by throwing it away is an editor that lost the address.
-		expect(mapEditor()).toHaveAttribute('src', expect.stringContaining('marker=45.46420,9.19000'))
+		expect(mapEditor()).toHaveAttribute('src', expect.stringContaining('marker=42.36010,-71.06000'))
 	})
 
-	// The sentence goes away with the rest of the read-only half, and the editor opens on the middle of
-	// Italy — there is nowhere else to open it for a record whose position nobody ever picked.
-	it('opens on Italy for an shopOwner who has no point yet', async () => {
+	// The sentence goes away with the rest of the read-only half, and the editor opens on the middle of the
+	// country — there is nowhere else to open it for a record whose position nobody ever picked.
+	it('opens on the country centre for a shopOwner who has no point yet', async () => {
 		stubNetwork(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
 
 		expect(
@@ -946,16 +946,16 @@ describe('ShopOwnerPersonalData — address', () => {
 
 	/*
 	 * The whole point of the card, and on this collection the only way a point arrives at all: the operator
-	 * types, OSM answers, and one click fills an address, a CAP, a city, a province **and** a position
+	 * types, OSM answers, and one click fills an address, a postal code, a city, a province **and** a position
 	 * where the record had none.
 	 */
 	it('writes the picked address and its coordinates, longitude first on the wire', async () => {
 		const stub = stubNetwork({ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } }, { results: [resultOsm()] })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
-		fireEvent.change(field(), { target: { value: 'Via Roma 1 Milano' } })
+		fireEvent.change(field(), { target: { value: '1 Main Street Boston' } })
 		fireEvent.click(await hintOsm(HINT))
 
 		expect(field()).toHaveValue(PICKED)
@@ -966,13 +966,13 @@ describe('ShopOwnerPersonalData — address', () => {
 		expect(writes(stub)[0]?.variables).toMatchObject({
 			personalData: {
 				address: {
-					street: 'Via Roma 1',
-					postalCode: '20121',
-					city: 'Milano',
-					province: 'MI',
+					street: '1 Main Street',
+					postalCode: '02108',
+					city: 'Boston',
+					province: 'MA',
 					// Longitude first, and the pair is the geocoder's — reading it back in the order OSM sent
-					// it would put an shopOwner from Milan in the sea off Somalia.
-					position: { coordinates: [9.1895, 45.4642] }
+					// it would put a shopOwner from Boston in the Southern Ocean.
+					position: { coordinates: [-71.0589, 42.3601] }
 				}
 			}
 		})
@@ -982,7 +982,7 @@ describe('ShopOwnerPersonalData — address', () => {
 	 * ⚠️ The reason this card needs a rule of its own.
 	 *
 	 * The box is free text and the fields behind it are not written by typing, so an address left half
-	 * typed and never picked would send the *stored* street, CAP, city and position under a line that
+	 * typed and never picked would send the *stored* street, postal code, city and position under a line that
 	 * reads like a different address entirely — a save that looks like it worked and wrote none of what is
 	 * on screen. The message is on the box, because the fields it is really about have no input at all.
 	 */
@@ -990,9 +990,9 @@ describe('ShopOwnerPersonalData — address', () => {
 		const stub = stubNetwork({ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } }, { results: [resultOsm()] })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
-		fireEvent.change(field(), { target: { value: 'Via Roma 1 Milano' } })
+		fireEvent.change(field(), { target: { value: '1 Main Street Boston' } })
 		await userEvent.click(save())
 
 		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
@@ -1007,9 +1007,9 @@ describe('ShopOwnerPersonalData — address', () => {
 		stubNetwork(detail(), { results: [resultOsm()] })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
-		fireEvent.change(field(), { target: { value: 'Via Roma 1 Milano' } })
+		fireEvent.change(field(), { target: { value: '1 Main Street Boston' } })
 		await userEvent.click(save())
 
 		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
@@ -1034,9 +1034,9 @@ describe('ShopOwnerPersonalData — address', () => {
 		stubNetwork(detail(corrupted), { results: [resultOsm()] })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
-		fireEvent.change(field(), { target: { value: 'Via Roma 1 Milano' } })
+		fireEvent.change(field(), { target: { value: '1 Main Street Boston' } })
 		await userEvent.click(save())
 
 		// The first of the six, which is all the box can say about them.
@@ -1053,27 +1053,27 @@ describe('ShopOwnerPersonalData — address', () => {
 	 * OSM answers for places that are not postal addresses — a bridge, a square, a hamlet — and those come
 	 * back without a `postcode`. The four fields it fills have no box of their own, so their errors have
 	 * nowhere to render unless the card gathers them: without that the save would refuse in silence and the
-	 * operator would press Save again. The field's own message comes first, because "seleziona l'address"
+	 * operator would press Save again. The field's own message comes first, because "select the address"
 	 * under an address that *was* selected sends them back to the list for nothing.
 	 */
-	it('reports a geocoder answer that carries no CAP', async () => {
+	it('reports a geocoder answer that carries no postal code', async () => {
 		const stub = stubNetwork(
 			{ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } },
 			{
 				results: [
 					resultOsm({
-						display_name: 'Piazza del Duomo, Milano, Italia',
-						address: { road: 'Piazza del Duomo', city: 'Milano', 'ISO3166-2-lvl6': 'IT-MI' }
+						display_name: 'Cathedral Square, Boston, USA',
+						address: { road: 'Cathedral Square', city: 'Boston', 'ISO3166-2-lvl4': 'US-MA' }
 					})
 				]
 			}
 		)
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
-		fireEvent.change(field(), { target: { value: 'Piazza del Duomo' } })
-		fireEvent.click(await hintOsm('Piazza del Duomo, Milano, Italia'))
+		fireEvent.change(field(), { target: { value: 'Cathedral Square' } })
+		fireEvent.click(await hintOsm('Cathedral Square, Boston, USA'))
 		await userEvent.click(save())
 
 		expect(await page().findByText('The postal code must be 5 digits')).toBeInTheDocument()
@@ -1090,34 +1090,34 @@ describe('ShopOwnerPersonalData — address', () => {
 	 * the address back over itself.
 	 */
 	it('goes clean again when the stored address is the one picked', async () => {
-		stubNetwork(detail(conPosition), {
+		stubNetwork(detail(withPosition), {
 			results: [
 				resultOsm({
-					display_name: 'Via Roma, 1, Milano, MI, 20100, Italia',
-					lat: '45.4642',
-					lon: '9.19',
+					display_name: 'Main Street, 1, Boston, MA, 02109, USA',
+					lat: '42.3601',
+					lon: '-71.06',
 					address: {
-						road: 'Via Roma',
+						road: 'Main Street',
 						house_number: '1',
-						postcode: '20100',
-						city: 'Milano',
-						'ISO3166-2-lvl6': 'IT-MI'
+						postcode: '02109',
+						city: 'Boston',
+						'ISO3166-2-lvl4': 'US-MA'
 					}
 				})
 			]
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Address')
 		expect(save()).toBeDisabled()
 
-		fireEvent.change(field(), { target: { value: 'Via Roma Milano' } })
+		fireEvent.change(field(), { target: { value: 'Main Street Boston' } })
 		expect(save()).toBeEnabled()
 
-		fireEvent.click(await hintOsm('Via Roma, 1, Milano, MI, 20100, Italia'))
+		fireEvent.click(await hintOsm('Main Street, 1, Boston, MA, 02109, USA'))
 
-		expect(field()).toHaveValue('Via Roma 1, 20100 Milano (MI)')
+		expect(field()).toHaveValue('1 Main Street, 02109 Boston (MA)')
 		await waitFor(() => {
 			expect(save()).toBeDisabled()
 		})
@@ -1135,14 +1135,14 @@ describe('ShopOwnerPersonalData — note', () => {
 	const areaNote = () => box('Notes').getByLabelText('Notes')
 
 	it('opens a textarea seeded with the stored note', async () => {
-		stubGraphQL(detail({ notes: 'Chiamare prima delle 18.' }))
+		stubGraphQL(detail({ notes: 'Call before 6pm.' }))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 
 		expect(areaNote().tagName).toBe('TEXTAREA')
-		expect(areaNote()).toHaveValue('Chiamare prima delle 18.')
+		expect(areaNote()).toHaveValue('Call before 6pm.')
 		expect(save()).toBeDisabled()
 	})
 
@@ -1152,7 +1152,7 @@ describe('ShopOwnerPersonalData — note', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 
 		expect(areaNote()).toHaveValue('')
@@ -1163,9 +1163,9 @@ describe('ShopOwnerPersonalData — note', () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
-		fireEvent.change(areaNote(), { target: { value: '  Preferisce il telefono.  ' } })
+		fireEvent.change(areaNote(), { target: { value: '  Prefers the phone.  ' } })
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
@@ -1174,22 +1174,22 @@ describe('ShopOwnerPersonalData — note', () => {
 				operationName: 'ShopOwnerUpdateNote',
 				// Trimmed, because the payload is the *parsed* value — the schema's transforms are as much
 				// part of the write as its messages are part of the page.
-				variables: { _id: ID, notes: 'Preferisce il telefono.' }
+				variables: { _id: ID, notes: 'Prefers the phone.' }
 			})
 		])
 	})
 
 	// ⚠️ The empty string, not `null`. The mutation takes `String!`, and blank is the instruction that
-	// removes the note — there is nothing to send `null` as, and a `vuotoInNull` here would be a type
+	// removes the note — there is nothing to send `null` as, and a `emptyInNull` here would be a type
 	// error at best and a cleared note that never clears at worst.
 	it('sends a cleared note as an empty string', async () => {
 		const stub = stubGraphQL({
-			...detail({ notes: 'Chiamare prima delle 18.' }),
+			...detail({ notes: 'Call before 6pm.' }),
 			ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 		fireEvent.change(areaNote(), { target: { value: '' } })
 		await userEvent.click(save())
@@ -1208,7 +1208,7 @@ describe('ShopOwnerPersonalData — note', () => {
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Onboarding step')
 		write('Onboarding step', '4')
 		await open('Notes')
@@ -1223,7 +1223,7 @@ describe('ShopOwnerPersonalData — note', () => {
 		const stub = stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 		fireEvent.change(areaNote(), { target: { value: 'n'.repeat(2001) } })
 		await userEvent.click(save())
@@ -1236,17 +1236,17 @@ describe('ShopOwnerPersonalData — note', () => {
 	 * The count is seeded from the stored note, not from zero.
 	 *
 	 * ⚠️ This is the case the caller-side count exists for: `register()` writes the stored value in through
-	 * a ref and fires no `onChange`, so a length the box measured itself would open at "2000 rimanenti" on a
-	 * note of twenty-four characters and only tell the truth after a keystroke.
+	 * a ref and fires no `onChange`, so a length the box measured itself would open at "2000 remaining" on a
+	 * note of sixteen characters and only tell the truth after a keystroke.
 	 */
 	it('counts the characters left, starting from the stored note', async () => {
-		stubGraphQL(detail({ notes: 'Chiamare prima delle 18.' }))
+		stubGraphQL(detail({ notes: 'Call before 6pm.' }))
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 
-		expect(box('Notes').getByText('1976 characters remaining')).toBeInTheDocument()
+		expect(box('Notes').getByText('1984 characters remaining')).toBeInTheDocument()
 
 		fireEvent.change(areaNote(), { target: { value: 'Memo' } })
 
@@ -1259,7 +1259,7 @@ describe('ShopOwnerPersonalData — note', () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 		fireEvent.change(areaNote(), { target: { value: 'n'.repeat(2001) } })
 
@@ -1269,23 +1269,23 @@ describe('ShopOwnerPersonalData — note', () => {
 	it('reports the backend refusal of the note write', async () => {
 		stubGraphQL({
 			...detail(),
-			ShopOwnerUpdateNote: { errors: [graphQLError('Errore', 'Note non aggiornabile', 500)], status: 500 }
+			ShopOwnerUpdateNote: { errors: [graphQLError('Error', 'Note not updatable', 500)], status: 500 }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 		fireEvent.change(areaNote(), { target: { value: 'Memo' } })
 		await userEvent.click(save())
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Note non aggiornabile')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Note not updatable')
 	})
 
 	it('reports a bare refusal of the note write', async () => {
 		stubGraphQL({ ...detail(), ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: false } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByText('Mario')
+		await screen.findByText('Mark')
 		await open('Notes')
 		fireEvent.change(areaNote(), { target: { value: 'Memo' } })
 		await userEvent.click(save())

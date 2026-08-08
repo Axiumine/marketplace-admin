@@ -18,7 +18,7 @@ describe('isSectionActive', () => {
 		expect(isSectionActive('/p/shopOwners/manage-shopOwners', ['/shopOwners', '/p/shopOwners'])).toBe(true)
 	})
 
-	// `/settings-avanzate` is not inside `/settings`. A bare `startsWith` says it is, which is
+	// `/settings-advanced` is not inside `/settings`. A bare `startsWith` says it is, which is
 	// why the check tests for the separator too.
 	it('does not match a sibling that merely starts with the same letters', () => {
 		expect(isSectionActive('/settingsx', ['/settings'])).toBe(false)

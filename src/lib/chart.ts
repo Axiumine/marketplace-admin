@@ -29,11 +29,11 @@ export interface Bar extends SeriesPoint {
  * in the browser's own zone still reads 1 August — but one west of it reads 31 July, and a month bucket
  * would be labelled with the month before its own. The server buckets in UTC; so does the axis.
  */
-const MONTH_FORMAT = new Intl.DateTimeFormat('it-IT', { month: 'short', year: 'numeric', timeZone: 'UTC' })
-const DAY_FORMAT = new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })
+const MONTH_FORMAT = new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric', timeZone: 'UTC' })
+const DAY_FORMAT = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', timeZone: 'UTC' })
 
 /**
- * The axis label for one bucket: `ago 2026` for a month, `02/08` for a day.
+ * The axis label for one bucket: `Aug 2026` for a month, `02/08` for a day.
  *
  * The year is dropped from the day form on purpose — the two bounded ranges span at most three months,
  * so it would repeat on every one of ninety-odd labels to disambiguate nothing.
@@ -56,13 +56,13 @@ const MIN_HEIGHT = 1
  * The bars, in the viewBox's own units, oldest first.
  *
  * ⚠️ **Bars and not a polyline**, and the reason is arithmetic rather than taste. A line's step is
- * `larghezza / (n - 1)`, which is a division by zero for a platform whose first shopOwner registered
+ * `width / (n - 1)`, which is a division by zero for a platform whose first shopOwner registered
  * this month — one bucket, one point, no segment to draw and an `Infinity` in the coordinates. A bar's
- * step is `larghezza / n`, which needs no special case at n = 1 and none at n = 0 either, since the
+ * step is `width / n`, which needs no special case at n = 1 and none at n = 0 either, since the
  * `map` below never runs.
  *
  * The scale floor of 1 is the other end of the same argument: a range in which nobody registered is a
- * legitimate answer, and `totale / 0` would put `NaN` in every coordinate. With a floor, that series
+ * legitimate answer, and `total / 0` would put `NaN` in every coordinate. With a floor, that series
  * draws as a flat row of baseline ticks — which is what it is — instead of an empty box that reads as
  * a failed query.
  */

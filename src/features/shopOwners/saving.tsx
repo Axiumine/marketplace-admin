@@ -47,7 +47,7 @@ export const useSaving = () => {
 	 * A remount is the whole mechanism behind "after Save the page looks freshly loaded": every open
 	 * `EditableRow` goes back to a value and a pen, every address editor folds away, every form re-seeds
 	 * itself from the data the save just invalidated in the cache. ⚠️ It has to be a remount and cannot be
-	 * a `chiudi()` passed down — `EditableRow` deliberately has no way to close, because closing a row
+	 * a `close()` passed down — `EditableRow` deliberately has no way to close, because closing a row
 	 * while react-hook-form still holds its edited value is how a page comes to display the server's
 	 * value and save a different one (see the note on that component). Unmounting takes the form with the
 	 * row, so there is no stale value left to disagree with.
@@ -201,15 +201,15 @@ export const useSavableSection = (id: string, register: RegisterSection, changed
  * unconditional button would turn "I pressed save twice" into a server error.
  *
  * The confirmation is shown for a save that succeeded *and* has not been superseded: the moment the
- * operator edits anything again the section goes dirty and the message goes away, so "Modifiche
- * salvate" can never sit above a form holding unsaved changes.
+ * operator edits anything again the section goes dirty and the message goes away, so "Changes
+ * saved" can never sit above a form holding unsaved changes.
  */
 export const SaveChanges = ({ changed, saveAll }: { changed: boolean; saveAll: () => Promise<boolean> }) => {
 	const [saving, setSaving] = useState(false)
 	const [saved, setSaved] = useState(false)
 
 	/*
-	 * No clearing of `salvato` on the way in, deliberately. Every save produces its own toast anyway, and
+	 * No clearing of `saved` on the way in, deliberately. Every save produces its own toast anyway, and
 	 * `!changed` is what guarantees it: the button is dead unless something is dirty, so by the time a
 	 * second save can be pressed the condition below has already gone false and unmounted the first
 	 * confirmation — dismissed or not. A pre-clear here could only re-state that, and stated twice it

@@ -67,10 +67,10 @@ describe('shopOwners search params', () => {
 	})
 
 	it('reads the whole state out of the URL', async () => {
-		expect(await searchOf(`${MANAGE}?page=3&pageSize=50&search=rossi&sortBy=CITY&sortDir=DESC`)).toEqual({
+		expect(await searchOf(`${MANAGE}?page=3&pageSize=50&search=rivers&sortBy=CITY&sortDir=DESC`)).toEqual({
 			page: 3,
 			pageSize: 50,
-			search: 'rossi',
+			search: 'rivers',
 			sortBy: 'CITY',
 			sortDir: 'DESC'
 		})

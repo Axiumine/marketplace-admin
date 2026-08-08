@@ -62,15 +62,15 @@ describe('StatsShopOwners', () => {
 	it('reports a failure instead of an empty box', async () => {
 		stubGraphQL({
 			...chart,
-			ShopOwnersStats: { errors: [graphQLError('Errore', 'Statistics unavailable', 500)], status: 500 }
+			ShopOwnersStats: { errors: [graphQLError('Error', 'Statistics unavailable', 500)], status: 500 }
 		})
 		await renderRoute('/shopOwners')
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Statistics unavailable')
 	})
 
-	// ⚠️ One statistic, because one query answers one. Rows for "email da confermare", "confermati",
-	// "disabilitati" and "eliminati" all read naturally here, and none of them exists on the
+	// ⚠️ One statistic, because one query answers one. Rows for "email to confirm", "confirmed",
+	// "disabled" and "deleted" all read naturally here, and none of them exists on the
 	// admin-resource service — add the resolver first. A stat with no backend and a stat that is broken
 	// look identical on screen, and the snapshot is what keeps a placeholder from becoming permanent.
 	it('renders', async () => {

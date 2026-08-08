@@ -39,7 +39,7 @@ describe('useLogout', () => {
 	// A logout that failed server-side still has to log the operator out of this browser. Keeping the
 	// token because a request went wrong is the opposite of what the button promises.
 	it('logs out locally even when the mutation fails', async () => {
-		stubGraphQL({ Logout: { errors: [graphQLError('Sessione non trovata', undefined, 401)], status: 401 } })
+		stubGraphQL({ Logout: { errors: [graphQLError('Session not found', undefined, 401)], status: 401 } })
 		const { router } = await renderRoute('/home')
 
 		await logout()

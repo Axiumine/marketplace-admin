@@ -38,7 +38,7 @@ describe('LoginPage', () => {
 		await renderRoute('/', signedOut)
 
 		expect(screen.getByText(/Standalone recovery is not available for operator accounts/)).toBeInTheDocument()
-		expect(screen.queryByRole('button', { name: /Recupera/ })).not.toBeInTheDocument()
+		expect(screen.queryByRole('button', { name: /Recover/ })).not.toBeInTheDocument()
 	})
 
 	// ⚠️ Asserted, not assumed. A "development only" default email and password is substituted into the
@@ -53,7 +53,7 @@ describe('LoginPage', () => {
 		expect(screen.getByLabelText('Remember me on this device')).not.toBeChecked()
 	})
 
-	// `operator@marketplace`, not `operatore`: the field is `type="email"`, so a value with no `@` fails
+	// `operator@marketplace`, not `operator`: the field is `type="email"`, so a value with no `@` fails
 	// the browser's own constraint validation and the submit event never fires — nothing to assert about
 	// this app. A missing TLD is the gap between the two checks: the HTML validator accepts it, the zod
 	// schema does not, and that is the branch under test.
@@ -72,7 +72,7 @@ describe('LoginPage', () => {
 		const stub = stubGraphQL({})
 		await renderRoute('/', signedOut)
 
-		await userEvent.type(screen.getByLabelText('Email'), 'operator@marketplace.it')
+		await userEvent.type(screen.getByLabelText('Email'), 'operator@marketplace.test')
 		await submit()
 
 		expect(await screen.findByText('Enter the password')).toBeInTheDocument()
@@ -85,13 +85,13 @@ describe('LoginPage', () => {
 		const stub = stubGraphQL({ LoginAdmin: { errors: [graphQLError('Invalid credentials', undefined, 400)], status: 400 } })
 		await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.it', 'corta')
+		await fillIn('operator@marketplace.test', 'short')
 		await submit()
 
 		await waitFor(() => {
 			expect(stub.calls).toHaveLength(1)
 		})
-		expect(stub.calls[0]?.variables).toEqual({ email: 'operator@marketplace.it', password: 'corta', rememberMe: false })
+		expect(stub.calls[0]?.variables).toEqual({ email: 'operator@marketplace.test', password: 'short', rememberMe: false })
 	})
 
 	it('signs in, stores the token and lands on the dashboard', async () => {
@@ -101,7 +101,7 @@ describe('LoginPage', () => {
 		})
 		const { router } = await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.it', 'password123')
+		await fillIn('operator@marketplace.test', 'password123')
 		await submit()
 
 		expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
@@ -121,13 +121,13 @@ describe('LoginPage', () => {
 		})
 		await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.it', 'password123')
+		await fillIn('operator@marketplace.test', 'password123')
 		await userEvent.click(screen.getByLabelText('Remember me on this device'))
 		await submit()
 
 		await waitFor(() => {
 			expect(stub.calls[0]?.variables).toEqual({
-				email: 'operator@marketplace.it',
+				email: 'operator@marketplace.test',
 				password: 'password123',
 				rememberMe: true
 			})
@@ -137,16 +137,16 @@ describe('LoginPage', () => {
 	it('reports the backend error and stays put', async () => {
 		stubGraphQL({
 			LoginAdmin: {
-				errors: [graphQLError('Invalid credentials', 'Email o password non corrette', 400)],
+				errors: [graphQLError('Invalid credentials', 'Email or password not correct', 400)],
 				status: 400
 			}
 		})
 		const { router } = await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.it', 'password123')
+		await fillIn('operator@marketplace.test', 'password123')
 		await submit()
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Email o password non corrette')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Email or password not correct')
 		expect(getAccessToken()).toBeNull()
 		expect(router.state.location.pathname).toBe('/')
 	})
@@ -158,7 +158,7 @@ describe('LoginPage', () => {
 		stubGraphQL({ LoginAdmin: { data: { loginAdmin: { accessToken: '' } } } })
 		const { router } = await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.it', 'password123')
+		await fillIn('operator@marketplace.test', 'password123')
 		await submit()
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Invalid credentials')

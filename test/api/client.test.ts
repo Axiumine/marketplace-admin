@@ -99,7 +99,7 @@ describe('createGraphQLClient', () => {
 
 	it('refreshes and retries when the token has expired', async () => {
 		const stub = stubGraphQL({
-			InfoAdminAfterLogin: [{ errors: [graphQLError('Token non valido', undefined, 498)], status: 498 }, { data: ADMIN }],
+			InfoAdminAfterLogin: [{ errors: [graphQLError('Invalid token', undefined, 498)], status: 498 }, { data: ADMIN }],
 			Refresh: refreshed('tok-2')
 		})
 		setAccessToken('tok-1')
@@ -117,7 +117,7 @@ describe('createGraphQLClient', () => {
 
 	it('does not retry a failure that is not 498', async () => {
 		const stub = stubGraphQL({
-			InfoAdminAfterLogin: { errors: [graphQLError('Dati non validi', undefined, 400)], status: 400 },
+			InfoAdminAfterLogin: { errors: [graphQLError('Invalid data', undefined, 400)], status: 400 },
 			Refresh: refreshed('tok-2')
 		})
 		setAccessToken('tok-1')
@@ -126,14 +126,14 @@ describe('createGraphQLClient', () => {
 		const result = await info(client)
 
 		expect(stub.calls.map((call) => call.operationName)).toEqual(['InfoAdminAfterLogin'])
-		expect(result.error?.message).toContain('Dati non validi')
+		expect(result.error?.message).toContain('Invalid data')
 		expect(getAccessToken()).toBe('tok-1')
 		expect(onSessionLost).not.toHaveBeenCalled()
 	})
 
 	it('ends the session when the refresh mutation reports failure', async () => {
 		stubGraphQL({
-			InfoAdminAfterLogin: { errors: [graphQLError('Token non valido', undefined, 498)], status: 498 },
+			InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
 			Refresh: { data: { refresh: { status: false, accessToken: '' } } }
 		})
 		setAccessToken('tok-1')
@@ -151,7 +151,7 @@ describe('createGraphQLClient', () => {
 	// backend has just said is over.
 	it('ends the session when the refresh reports failure but still returns a token', async () => {
 		stubGraphQL({
-			InfoAdminAfterLogin: { errors: [graphQLError('Token non valido', undefined, 498)], status: 498 },
+			InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
 			Refresh: { data: { refresh: { status: false, accessToken: 'tok-2' } } }
 		})
 		setAccessToken('tok-1')
@@ -167,7 +167,7 @@ describe('createGraphQLClient', () => {
 	// response rather than the one field. Nothing is left to read the status off.
 	it('ends the session when the refresh answers without data', async () => {
 		stubGraphQL({
-			InfoAdminAfterLogin: { errors: [graphQLError('Token non valido', undefined, 498)], status: 498 },
+			InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
 			Refresh: {}
 		})
 		setAccessToken('tok-1')
@@ -183,7 +183,7 @@ describe('createGraphQLClient', () => {
 	// non-null, so a blank string is the service saying it minted nothing.
 	it('ends the session when the refresh returns an empty token', async () => {
 		stubGraphQL({
-			InfoAdminAfterLogin: { errors: [graphQLError('Token non valido', undefined, 498)], status: 498 },
+			InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
 			Refresh: { data: { refresh: { status: true, accessToken: '' } } }
 		})
 		setAccessToken('tok-1')
@@ -197,8 +197,8 @@ describe('createGraphQLClient', () => {
 
 	it('ends the session when the refresh itself errors', async () => {
 		stubGraphQL({
-			InfoAdminAfterLogin: { errors: [graphQLError('Token non valido', undefined, 498)], status: 498 },
-			Refresh: { errors: [graphQLError('Sessione non trovata', undefined, 401)], status: 401 }
+			InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+			Refresh: { errors: [graphQLError('Session not found', undefined, 401)], status: 401 }
 		})
 		setAccessToken('tok-1')
 
@@ -210,9 +210,9 @@ describe('createGraphQLClient', () => {
 	})
 
 	it.each([
-		['401 nessuna sessione', 401],
-		['412 account disabilitato', 412],
-		['499 token mancante', 499]
+		['401 no session', 401],
+		['412 account disabled', 412],
+		['499 token missing', 499]
 	])('ends the session on %s', async (_label, status) => {
 		stubGraphQL({ InfoAdminAfterLogin: { errors: [graphQLError('Fine', undefined, status)], status } })
 		setAccessToken('tok-1')
@@ -225,7 +225,7 @@ describe('createGraphQLClient', () => {
 	})
 
 	it('keeps the session on an ordinary domain failure', async () => {
-		stubGraphQL({ InfoAdminAfterLogin: { errors: [graphQLError('Dati non validi', undefined, 400)], status: 400 } })
+		stubGraphQL({ InfoAdminAfterLogin: { errors: [graphQLError('Invalid data', undefined, 400)], status: 400 } })
 		setAccessToken('tok-1')
 
 		const { client, onSessionLost } = setup()

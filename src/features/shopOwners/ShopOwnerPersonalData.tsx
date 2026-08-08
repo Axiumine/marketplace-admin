@@ -51,13 +51,13 @@ import { saveValidated, useSavableSection } from './saving'
  * Order matters: deleted wins over disabled, and the yellow is the *remaining* flagged case — an
  * account still waiting on manual approval. The approved-and-active account falls off the end with no
  * tint at all, which is the honest rendering of "nothing is wrong". Reaching the yellow through a bare
- * `else` would paint every healthy account "in attesa", so the last branch is a real test, not a
+ * `else` would paint every healthy account "pending", so the last branch is a real test, not a
  * default.
  *
  * ⚠️ `deleted` is a **timestamp**, not a flag — `IShopOwnerSchema.deleted?: Date`, exposed as
  * `DateTime`. Its presence is the soft delete, so it is tested with `!= null`. Comparing it against
  * `true`, or rendering it through `handleNullBoolYN`, is false for every value the field can hold: a
- * deleted account then reads "Eliminato: No" and never gets its grey.
+ * deleted account then reads "Deleted: No" and never gets its grey.
  */
 export const accountStatusClass = (shopOwner: {
 	deleted?: string | null
@@ -117,7 +117,7 @@ const optionalCoordinates = (label: string, limit: number) =>
 /**
  * Everything the detail page can write about one shopOwner, flat.
  *
- * Flat and not shaped like the four mutations it feeds: the grouping lives in `GRUPPI` below, where it
+ * Flat and not shaped like the four mutations it feeds: the grouping lives in `GROUPS` below, where it
  * is a list of field names, and nesting the form state to match would give every `register()` a dotted
  * path for no gain. The booleans are here too — they cannot fail validation, but leaving them out of the
  * schema would leave them out of the resolver's inferred type as well.
@@ -135,8 +135,8 @@ export const shopOwnerDetailSchema = z
 			.date('Enter a valid date of birth')
 			.refine((data) => isAdult(data, new Date()), `The shop owner must be of age (at least ${MIN_AGE})`),
 		/**
-		 * The whole address on one line — the only part of it with a box of its own, exactly as on a punto
-		 * vendita. Unvalidated by itself, because it is text the operator may be halfway through typing, and
+		 * The whole address on one line — the only part of it with a box of its own, exactly as on a
+		 * shop. Unvalidated by itself, because it is text the operator may be halfway through typing, and
 		 * checked instead by the composite rule at the bottom.
 		 */
 		addressComplete: z.string(),
@@ -145,7 +145,7 @@ export const shopOwnerDetailSchema = z
 		city: required('City', MAX_CITY),
 		// Upper-cased by the schema rather than on the way to the wire, so the value the form keeps is the
 		// value the collection stores. Uppercasing in the payload alone would leave "mi" in the box after a
-		// save that wrote "MI" — a row disagreeing with the server it just answered to.
+		// save that wrote "MA" — a row disagreeing with the server it just answered to.
 		province: z
 			.string()
 			.trim()
@@ -337,8 +337,8 @@ const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner
 	 * The five writes, once the form has validated.
 	 *
 	 * `values` is the resolver's output and not what is in the boxes: the schema's `trim` and its
-	 * upper-casing are transforms, so this is where " Mario " and "mi" have already become "Mario" and
-	 * "MI". Sending the raw form state would write them past a validator that had just approved the
+	 * upper-casing are transforms, so this is where " Mark " and "mi" have already become "Mark" and
+	 * "MA". Sending the raw form state would write them past a validator that had just approved the
 	 * cleaned-up pair.
 	 */
 	const write = async (values: DetailValues): Promise<boolean> => {
@@ -403,7 +403,7 @@ const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner
 			if (result.data?.shopOwnerUpdatePreferences !== true) return failed(result.error)
 		}
 
-		// `values.notes` and not `vuotoInNull`: this mutation takes `String!`, and the empty string is the
+		// `values.notes` and not `emptyInNull`: this mutation takes `String!`, and the empty string is the
 		// instruction that removes the note. There is nothing to send `null` as.
 		if (dirtyFields.notes === true) {
 			const result = await runNote({ _id: shopOwner._id, notes: values.notes }, CTX_SAVE_SHOP_OWNER)
@@ -528,7 +528,7 @@ const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner
 							 * all — the same component the new-shopOwner form and the shop use.
 							 *
 							 * Its map opens on the shopOwner's own address when there is one, and on the middle
-							 * of Italy when there is not; `centroIniziale` takes the `null` for exactly that.
+							 * of the country when there is not; `initialCenter` takes the `null` for exactly that.
 							 *
 							 * `Controller` and not `register` + `useWatch`: the box is a controlled component, and
 							 * `register` would also hand the form the input's DOM node to write `ref.value` onto

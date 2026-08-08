@@ -3,7 +3,7 @@ import { LoginForm } from '@/features/login/LoginForm'
 /**
  * The unauthenticated landing page.
  *
- * ⚠️ There is deliberately no "password dimenticata" flow, and the note in the card says so rather
+ * ⚠️ There is deliberately no "forgotten password" flow, and the note in the card says so rather
  * than leaving the omission to be read as an oversight. The platform's only recovery pair — `resetPwd`
  * and `updatePwd` on public-resource — looks the address up in the `shopOwner` collection, so it
  * answers "email not found" for every operator account that exists. A link to it would be a dead end
