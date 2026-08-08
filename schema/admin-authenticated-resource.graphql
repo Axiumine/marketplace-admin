@@ -138,7 +138,7 @@ type MutationsApi {
 	companyUpdate(_id: ID!, company: GraphQLInputCompany!): Boolean!
 
 	"""
-	Retires one company — a soft delete: the row keeps its place and gains a `deleted` instant, and every
+	Retires one company — a soft delete: the company keeps its place and gains a `deleted` instant, and every
 	read path filters on it. 404 when `_id` matches no company; a company already retired answers 200
 	again, since the `$set` still matches it.
 
@@ -317,7 +317,7 @@ type GraphQLResetPwd {
 A company, as its own entity — the `company` collection since migration 20260803000000.
 
 `idShopOwner` is exposed rather than kept internal: the operator app reaches a company through its
-owner's detail page, and the field is what a client re-reading one row can check it against.
+owner's detail page, and the field is what a client re-reading one company can check it against.
 
 `taxCode` and `uniqueCode` are the two nullable fields, matching the collection's `required` array. `taxCode` is new
 with the extraction and no stored company carries one.

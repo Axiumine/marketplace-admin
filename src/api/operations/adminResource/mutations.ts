@@ -90,7 +90,7 @@ export const ShopOwnerUpdateNoteDocument = graphql(`
  * `CompanyAdd` takes the owner and `CompanyUpdate` does not — `idShopOwner` is absent from
  * `GraphQLInputCompany` too, so a card cannot be edited into another shopOwner's hands.
  *
- * `CompanyDel` is a soft delete — it stamps `deleted` and the row stays. The message comes back through
+ * `CompanyDel` is a soft delete — it stamps `deleted` and the document stays. The message comes back through
  * `messageOf` like any other. ⚠️ The VAT number stays occupied afterwards: `vatNumber_unique` is global and
  * unconditional, so the same company cannot be registered again once retired.
  *

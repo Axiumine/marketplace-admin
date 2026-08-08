@@ -223,7 +223,7 @@ describe('ShopOwnerDetailPage — after saving', () => {
 	 * A section nobody touched is not merely nothing to send — it is nothing to *validate* either.
 	 *
 	 * These forms are seeded from whatever the collection already holds, and the rules they enforce are
-	 * younger than some of the rows: this `personalData` carries a three-letter province and no street,
+	 * younger than some of the documents: this `personalData` carries a three-letter province and no street,
 	 * which the address card refuses outright. Validating it anyway would fail the page's save while the
 	 * operator was editing a company, on a card they never opened and cannot see the error on — and the
 	 * companies come after the personalData in the save loop, so the write they *did* ask for is the one

@@ -142,7 +142,7 @@ export const ShopOwnerByIdDocument = graphql(`
 /**
  * The companies owned by one shopOwner.
  *
- * The Companies section renders a card per row. Whole rows, not a projection: the section edits the
+ * The Companies section renders a card per company. Whole documents, not a projection: the section edits the
  * company card, and there is no second query behind it.
  */
 export const ShopOwnerCompaniesDocument = graphql(`

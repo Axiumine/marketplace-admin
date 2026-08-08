@@ -197,7 +197,7 @@ describe('ShopOwnerPersonalData', () => {
 
 	/*
 	 * ⚠️ The difference from the shop's card, and the reason it is a sentence rather than a blank
-	 * space: an shopOwner registered before `position` existed has none, so this is the state most rows
+	 * space: an shopOwner registered before `position` existed has none, so this is the state most of them
 	 * are in. A map centred on a fallback would be a claim about where they live; an empty gap would read
 	 * as a frame that failed to load.
 	 */
