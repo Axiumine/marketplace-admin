@@ -161,13 +161,13 @@ exports[`TblShopOwners > renders 1`] = `
                 class="underline"
                 href="/p/shopOwners/id/65f0000000000000000000f1"
               >
-                Rossi
+                Rivers
               </a>
             </td>
             <td
               class="p-2"
             >
-              Mario
+              Mark
             </td>
             <td
               class="p-2"
@@ -177,7 +177,7 @@ exports[`TblShopOwners > renders 1`] = `
             <td
               class="p-2"
             >
-              Via Roma 1, 20100 Milano (MI)
+              1 Main Street, 02109 Boston (MA)
             </td>
           </tr>
           <tr
@@ -190,7 +190,7 @@ exports[`TblShopOwners > renders 1`] = `
                 class="underline"
                 href="/p/shopOwners/id/65f0000000000000000000f2"
               >
-                Bianchi
+                White
               </a>
             </td>
             <td
@@ -206,7 +206,7 @@ exports[`TblShopOwners > renders 1`] = `
             <td
               class="p-2"
             >
-              Corso Italia 9, 00100 Roma (RM)
+              9 Broadway, 10001 New York (NY)
             </td>
           </tr>
         </tbody>

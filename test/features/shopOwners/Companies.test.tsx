@@ -25,7 +25,7 @@ const personalData = {
 				disabled: false,
 				waitApprov: false,
 				login: {
-					email: 'mario@rossi.it',
+					email: 'mark@rivers.test',
 					firstLogin: null,
 					lastLogin: null,
 					onboardingStep: '0',
@@ -33,11 +33,11 @@ const personalData = {
 					rememberMe: false
 				},
 				personalData: {
-					firstName: 'Mario',
-					lastName: 'Rossi',
+					firstName: 'Mark',
+					lastName: 'Rivers',
 					birth: { date: '1980-06-15T00:00:00.000Z' },
-					contacts: { email: 'contatto@rossi.it', landline: null, mobile: '3331234567' },
-					address: { street: 'Via Roma 1', postalCode: '20100', city: 'Milano', province: 'MI' }
+					contacts: { email: 'contact@rivers.test', landline: null, mobile: '3331234567' },
+					address: { street: '1 Main Street', postalCode: '02109', city: 'Boston', province: 'MA' }
 				},
 				resetPwd: null
 			}
@@ -58,20 +58,20 @@ const ID_COMPANY = '65f0000000000000000000a1'
 const company = {
 	__typename: 'GraphQLCompany',
 	_id: ID_COMPANY,
-	legalName: 'Rossi Mario S.r.l.',
+	legalName: 'Rivers Trading Ltd',
 	vatNumber: '12345678901',
 	taxCode: null,
-	contactPerson: 'Mario Rossi',
-	administrator: 'Mario Rossi',
+	contactPerson: 'Mark Rivers',
+	administrator: 'Mark Rivers',
 	uniqueCode: null,
-	certifiedEmail: 'rossi@pec.it',
-	registryExtract: 'MI-123456',
+	certifiedEmail: 'certified@rivers.test',
+	registryExtract: 'MA-123456',
 	address: {
-		street: 'Via Dante 3',
-		postalCode: '20121',
-		city: 'Milano',
-		province: 'MI',
-		position: { type: 'Point', coordinates: [9.1859, 45.4668] }
+		street: '3 Oak Street',
+		postalCode: '02108',
+		city: 'Boston',
+		province: 'MA',
+		position: { type: 'Point', coordinates: [-71.0636, 42.3626] }
 	}
 }
 
@@ -79,7 +79,7 @@ const company = {
 const companyTwo = {
 	...company,
 	_id: '65f0000000000000000000a2',
-	legalName: 'Bianchi Anna S.r.l.',
+	legalName: 'White Trading Ltd',
 	// Both unique across the whole collection, so two rows seeded from one literal would be a pair no
 	// database would ever hold.
 	vatNumber: '10987654321',
@@ -90,11 +90,11 @@ const companyTwo = {
 const companyGeocoded = {
 	...company,
 	address: {
-		street: 'Via Roma 1',
-		postalCode: '20121',
-		city: 'Milano',
-		province: 'MI',
-		position: { type: 'Point', coordinates: [9.1895, 45.4642] }
+		street: '1 Main Street',
+		postalCode: '02108',
+		city: 'Boston',
+		province: 'MA',
+		position: { type: 'Point', coordinates: [-71.0589, 42.3601] }
 	}
 }
 
@@ -107,14 +107,14 @@ const companies = (items: unknown[]) => ({
 })
 
 /**
- * One company's block, by its ragione sociale — which is the heading, and the only thing that tells two
+ * One company's block, by its legal name — which is the heading, and the only thing that tells two
  * cards apart. The personalData above has an "Address" card of its own, so an unscoped lookup finds the
  * shopOwner's home address instead of the company's legal seat.
  *
  * `closest('section')`, not `parentElement`: the heading shares a flex row with the trash icon, so its
  * immediate parent is that title row and not the card's outer `<section>`.
  */
-const card = (name = 'Rossi Mario S.r.l.') =>
+const card = (name = 'Rivers Trading Ltd') =>
 	within(screen.getByRole('heading', { name: name, level: 3 }).closest('section') as HTMLElement)
 
 const box = (title: string, name?: string) => within(card(name).getByRole('region', { name: title }))
@@ -143,7 +143,7 @@ const save = () => screen.getByRole('button', { name: 'Save' })
 const mask = () => screen.queryByText('It will be deleted on save.')?.parentElement ?? null
 
 /** A company's own map frame, titled after the company so one card's frame is not another's. */
-const map = (name = 'Rossi Mario S.r.l.') => screen.queryByTitle(`Map of ${name}`)
+const map = (name = 'Rivers Trading Ltd') => screen.queryByTitle(`Map of ${name}`)
 
 /** The map `AddressField` brings with it, which follows what is being typed rather than what is stored. */
 const mapEditor = () => screen.queryByTitle('Address map')
@@ -159,10 +159,10 @@ const stubNetwork = (replies: GraphQLReplies, osm: ResponseOsm | readonly Respon
 const hintOsm = (name: string) => screen.findByRole('button', { name: name }, { timeout: SEARCH_DEBOUNCE_MS + 2000 })
 
 /** What `osmResult()` answers with, as the suggestion list spells it out. */
-const HINT = 'Via Roma, 1, Milano, MI, 20121, Italia'
+const HINT = 'Main Street, 1, Boston, MA, 02108, USA'
 
 /** The same answer once picked, as the box spells it out. */
-const PICKED = 'Via Roma 1, 20121 Milano (MI)'
+const PICKED = '1 Main Street, 02108 Boston (MA)'
 
 const withAddress = { results: [resultOsm()] }
 
@@ -235,12 +235,12 @@ describe('Companies', () => {
 	it('reports a failure without hiding the personalData', async () => {
 		stubGraphQL({
 			...personalData,
-			ShopOwnerCompanies: { errors: [graphQLError('Errore', 'Companies non disponibili', 500)], status: 500 }
+			ShopOwnerCompanies: { errors: [graphQLError('Error', 'Companies unavailable', 500)], status: 500 }
 		})
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Companies non disponibili')
-		expect(screen.getByText('Mario')).toBeInTheDocument()
+		expect(await screen.findByRole('alert')).toHaveTextContent('Companies unavailable')
+		expect(screen.getByText('Mark')).toBeInTheDocument()
 		expect(screen.queryByText('No company registered.')).not.toBeInTheDocument()
 	})
 
@@ -248,12 +248,12 @@ describe('Companies', () => {
 		stubGraphQL(companies([company]))
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })).toBeInTheDocument()
+		expect(await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })).toBeInTheDocument()
 		expect(rowValue('Company data', 'VAT number')).toBe('12345678901')
-		expect(rowValue('Company data', 'Contact person')).toBe('Mario Rossi')
-		expect(rowValue('Company data', 'Administrator')).toBe('Mario Rossi')
-		expect(rowValue('Company data', 'Certified email')).toBe('rossi@pec.it')
-		expect(rowValue('Company data', 'Registry extract')).toBe('MI-123456')
+		expect(rowValue('Company data', 'Contact person')).toBe('Mark Rivers')
+		expect(rowValue('Company data', 'Administrator')).toBe('Mark Rivers')
+		expect(rowValue('Company data', 'Certified email')).toBe('certified@rivers.test')
+		expect(rowValue('Company data', 'Registry extract')).toBe('MA-123456')
 		// The two fields the migration added, absent on every company lifted out of a shop: a dash,
 		// never the word "null" nor an empty cell that reads as a rendering bug.
 		expect(rowValue('Company data', 'Tax code')).toBe('---')
@@ -266,10 +266,10 @@ describe('Companies', () => {
 		stubGraphQL(companies([company]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 
-		expect(rowValue('Registered office', 'Address')).toBe('Via Dante 3, 20121 Milano (MI)')
-		expect(map()).toHaveAttribute('src', expect.stringContaining('marker=45.46680,9.18590'))
+		expect(rowValue('Registered office', 'Address')).toBe('3 Oak Street, 02108 Boston (MA)')
+		expect(map()).toHaveAttribute('src', expect.stringContaining('marker=42.36260,-71.06360'))
 	})
 
 	// A pair of the wrong length is the one broken shape `[Float!]!` can carry: the card has nowhere to put
@@ -278,7 +278,7 @@ describe('Companies', () => {
 		stubGraphQL(companies([{ ...company, address: { ...company.address, position: { type: 'Point', coordinates: [] } } }]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 
 		expect(map()).not.toBeInTheDocument()
 	})
@@ -289,8 +289,8 @@ describe('Companies', () => {
 		stubGraphQL(companies([company, companyTwo]))
 		await renderRoute(DETAIL)
 
-		expect(await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })).toBeInTheDocument()
-		expect(screen.getByRole('heading', { name: 'Bianchi Anna S.r.l.', level: 3 })).toBeInTheDocument()
+		expect(await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })).toBeInTheDocument()
+		expect(screen.getByRole('heading', { name: 'White Trading Ltd', level: 3 })).toBeInTheDocument()
 	})
 
 	// One frame per company, each named after the company it belongs to: two frames sharing a title would
@@ -299,10 +299,10 @@ describe('Companies', () => {
 		stubGraphQL(companies([company, companyTwo]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 
 		expect(map()).toBeInTheDocument()
-		expect(map('Bianchi Anna S.r.l.')).toBeInTheDocument()
+		expect(map('White Trading Ltd')).toBeInTheDocument()
 	})
 })
 
@@ -311,15 +311,15 @@ describe('Companies', () => {
  * seat together — the same shape the shop card has, deliberately, because the two sit on one page under
  * one button.
  */
-describe('Companies — modifica', () => {
+describe('Companies — editing', () => {
 	it('turns a row into its editor, seeded with the stored value', async () => {
 		stubGraphQL(companies([company]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', 'Contact person')
 
-		expect(box('Company data').getByLabelText('Contact person')).toHaveValue('Mario Rossi')
+		expect(box('Company data').getByLabelText('Contact person')).toHaveValue('Mark Rivers')
 		expect(save()).toBeDisabled()
 	})
 
@@ -329,7 +329,7 @@ describe('Companies — modifica', () => {
 		stubGraphQL(companies([company]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', 'Tax code')
 
 		expect(box('Company data').getByLabelText('Tax code')).toHaveValue('')
@@ -337,14 +337,14 @@ describe('Companies — modifica', () => {
 	})
 
 	// Latitude first in the geocoder, longitude first on the wire. The pair is reassembled on save, and a
-	// form that sent them in reading order would put an Italian company in the sea off Somalia.
+	// form that sent them in reading order would put a company in the Southern Ocean.
 	it('sends the whole company, with the coordinates back in GeoJSON order', async () => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', 'Contact person')
-		write('Company data', 'Contact person', 'Anna Bianchi')
+		write('Company data', 'Contact person', 'Anna White')
 		await userEvent.click(save())
 
 		expect(await screen.findByText('Changes saved.')).toBeInTheDocument()
@@ -353,23 +353,23 @@ describe('Companies — modifica', () => {
 				variables: {
 					_id: ID_COMPANY,
 					company: {
-						legalName: 'Rossi Mario S.r.l.',
+						legalName: 'Rivers Trading Ltd',
 						vatNumber: '12345678901',
 						// Never `''`: the collection is `additionalProperties: false` with `bsonType: 'string'`,
 						// so an empty string would be a stored value where the service is meant to drop the field.
 						taxCode: null,
-						contactPerson: 'Anna Bianchi',
-						administrator: 'Mario Rossi',
+						contactPerson: 'Anna White',
+						administrator: 'Mark Rivers',
 						uniqueCode: null,
-						certifiedEmail: 'rossi@pec.it',
+						certifiedEmail: 'certified@rivers.test',
 						address: {
-							street: 'Via Dante 3',
-							postalCode: '20121',
-							city: 'Milano',
-							province: 'MI',
-							position: { coordinates: [9.1859, 45.4668] }
+							street: '3 Oak Street',
+							postalCode: '02108',
+							city: 'Boston',
+							province: 'MA',
+							position: { coordinates: [-71.0636, 42.3626] }
 						},
-						registryExtract: 'MI-123456'
+						registryExtract: 'MA-123456'
 					}
 				}
 			})
@@ -377,12 +377,12 @@ describe('Companies — modifica', () => {
 	})
 
 	// The two optional fields, filled: what was `null` on the way in is a real value on the way out, and
-	// the codice fiscale is not checked for a format the collection does not have either.
+	// the tax code is not checked for a format the collection does not have either.
 	it('sends the optional fields once they are filled', async () => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', 'Tax code')
 		write('Company data', 'Tax code', '12345678901')
 		await open('Company data', 'Unique code')
@@ -404,9 +404,9 @@ describe('Companies — modifica', () => {
 		const stub = stubGraphQL({ ...companies([{ ...company, registryExtract: '' }, companyTwo]), ...OK })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Bianchi Anna S.r.l.', level: 3 })
-		await open('Company data', 'Contact person', 'Bianchi Anna S.r.l.')
-		write('Company data', 'Contact person', 'Luigi Verdi', 'Bianchi Anna S.r.l.')
+		await screen.findByRole('heading', { name: 'White Trading Ltd', level: 3 })
+		await open('Company data', 'Contact person', 'White Trading Ltd')
+		write('Company data', 'Contact person', 'Louis Green', 'White Trading Ltd')
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
@@ -431,12 +431,12 @@ describe('Companies — modifica', () => {
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 
 		expect(reads(stub, 'ShopOwnerCompanies')).toHaveLength(1)
 
 		await open('Company data', 'Legal name')
-		write('Company data', 'Legal name', 'Pizzeria Rinominata S.r.l.')
+		write('Company data', 'Legal name', 'Renamed Boutique Ltd')
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
@@ -449,18 +449,18 @@ describe('Companies — modifica', () => {
 	it('stops at the company that was refused', async () => {
 		const stub = stubGraphQL({
 			...companies([company, companyTwo]),
-			CompanyUpdate: { errors: [graphQLError('Errore', 'Certified email già presente', 409)], status: 409 }
+			CompanyUpdate: { errors: [graphQLError('Error', 'Certified email already registered', 409)], status: 409 }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Bianchi Anna S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'White Trading Ltd', level: 3 })
 		await open('Company data', 'Contact person')
-		write('Company data', 'Contact person', 'Anna Bianchi')
-		await open('Company data', 'Contact person', 'Bianchi Anna S.r.l.')
-		write('Company data', 'Contact person', 'Luigi Verdi', 'Bianchi Anna S.r.l.')
+		write('Company data', 'Contact person', 'Anna White')
+		await open('Company data', 'Contact person', 'White Trading Ltd')
+		write('Company data', 'Contact person', 'Louis Green', 'White Trading Ltd')
 		await userEvent.click(save())
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Certified email già presente')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Certified email already registered')
 		expect(writes(stub)).toHaveLength(1)
 		expect(save()).toBeEnabled()
 	})
@@ -477,26 +477,26 @@ describe('Companies — modifica', () => {
 		stubGraphQL({
 			...companies([company, companyTwo]),
 			CompanyUpdate: [
-				{ errors: [graphQLError('Errore', 'Certified email già presente', 409)], status: 409 },
+				{ errors: [graphQLError('Error', 'Certified email already registered', 409)], status: 409 },
 				{ data: { companyUpdate: true } },
-				{ errors: [graphQLError('Errore', 'Partita IVA già presente', 409)], status: 409 }
+				{ errors: [graphQLError('Error', 'VAT number already registered', 409)], status: 409 }
 			]
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Bianchi Anna S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'White Trading Ltd', level: 3 })
 		await open('Company data', 'Contact person')
-		write('Company data', 'Contact person', 'Anna Bianchi')
-		await open('Company data', 'Contact person', 'Bianchi Anna S.r.l.')
-		write('Company data', 'Contact person', 'Luigi Verdi', 'Bianchi Anna S.r.l.')
+		write('Company data', 'Contact person', 'Anna White')
+		await open('Company data', 'Contact person', 'White Trading Ltd')
+		write('Company data', 'Contact person', 'Louis Green', 'White Trading Ltd')
 		await userEvent.click(save())
 
-		expect(await screen.findByText('Certified email già presente')).toBeInTheDocument()
+		expect(await screen.findByText('Certified email already registered')).toBeInTheDocument()
 
 		await userEvent.click(save())
 
-		expect(await screen.findByText('Partita IVA già presente')).toBeInTheDocument()
-		expect(screen.queryByText('Certified email già presente')).not.toBeInTheDocument()
+		expect(await screen.findByText('VAT number already registered')).toBeInTheDocument()
+		expect(screen.queryByText('Certified email already registered')).not.toBeInTheDocument()
 	})
 
 	// `false` with no error at all: no resolver answers that way, but `Boolean!` says it could, and a save
@@ -505,9 +505,9 @@ describe('Companies — modifica', () => {
 		stubGraphQL({ ...companies([company]), CompanyUpdate: { data: { companyUpdate: false } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', 'Contact person')
-		write('Company data', 'Contact person', 'Anna Bianchi')
+		write('Company data', 'Contact person', 'Anna White')
 		await userEvent.click(save())
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
@@ -530,7 +530,7 @@ describe('Companies — modifica', () => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', field)
 		write('Company data', field, '   ')
 		await userEvent.click(save())
@@ -545,12 +545,12 @@ describe('Companies — modifica', () => {
 		['Unique code', 'ABC12', 'The unique code is 7 alphanumeric characters'],
 		// Something the `type="email"` box itself accepts: jsdom runs the HTML validator too, and a value it
 		// refuses never reaches the schema this line is about.
-		['Certified email', 'chiocciola@', 'The certified email is not a valid address']
+		['Certified email', 'at@', 'The certified email is not a valid address']
 	])('refuses a malformed %s', async (field, value, message) => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', field)
 		write('Company data', field, value)
 		await userEvent.click(save())
@@ -571,7 +571,7 @@ describe('Companies — modifica', () => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', field)
 		write('Company data', field, 'x'.repeat(length))
 		await userEvent.click(save())
@@ -588,7 +588,7 @@ describe('Companies — modifica', () => {
  * written by picking a geocoder answer and by nothing else. Free text left in the box would save the
  * *stored* seat under a line reading like some other address.
  */
-describe('Companies — sede legale', () => {
+describe('Companies — registered office', () => {
 	const addressBox = (name?: string) => box('Registered office', name).getByLabelText('Address')
 
 	const list = () => screen.queryByRole('button', { name: HINT })
@@ -597,14 +597,14 @@ describe('Companies — sede legale', () => {
 		stubNetwork(companies([company]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Registered office', 'Address')
 
-		expect(addressBox()).toHaveValue('Via Dante 3, 20121 Milano (MI)')
+		expect(addressBox()).toHaveValue('3 Oak Street, 02108 Boston (MA)')
 		expect(box('Registered office').queryByLabelText('Postal code')).not.toBeInTheDocument()
 		expect(box('Registered office').queryByLabelText('City')).not.toBeInTheDocument()
 		expect(box('Registered office').queryByLabelText('Province')).not.toBeInTheDocument()
-		expect(box('Registered office').queryByLabelText('Latitudine')).not.toBeInTheDocument()
+		expect(box('Registered office').queryByLabelText('Latitude')).not.toBeInTheDocument()
 	})
 
 	// Two maps of two different places, stacked, is worse than either: the stored one steps aside for the
@@ -613,7 +613,7 @@ describe('Companies — sede legale', () => {
 		stubNetwork(companies([company]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 
 		expect(map()).toBeInTheDocument()
 		expect(mapEditor()).not.toBeInTheDocument()
@@ -621,7 +621,7 @@ describe('Companies — sede legale', () => {
 		await open('Registered office', 'Address')
 
 		expect(map()).not.toBeInTheDocument()
-		expect(mapEditor()).toHaveAttribute('src', expect.stringContaining('marker=45.46680,9.18590'))
+		expect(mapEditor()).toHaveAttribute('src', expect.stringContaining('marker=42.36260,-71.06360'))
 	})
 
 	// The whole of what a pick writes: the line, the four fields under it and the coordinate pair, all
@@ -631,9 +631,9 @@ describe('Companies — sede legale', () => {
 		const stub = stubNetwork({ ...companies([company]), ...OK }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Registered office', 'Address')
-		fireEvent.change(addressBox(), { target: { value: 'Via Roma 1 Milano' } })
+		fireEvent.change(addressBox(), { target: { value: '1 Main Street Boston' } })
 		fireEvent.click(await hintOsm(HINT))
 
 		expect(list()).not.toBeInTheDocument()
@@ -646,11 +646,11 @@ describe('Companies — sede legale', () => {
 		expect(writes(stub)[0]?.variables).toMatchObject({
 			company: {
 				address: {
-					street: 'Via Roma 1',
-					postalCode: '20121',
-					city: 'Milano',
-					province: 'MI',
-					position: { coordinates: [9.1895, 45.4642] }
+					street: '1 Main Street',
+					postalCode: '02108',
+					city: 'Boston',
+					province: 'MA',
+					position: { coordinates: [-71.0589, 42.3601] }
 				}
 			}
 		})
@@ -666,9 +666,9 @@ describe('Companies — sede legale', () => {
 		stubNetwork({ ...companies([company]), ...OK }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Registered office', 'Address')
-		fireEvent.change(addressBox(), { target: { value: 'Via Roma 2, 20121 Milano (MI)' } })
+		fireEvent.change(addressBox(), { target: { value: '2 Main Street, 02108 Boston (MA)' } })
 		await userEvent.click(save())
 
 		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
@@ -692,9 +692,9 @@ describe('Companies — sede legale', () => {
 		stubNetwork(companies([companyGeocoded]), withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Registered office', 'Address')
-		fireEvent.change(addressBox(), { target: { value: 'Via Roma 1 Milano' } })
+		fireEvent.change(addressBox(), { target: { value: '1 Main Street Boston' } })
 
 		expect(save()).toBeEnabled()
 
@@ -712,9 +712,9 @@ describe('Companies — sede legale', () => {
 		const stub = stubNetwork({ ...companies([company]), ...OK })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Registered office', 'Address')
-		fireEvent.change(addressBox(), { target: { value: 'Via Roma 2, 20121 Milano (MI)' } })
+		fireEvent.change(addressBox(), { target: { value: '2 Main Street, 02108 Boston (MA)' } })
 		await userEvent.click(save())
 
 		expect(await page().findByText('Select the address from the list')).toBeInTheDocument()
@@ -726,18 +726,18 @@ describe('Companies — sede legale', () => {
  * The trash beside a company's name. Queued exactly like the field editors: a click marks the card and
  * nothing reaches the server until Save.
  *
- * ⚠️ Unlike a shop's, the backend delete is a **hard** one and is refused with a 409 while a live punto
- * vendita still points at the company. That message has to reach the operator, which is why the card's
+ * ⚠️ Unlike a shop's, the backend delete is a **hard** one and is refused with a 409 while a live shop
+ * still points at the company. That message has to reach the operator, which is why the card's
  * toast sits outside the mask that covers everything else.
  */
-describe('Companies — eliminazione', () => {
+describe('Companies — deletion', () => {
 	const trash = (name?: string) => card(name).getByRole('button', { name: 'Delete company' })
 
 	it('queues the deletion behind the mask instead of writing it', async () => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK_DEL })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 
 		expect(mask()).toBeNull()
 
@@ -754,7 +754,7 @@ describe('Companies — eliminazione', () => {
 		stubGraphQL(companies([company]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await userEvent.click(trash())
 		await userEvent.click(card().getByRole('button', { name: 'Cancel company deletion' }))
 
@@ -768,7 +768,7 @@ describe('Companies — eliminazione', () => {
 		stubGraphQL(companies([company]))
 		await renderRoute(DETAIL)
 
-		const title = await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		const title = await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 
 		// The whole class list, not just the absence of `line-through`. The queued state is expressed by
 		// what the ternary adds, so its *empty* alternative is as much a part of the rule as the struck
@@ -785,7 +785,7 @@ describe('Companies — eliminazione', () => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK_DEL })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await userEvent.click(trash())
 		await userEvent.click(save())
 
@@ -807,9 +807,9 @@ describe('Companies — eliminazione', () => {
 		const stub = stubGraphQL({ ...companies([company]), ...OK, ...OK_DEL })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await open('Company data', 'Contact person')
-		write('Company data', 'Contact person', 'Anna Bianchi')
+		write('Company data', 'Contact person', 'Anna White')
 		await userEvent.click(trash())
 		await userEvent.click(save())
 
@@ -823,7 +823,7 @@ describe('Companies — eliminazione', () => {
 		stubGraphQL({ ...companies([company]), CompanyDel: { data: { companyDel: false } } })
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await userEvent.click(trash())
 		await userEvent.click(save())
 
@@ -837,11 +837,11 @@ describe('Companies — eliminazione', () => {
 	it('surfaces the server message and leaves the card queued', async () => {
 		stubGraphQL({
 			...companies([company]),
-			CompanyDel: { errors: [graphQLError('Errore', 'Company with active shops', 409)], status: 409 }
+			CompanyDel: { errors: [graphQLError('Error', 'Company with active shops', 409)], status: 409 }
 		})
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await userEvent.click(trash())
 		await userEvent.click(save())
 
@@ -882,13 +882,13 @@ describe('Companies — new company', () => {
 	 * The two optional boxes are left empty on purpose — what they send is the subject of its own test.
 	 */
 	const fill = async (target = NEW) => {
-		write('Company data', 'Legal name', 'Pizzeria Nuova S.r.l.', target)
+		write('Company data', 'Legal name', 'New Boutique Ltd', target)
 		write('Company data', 'VAT number', '11122233344', target)
-		write('Company data', 'Contact person', 'Anna Bianchi', target)
-		write('Company data', 'Administrator', 'Anna Bianchi', target)
+		write('Company data', 'Contact person', 'Anna White', target)
+		write('Company data', 'Administrator', 'Anna White', target)
 		write('Company data', 'Certified email', 'new@pec.it', target)
-		write('Company data', 'Registry extract', 'MI-999999', target)
-		fireEvent.change(box('Registered office', target).getByLabelText('Address'), { target: { value: 'Via Roma 1 Milano' } })
+		write('Company data', 'Registry extract', 'MA-999999', target)
+		fireEvent.change(box('Registered office', target).getByLabelText('Address'), { target: { value: '1 Main Street Boston' } })
 		fireEvent.click(await hintOsm(HINT))
 	}
 
@@ -904,7 +904,7 @@ describe('Companies — new company', () => {
 	it('offers the plus when the companies could not be loaded', async () => {
 		stubNetwork({
 			...personalData,
-			ShopOwnerCompanies: { errors: [graphQLError('Errore', 'Companies non disponibili', 500)], status: 500 }
+			ShopOwnerCompanies: { errors: [graphQLError('Error', 'Companies unavailable', 500)], status: 500 }
 		})
 		await renderRoute(DETAIL)
 
@@ -939,15 +939,15 @@ describe('Companies — new company', () => {
 		stubNetwork(companies([company]))
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await add()
 
 		// Filtered, because `Infobox` titles are `h3` too — every card contributes two of them.
 		const titles = screen
 			.getAllByRole('heading', { level: 3 })
 			.map((title) => title.textContent)
-			.filter((text) => text === 'Rossi Mario S.r.l.' || text === NEW)
-		expect(titles).toEqual(['Rossi Mario S.r.l.', NEW])
+			.filter((text) => text === 'Rivers Trading Ltd' || text === NEW)
+		expect(titles).toEqual(['Rivers Trading Ltd', NEW])
 	})
 
 	// Every row opens on its editor, because there is no stored value for a closed row to show — a card of
@@ -970,7 +970,7 @@ describe('Companies — new company', () => {
 	})
 
 	// What a card with no stored company behind it deliberately does not carry: the map draws a position
-	// nobody has picked. The editor's own map is there instead, centred on Italy until an address is chosen.
+	// nobody has picked. The editor's own map is there instead, centred on the country until an address is chosen.
 	it('leaves out the map of a seat that has not been chosen', async () => {
 		stubNetwork(companies([]))
 		await renderRoute(DETAIL)
@@ -1011,17 +1011,17 @@ describe('Companies — new company', () => {
 		await add()
 
 		fireEvent.change(within(newCards()[1] as HTMLElement).getByLabelText('Contact person'), {
-			target: { value: 'Anna Bianchi' }
+			target: { value: 'Anna White' }
 		})
 		await userEvent.click(within(newCards()[0] as HTMLElement).getByRole('button', { name: 'Cancel new company' }))
 
 		expect(newCards()).toHaveLength(1)
-		expect(within(newCards()[0] as HTMLElement).getByLabelText('Contact person')).toHaveValue('Anna Bianchi')
+		expect(within(newCards()[0] as HTMLElement).getByLabelText('Contact person')).toHaveValue('Anna White')
 	})
 
 	/*
 	 * ⚠️ The card is seeded with an empty string per field rather than with nothing at all. react-hook-form
-	 * hands the schema whatever it was given: `''` fails the rule the form wrote, in Italian, under the box
+	 * hands the schema whatever it was given: `''` fails the rule the form wrote under the box
 	 * it belongs to — `undefined` fails zod's type check instead, with "expected string, received
 	 * undefined" shown to an operator.
 	 */
@@ -1073,7 +1073,7 @@ describe('Companies — new company', () => {
 		expect(rows().filter((riga) => MESSAGES_ADDRESS.includes(riga))).toEqual(['Address is required'])
 		expect(legalName()).toHaveClass('border-2', 'bg-app-error/10')
 
-		write('Company data', 'Legal name', 'Pizzeria Nuova S.r.l.', NEW)
+		write('Company data', 'Legal name', 'New Boutique Ltd', NEW)
 
 		await waitFor(() => {
 			expect(rows()).not.toContain('Legal name is required')
@@ -1102,7 +1102,7 @@ describe('Companies — new company', () => {
 
 		expect(await page().findByText('Address is required')).toBeInTheDocument()
 
-		fireEvent.change(box('Registered office', NEW).getByLabelText('Address'), { target: { value: 'Via Roma 1 Milano' } })
+		fireEvent.change(box('Registered office', NEW).getByLabelText('Address'), { target: { value: '1 Main Street Boston' } })
 		fireEvent.click(await hintOsm(HINT))
 
 		await waitFor(() => {
@@ -1130,21 +1130,21 @@ describe('Companies — new company', () => {
 		expect(adds(stub)[0]?.variables).toEqual({
 			idShopOwner: ID,
 			company: {
-				legalName: 'Pizzeria Nuova S.r.l.',
+				legalName: 'New Boutique Ltd',
 				vatNumber: '11122233344',
 				taxCode: null,
-				contactPerson: 'Anna Bianchi',
-				administrator: 'Anna Bianchi',
+				contactPerson: 'Anna White',
+				administrator: 'Anna White',
 				uniqueCode: null,
 				certifiedEmail: 'new@pec.it',
 				address: {
-					street: 'Via Roma 1',
-					postalCode: '20121',
-					city: 'Milano',
-					province: 'MI',
-					position: { coordinates: [9.1895, 45.4642] }
+					street: '1 Main Street',
+					postalCode: '02108',
+					city: 'Boston',
+					province: 'MA',
+					position: { coordinates: [-71.0589, 42.3601] }
 				},
-				registryExtract: 'MI-999999'
+				registryExtract: 'MA-999999'
 			}
 		})
 		// The list refetches on `additionalTypenames` and the stored company takes the card's place. A
@@ -1176,7 +1176,7 @@ describe('Companies — new company', () => {
 			{
 				...companies([]),
 				CompanyAdd: {
-					errors: [graphQLError('Errore', 'VAT number or Certified email already registered by another company', 409)],
+					errors: [graphQLError('Error', 'VAT number or Certified email already registered by another company', 409)],
 					status: 409
 				}
 			},
@@ -1201,15 +1201,15 @@ describe('Companies — new company', () => {
 		const stub = stubNetwork({ ...companies([company]), ...OK, ...OK_ADD }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await add()
 		await open('Company data', 'Contact person')
-		write('Company data', 'Contact person', 'Anna Bianchi')
+		write('Company data', 'Contact person', 'Anna White')
 		await fill()
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
-		expect(writes(stub)[0]?.variables).toMatchObject({ _id: ID_COMPANY, company: { contactPerson: 'Anna Bianchi' } })
+		expect(writes(stub)[0]?.variables).toMatchObject({ _id: ID_COMPANY, company: { contactPerson: 'Anna White' } })
 		expect(adds(stub)[0]?.variables).toMatchObject({ idShopOwner: ID, company: { vatNumber: '11122233344' } })
 	})
 
@@ -1223,10 +1223,10 @@ describe('Companies — new company', () => {
 		const stub = stubNetwork({ ...companies([company]), CompanyAdd: { data: { companyAdd: false } }, ...OK }, withAddress)
 		await renderRoute(DETAIL)
 
-		await screen.findByRole('heading', { name: 'Rossi Mario S.r.l.', level: 3 })
+		await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
 		await add()
 		await open('Company data', 'Contact person')
-		write('Company data', 'Contact person', 'Anna Bianchi')
+		write('Company data', 'Contact person', 'Anna White')
 		await fill()
 		await userEvent.click(save())
 

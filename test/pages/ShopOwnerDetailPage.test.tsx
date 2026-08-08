@@ -20,7 +20,7 @@ const detail = {
 				disabled: false,
 				waitApprov: false,
 				login: {
-					email: 'mario@rossi.it',
+					email: 'mark@rivers.test',
 					firstLogin: null,
 					lastLogin: null,
 					onboardingStep: '0',
@@ -28,11 +28,11 @@ const detail = {
 					rememberMe: false
 				},
 				personalData: {
-					firstName: 'Mario',
-					lastName: 'Rossi',
+					firstName: 'Mark',
+					lastName: 'Rivers',
 					birth: { date: '1980-06-15T00:00:00.000Z' },
-					contacts: { email: 'contatto@rossi.it', landline: null, mobile: '3331234567' },
-					address: { street: 'Via Roma 1', postalCode: '20100', city: 'Milano', province: 'MI' }
+					contacts: { email: 'contact@rivers.test', landline: null, mobile: '3331234567' },
+					address: { street: '1 Main Street', postalCode: '02109', city: 'Boston', province: 'MA' }
 				},
 				resetPwd: null
 			}
@@ -61,20 +61,20 @@ const withCompanies = {
 				{
 					__typename: 'GraphQLCompany',
 					_id: ID_COMPANY,
-					legalName: 'Rossi Mario S.r.l.',
+					legalName: 'Rivers Trading Ltd',
 					vatNumber: '12345678901',
 					taxCode: null,
-					contactPerson: 'Mario Rossi',
-					administrator: 'Mario Rossi',
+					contactPerson: 'Mark Rivers',
+					administrator: 'Mark Rivers',
 					uniqueCode: null,
-					certifiedEmail: 'rossi@pec.it',
-					registryExtract: 'MI-123456',
+					certifiedEmail: 'certified@rivers.test',
+					registryExtract: 'MA-123456',
 					address: {
-						street: 'Via Dante 3',
-						postalCode: '20121',
-						city: 'Milano',
-						province: 'MI',
-						position: { type: 'Point', coordinates: [9.1859, 45.4668] }
+						street: '3 Oak Street',
+						postalCode: '02108',
+						city: 'Boston',
+						province: 'MA',
+						position: { type: 'Point', coordinates: [-71.0636, 42.3626] }
 					}
 				}
 			]
@@ -91,7 +91,7 @@ const respond = (response: boolean) => vi.spyOn(window, 'confirm').mockReturnVal
 
 const dirty = async () => {
 	await userEvent.click(screen.getByRole('button', { name: 'Change First name' }))
-	fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Marione' } })
+	fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Markus' } })
 	await waitFor(() => {
 		expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled()
 	})
@@ -106,7 +106,7 @@ afterEach(() => {
  * else. A stray click on the breadcrumb throws away thirteen fields and however many shops, with no
  * undo — the values never reached the server, so there is nothing to re-read them from.
  */
-describe('ShopOwnerDetailPage — modifiche non salvate', () => {
+describe('ShopOwnerDetailPage — unsaved changes', () => {
 	it('asks before leaving a page holding unsaved edits, and stays when the answer is no', async () => {
 		stubGraphQL(detail)
 		const { router } = await renderRoute(DETAIL)
@@ -130,7 +130,7 @@ describe('ShopOwnerDetailPage — modifiche non salvate', () => {
 		expect(router.state.location.pathname).toBe(DETAIL)
 		// The edit is still there to go back to — a guard that held the navigation but dropped the form
 		// state would be worse than no guard at all.
-		expect(screen.getByLabelText('First name')).toHaveValue('Marione')
+		expect(screen.getByLabelText('First name')).toHaveValue('Markus')
 	})
 
 	it('leaves when the answer is yes', async () => {
@@ -169,7 +169,7 @@ describe('ShopOwnerDetailPage — modifiche non salvate', () => {
  * has no close of its own — a row that closed while react-hook-form still held its edited value would
  * show the server's value and save a different one.
  */
-describe('ShopOwnerDetailPage — dopo il saving', () => {
+describe('ShopOwnerDetailPage — after saving', () => {
 	it('puts every row it opened back to read-only', async () => {
 		stubGraphQL({ ...detail, ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } })
 		await renderRoute(DETAIL)
@@ -185,7 +185,7 @@ describe('ShopOwnerDetailPage — dopo il saving', () => {
 		// was typed into a form which no longer exists.
 		expect(await screen.findByRole('button', { name: 'Change First name' })).toBeInTheDocument()
 		expect(screen.queryByLabelText('First name')).not.toBeInTheDocument()
-		expect(screen.getByText('Mario')).toBeInTheDocument()
+		expect(screen.getByText('Mark')).toBeInTheDocument()
 	})
 
 	/*
@@ -253,7 +253,7 @@ describe('ShopOwnerDetailPage — dopo il saving', () => {
 		await screen.findByRole('heading', { name: 'Shop owner info' })
 
 		await userEvent.click(screen.getByRole('button', { name: 'Change Legal name' }))
-		fireEvent.change(screen.getByLabelText('Legal name'), { target: { value: 'Rossi Mario S.p.A.' } })
+		fireEvent.change(screen.getByLabelText('Legal name'), { target: { value: 'Rivers Trading PLC' } })
 		await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
 		expect(await screen.findByRole('button', { name: 'Change Legal name' })).toBeInTheDocument()
@@ -274,6 +274,6 @@ describe('ShopOwnerDetailPage — dopo il saving', () => {
 		await userEvent.click(screen.getByRole('button', { name: 'Save' }))
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
-		expect(screen.getByLabelText('First name')).toHaveValue('Marione')
+		expect(screen.getByLabelText('First name')).toHaveValue('Markus')
 	})
 })

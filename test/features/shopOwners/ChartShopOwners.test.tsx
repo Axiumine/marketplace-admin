@@ -84,7 +84,7 @@ describe('ChartShopOwners', () => {
 		await renderRoute('/shopOwners')
 
 		await waitFor(() => expect(bars()).toHaveLength(2))
-		expect(tooltip()).toEqual(['lug 2026: 2', 'ago 2026: 5'])
+		expect(tooltip()).toEqual(['Jul 2026: 2', 'Aug 2026: 5'])
 	})
 
 	it('asks for the whole history first', async () => {
@@ -145,11 +145,11 @@ describe('ChartShopOwners', () => {
 	it('reports a failure instead of an empty chart', async () => {
 		stubGraphQL({
 			...stats,
-			ShopOwnersPerPeriod: { errors: [graphQLError('Errore', 'Serie non disponibile', 500)], status: 500 }
+			ShopOwnersPerPeriod: { errors: [graphQLError('Error', 'Series unavailable', 500)], status: 500 }
 		})
 		await renderRoute('/shopOwners')
 
-		expect(await screen.findByRole('alert')).toHaveTextContent('Serie non disponibile')
+		expect(await screen.findByRole('alert')).toHaveTextContent('Series unavailable')
 	})
 
 	it('offers the three ranges', async () => {

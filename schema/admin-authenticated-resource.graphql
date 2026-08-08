@@ -6,13 +6,6 @@
 #
 # This is the only endpoint that serves domain data to the operator app. Everything the app queries
 # that is not login / refresh / logout goes here.
-#
-# ⚠️ `puntoVendita` and `categoria` were deleted platform-wide on 2026-08-04 — collections, migrations,
-# models, resolvers, the lot. This slice lost `shopOwnerPuntiVendita`, the four `puntoVendita*`
-# mutations, every `GraphQLPuntoVendita*`/`GraphQLPVAddress`/`GraphQLPVPosition`/`GraphQLPVContacts`/
-# `GraphQLOpeningHours` type, all four `GraphQLInputPuntoVendita*` inputs, and the `Time` scalar that
-# existed only to serve their opening hours. `company` survives untouched; `companyDel` no longer has a
-# shop to be refused over, since nothing references a company by id any more.
 
 schema {
 	query: QueriesApi
@@ -128,7 +121,7 @@ type MutationsApi {
 
 	"""
 	Creates one company under an shopOwner. Answers 409 on either unique index (`vatNumber_unique`,
-	`certifiedEmail_unique`, both GLOBAL — one partita IVA is one company, whoever registered it), 400 naming the
+	`certifiedEmail_unique`, both GLOBAL — one VAT number is one company, whoever registered it), 400 naming the
 	offending path, and 404 when `idShopOwner` names no shopOwner. `Boolean!`, not the new `_id`:
 	the page re-reads `shopOwnerCompanies` after a save.
 
@@ -150,7 +143,7 @@ type MutationsApi {
 	again, since the `$set` still matches it.
 
 	⚠️ `vatNumber_unique` and `certifiedEmail_unique` are plain global unique indexes with no `partialFilterExpression`,
-	so a retired company keeps its partita IVA occupied and the same one cannot be registered again.
+	so a retired company keeps its VAT number occupied and the same one cannot be registered again.
 	"""
 	companyDel(_id: ID!): Boolean!
 }
@@ -282,7 +275,7 @@ type GraphQLShopOwnerAddress {
 	city: String!
 	province: String!
 	"""
-	⚠️ **Nullable, unlike the punto vendita's `GraphQLPVPosition!`.** The point was added to the
+	⚠️ **Nullable, unlike `GraphQLCompanyPosition!`.** The point was added to the
 	collection by 20260802000300 as an optional field and nothing backfilled it — `collMod` does not
 	re-validate stored documents, and there is nothing to derive a coordinate from without geocoding —
 	so every shopOwner that existed before the migration answers `null` here until an address is
@@ -292,8 +285,8 @@ type GraphQLShopOwnerAddress {
 }
 
 """
-GeoJSON `Point`, same shape as `GraphQLPVPosition` under a name of its own — a GraphQL schema has one
-flat type namespace, so the two tiers cannot share the fragment's output type. `coordinates` is
+GeoJSON `Point`, same shape as `GraphQLCompanyPosition` under a name of its own — a GraphQL schema has
+one flat type namespace, so the two tiers cannot share the fragment's output type. `coordinates` is
 [longitude, latitude].
 """
 type GraphQLPositionShopOwner {
@@ -349,8 +342,9 @@ type GraphQLCompany {
 
 """
 The company's legal seat — not the address of any of its shops. Same four fields and the same GeoJSON
-point as `GraphQLPVAddress`, under a name of its own: a GraphQL schema has one flat type namespace,
-so two collections' addresses cannot share one type without a field added to either appearing on both.
+point as `GraphQLShopOwnerAddress`, under a name of its own: a GraphQL schema has one flat type
+namespace, so two collections' addresses cannot share one type without a field added to either
+appearing on both.
 """
 type GraphQLCompanyAddress {
 	street: String!
@@ -360,40 +354,13 @@ type GraphQLCompanyAddress {
 	position: GraphQLCompanyPosition!
 }
 
-type GraphQLCompanyPosition {
-	type: String!
-	coordinates: [Float!]!
-}
-
-type GraphQLPVAddress {
-	street: String!
-	postalCode: String!
-	city: String!
-	province: String!
-	position: GraphQLPVPosition!
-}
-
 """
 GeoJSON `Point`. `coordinates` is [longitude, latitude], in that order — not the other way round,
 and not a pair of named fields. Float, because a latitude is not an integer.
 """
-type GraphQLPVPosition {
+type GraphQLCompanyPosition {
 	type: String!
 	coordinates: [Float!]!
-}
-
-type GraphQLPVContacts {
-	mobile: String!
-	email: String
-	web: String
-	certifiedEmail: String
-	landline: String
-}
-
-type GraphQLOpeningHours {
-	day: String!
-	da: DateTime!
-	a: DateTime!
 }
 
 input GraphQLInputLogin {

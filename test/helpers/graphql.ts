@@ -93,7 +93,7 @@ export const stubGraphQL = (replies: GraphQLReplies, rest?: RestHandler): GraphQ
 		if (handled !== undefined) return Promise.resolve(handled)
 
 		const body = JSON.parse(String(init?.body ?? '{}')) as { operationName?: string; variables?: Record<string, unknown> }
-		const operationName = body.operationName ?? '(anonima)'
+		const operationName = body.operationName ?? '(anonymous)'
 
 		calls.push({
 			operationName,
@@ -108,7 +108,7 @@ export const stubGraphQL = (replies: GraphQLReplies, rest?: RestHandler): GraphQ
 
 		// A loud failure, not a default reply: an operation nobody expected is the interesting half of a
 		// regression, and answering it with an empty result hides it behind a rendering assertion.
-		if (queue === undefined) throw new Error(`No response configurata per l'operazione «${operationName}»`)
+		if (queue === undefined) throw new Error(`No response configured for operation «${operationName}»`)
 
 		// The last reply in a queue repeats, so a test that does not care how many times a component
 		// refetches does not have to count.

@@ -35,22 +35,22 @@ const today = (day: string) => {
 }
 
 const VALID = {
-	emailLogin: 'mario@rossi.it',
-	firstName: 'Mario',
-	lastName: 'Rossi',
+	emailLogin: 'mark@rivers.test',
+	firstName: 'Mark',
+	lastName: 'Rivers',
 	birthDate: '1980-06-15',
 	// The composite rule at the bottom of the schema compares this line against the four fields under it,
 	// so the two have to agree in the baseline or every single test would fail on the address.
-	addressComplete: 'Via Roma 1, 20100 Milano (MI)',
-	street: 'Via Roma 1',
-	postalCode: '20100',
-	city: 'Milano',
-	province: 'MI',
-	longitude: '9.19',
-	latitude: '45.4642',
+	addressComplete: '1 Main Street, 02109 Boston (MA)',
+	street: '1 Main Street',
+	postalCode: '02109',
+	city: 'Boston',
+	province: 'MA',
+	longitude: '-71.06',
+	latitude: '42.3601',
 	mobile: '3331234567',
 	landline: '021234567',
-	contactEmail: 'contatto@rossi.it',
+	contactEmail: 'contact@rivers.test',
 	disabled: false,
 	waitApprov: false,
 	rememberMe: false,
@@ -60,7 +60,7 @@ const VALID = {
 }
 
 /** A syntactically valid address of 254 characters — long enough for the cap, short enough to exist. */
-const EMAIL_TOO_LONG = `${'a'.repeat(245)}@rossi.it`
+const EMAIL_TOO_LONG = `${'a'.repeat(245)}@rivers.test`
 
 const outcome = (patch: Record<string, unknown> = {}) => shopOwnerDetailSchema.safeParse({ ...VALID, ...patch })
 
@@ -76,7 +76,7 @@ const value = (patch: Record<string, unknown>) => {
 	return result.data
 }
 
-describe('shopOwnerDetailSchema — fields obbligatori', () => {
+describe('shopOwnerDetailSchema — required fields', () => {
 	it('accepts a row that came back from the collection unchanged', () => {
 		expect(messages()).toEqual([])
 	})
@@ -118,8 +118,8 @@ describe('shopOwnerDetailSchema — email', () => {
 	// Two addresses, two messages: the operator has to know which of the two boxes to go back to, and
 	// they usually hold the same string.
 	it('tells the login address apart from the contact one', () => {
-		expect(messages({ emailLogin: 'mario@rossi' })).toEqual(['Enter a valid login email address'])
-		expect(messages({ contactEmail: 'contatto@rossi' })).toEqual(['Enter a valid contact email address'])
+		expect(messages({ emailLogin: 'mark@rivers' })).toEqual(['Enter a valid login email address'])
+		expect(messages({ contactEmail: 'contact@rivers' })).toEqual(['Enter a valid contact email address'])
 	})
 
 	it("caps both at the collection's length", () => {
@@ -146,13 +146,13 @@ describe('shopOwnerDetailSchema — data di birth', () => {
 	})
 })
 
-describe('shopOwnerDetailSchema — CAP e province', () => {
+describe('shopOwnerDetailSchema — postal code and province', () => {
 	/*
-	 * Both ends of the CAP are asserted because both ends are anchors: dropping either one turns "five
+	 * Both ends of the postal code are asserted because both ends are anchors: dropping either one turns "five
 	 * digits" into "five digits somewhere in there", and `A20100` is a postcode the collection refuses
 	 * after the page approved it.
 	 */
-	it('refuses a CAP with anything either side of the five digits', () => {
+	it('refuses a postal code with anything either side of the five digits', () => {
 		expect(messages({ postalCode: 'a12345' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
 		expect(messages({ postalCode: '12345a' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
 		expect(messages({ postalCode: '1234' })).toEqual(['The postal code must be 5 digits', 'Select the address from the list'])
@@ -166,7 +166,7 @@ describe('shopOwnerDetailSchema — CAP e province', () => {
 	// The value the form keeps is the value that gets written, so the upper-casing has to survive the
 	// parse and the padding must not reach the regex.
 	it('trims and upper-cases the province', () => {
-		expect(value({ province: '  mi  ' }).province).toBe('MI')
+		expect(value({ province: '  ma  ' }).province).toBe('MA')
 	})
 })
 
@@ -194,41 +194,41 @@ describe('shopOwnerDetailSchema — fields facoltativi', () => {
  *
  * The box is the only address input the card has; the four fields under it and the coordinate pair are
  * written by picking a geocoder answer and by nothing else. Free text left in the box would save the
- * *stored* street, CAP, city and position under a line reading like some other address — a save that
+ * *stored* street, postal code, city and position under a line reading like some other address — a save that
  * reports success and writes none of what is on screen.
  *
  * One thing is only true here: an shopOwner's coordinates may legitimately be missing, so this rule
  * is also what guarantees that when the address does change, a point comes with it.
  */
-describe('shopOwnerDetailSchema — address composto', () => {
+describe('shopOwnerDetailSchema — composed address', () => {
 	it('refuses a line that is not the address the fields under it spell out', () => {
-		expect(messages({ addressComplete: 'Via Roma 2, 20100 Milano (MI)' })).toEqual(['Select the address from the list'])
-		expect(messages({ addressComplete: 'Via Roma 1' })).toEqual(['Select the address from the list'])
+		expect(messages({ addressComplete: '2 Main Street, 02109 Boston (MA)' })).toEqual(['Select the address from the list'])
+		expect(messages({ addressComplete: '1 Main Street' })).toEqual(['Select the address from the list'])
 		expect(messages({ addressComplete: '' })).toEqual(['Select the address from the list'])
 	})
 
 	// Whichever of the four moved, the line stops matching — the rule is the whole address and not the
 	// street half of it.
 	it('refuses a line left behind by any one of the four fields', () => {
-		expect(messages({ postalCode: '20121' })).toEqual(['Select the address from the list'])
-		expect(messages({ city: 'Roma' })).toEqual(['Select the address from the list'])
-		expect(messages({ province: 'RM' })).toEqual(['Select the address from the list'])
+		expect(messages({ postalCode: '02108' })).toEqual(['Select the address from the list'])
+		expect(messages({ city: 'New York' })).toEqual(['Select the address from the list'])
+		expect(messages({ province: 'NY' })).toEqual(['Select the address from the list'])
 	})
 
 	// It is reported on the box, because the box is where the operator can do something about it: the
 	// four fields it is really about have no input on the page at all.
 	it('reports it on the box and not on a field with no input', () => {
-		const result = outcome({ addressComplete: 'Via Roma 2, 20100 Milano (MI)' })
+		const result = outcome({ addressComplete: '2 Main Street, 02109 Boston (MA)' })
 
 		expect(result.success).toBe(false)
 		expect(result.error?.issues.map((issue) => issue.path)).toEqual([['addressComplete']])
 	})
 
-	// The sigla is upper-cased by the schema, so the comparison sees `MI` however the box was filled —
+	// The province code is upper-cased by the schema, so the comparison sees `MA` however the box was filled —
 	// which is what lets the geocoder's own `IT-mi` reach the form without the rule refusing the address
 	// the operator picked out of the list a moment earlier.
 	it('compares against the upper-cased province code, not the one that was typed', () => {
-		expect(messages({ province: '  mi  ' })).toEqual([])
+		expect(messages({ province: '  ma  ' })).toEqual([])
 	})
 })
 
@@ -259,7 +259,7 @@ describe('shopOwnerDetailSchema — coordinate', () => {
 	})
 
 	it('trims the pair before reading it', () => {
-		expect(value({ longitude: '  9.19  ' }).longitude).toBe('9.19')
+		expect(value({ longitude: '  -71.06  ' }).longitude).toBe('-71.06')
 	})
 })
 

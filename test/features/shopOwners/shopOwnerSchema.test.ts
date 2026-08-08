@@ -11,19 +11,19 @@ import { shopOwnerSchema } from '@/features/shopOwners/ShopOwnerAddForm'
  * `max` is a hint any client that does not render one is free to ignore.
  */
 const VALID = {
-	email: 'mario@rossi.it',
-	password: 'password-lunga',
-	confirmPassword: 'password-lunga',
-	firstName: 'Mario',
-	lastName: 'Rossi',
+	email: 'mark@rivers.test',
+	password: 'password-long',
+	confirmPassword: 'password-long',
+	firstName: 'Mark',
+	lastName: 'Rivers',
 	birthDate: '1980-06-15',
-	street: 'Via Roma 1',
-	postalCode: '20100',
-	city: 'Milano',
-	province: 'MI',
+	street: '1 Main Street',
+	postalCode: '02109',
+	city: 'Boston',
+	province: 'MA',
 	mobile: '3331234567',
 	landline: '021234567',
-	contactEmail: 'contatto@rossi.it'
+	contactEmail: 'contact@rivers.test'
 }
 
 const messages = (birthDate: string) => {

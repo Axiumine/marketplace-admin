@@ -185,7 +185,7 @@ exports[`SettingsPage > renders 1`] = `
       </div>
     </div>
     <button
-      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-pomodoro px-4"
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-tomato px-4"
       type="submit"
     >
       Cambia password

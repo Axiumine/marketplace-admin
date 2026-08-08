@@ -22,9 +22,9 @@ beforeEach(async () => {
 
 const series = (...totals: number[]) => totals.map((total, i) => ({ date: `2026-08-${String(i + 1).padStart(2, '0')}`, total }))
 
-describe('etichettaBucket', () => {
+describe('bucketLabel', () => {
 	it('labels a month bucket with month and year', () => {
-		expect(chart.bucketLabel('2026-08-01', 'MONTH')).toBe('ago 2026')
+		expect(chart.bucketLabel('2026-08-01', 'MONTH')).toBe('Aug 2026')
 	})
 
 	// The year is deliberately absent from the day form: the two ranges that use it span three months at
@@ -38,7 +38,7 @@ describe('etichettaBucket', () => {
 	// with the month before its own. The formatters pin UTC; this is the assertion that says so, since
 	// the suite itself runs at TZ=UTC and would not otherwise notice the pin going missing.
 	it('reads the bucket in UTC, not in the browser zone', () => {
-		expect(chart.bucketLabel('2026-01-01', 'MONTH')).toBe('gen 2026')
+		expect(chart.bucketLabel('2026-01-01', 'MONTH')).toBe('Jan 2026')
 		expect(chart.bucketLabel('2026-01-01', 'DAY')).toBe('01/01')
 	})
 
@@ -112,7 +112,7 @@ describe('bars', () => {
 
 		expect(only?.total).toBe(7)
 		expect(only?.date).toBe('2026-08-01')
-		expect(only?.label).toBe('ago 2026')
+		expect(only?.label).toBe('Aug 2026')
 	})
 
 	it('answers nothing for an empty series', () => {
@@ -120,7 +120,7 @@ describe('bars', () => {
 	})
 })
 
-describe('estremi', () => {
+describe('bounds', () => {
 	it('answers the first and the last label', () => {
 		expect(chart.bounds(chart.bars(series(1, 2, 3, 4), 'DAY', 600, 160))).toEqual(['01/08', '04/08'])
 	})
@@ -135,7 +135,7 @@ describe('estremi', () => {
 	})
 })
 
-describe('totaleSerie', () => {
+describe('seriesTotal', () => {
 	it('sums every bucket', () => {
 		expect(chart.seriesTotal(series(1, 2, 3))).toBe(6)
 	})

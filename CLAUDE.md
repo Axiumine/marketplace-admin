@@ -4,16 +4,12 @@ Platform-operator SPA (`Admin` tier) for Marketplace. Vite + React + TypeScript.
 workspace's `/media/nvme/websites/fullstack-marketplace-blueprint/CLAUDE.md` first — this is one of fourteen sub-repos and
 almost nothing here is changeable on its own.
 
-⚠️ **Language: everything is English — identifiers, UI text, form labels, comments, routes.** This
-reverses the rule this file carried until 2026-08-04, when the whole platform was renamed on the
-user's explicit instruction: `imprenditore` → `shopOwner`, `azienda` → `company`, `anagrafica` →
-`personalData`, `iscrizione` → `registeredAt`, and the routes with them (`/imprenditori` →
-`/shopOwners`). Never "translate back", and never add a new Italian identifier — the names here are
-the names the database and the resolvers use.
+⚠️ **Language: everything is English — identifiers, UI text, form labels, comments, routes.** There is
+no second language anywhere in this app, and adding one is a regression rather than a style nit. The
+names here are the names the database and the resolvers use, so a rename is never local to this repo.
 
-Italian survives in two deliberate places: **domain terms with no English equivalent** in prose and
-comments (*partita IVA*, *codice fiscale*, *PEC*, *ragione sociale*, *visura*), and the **`it-IT`
-locale** `formatDateTime` renders with, which is a market choice and not a name.
+The **`en-GB` locale** `formatDateTime` renders with is a market choice and not a name; changing it
+changes what dates look like on screen and every snapshot that shows one.
 
 ## Do not trust `schema/*.graphql`
 
@@ -86,7 +82,7 @@ That is what lets a page be rendered in a test without a router assertion in the
 - **Every block in `eslint.config.js` carries a `files` glob.** A flat-config entry without one
   applies to *every* file eslint walks into, so `js.configs.recommended` with no glob linted any
   stray `.js` under the root — the minified Qodana HTML report turned `yarn lint` into 1601
-  `no-undef` errors in code nobody here wrote. The globs live in `SORGENTI` and `CONFIG_ROOT` at the
+  `no-undef` errors in code nobody here wrote. The globs live in `SOURCES` and `CONFIG_ROOT` at the
   top of the file; add a new block by reusing them, not by omitting `files`. Ignoring a directory
   fixes one path, scoping makes the next one impossible. The backend nine never had the bug because
   `@axiumine/eslint-config-be` scopes everything to `src/**`.
@@ -144,7 +140,7 @@ nine others; a backend service's token would file these reports under that servi
 - **`renderRoute(path)`** (`test/helpers/render.tsx`) mounts the real router at a real URL.
 - **jsdom enforces interactive form validation.** A value that fails an `<input type="email">`'s own
   check never fires submit, so a zod email rule can only be reached with something the HTML validator
-  accepts — `operatore@marketplace` (no TLD), not `operatore`.
+  accepts — `operator@marketplace` (no TLD), not `operator`.
 - **`fireEvent.change`, not `userEvent.type`,** for any field with a `maxLength` or a date input.
 - `Alert` is `role="alert"` only for the error tone; success and info are `role="status"`.
 - Snapshots normalise React's `useId` values (see `vitest.setup.ts`) — do not "fix" a snapshot by
