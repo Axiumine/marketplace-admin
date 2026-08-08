@@ -421,7 +421,7 @@ const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner
 
 	const save = async (): Promise<boolean> => {
 		// An untouched block is not merely nothing to send — it must not be *validated* either. These forms
-		// are seeded from whatever the collection already holds, and a legacy row the current rules would
+		// are seeded from whatever the collection already holds, and a legacy document the current rules would
 		// reject (a three-letter province, a landline of thirteen digits) would otherwise fail the page's
 		// save while the operator was editing a different block entirely.
 		if (!isDirty) return true

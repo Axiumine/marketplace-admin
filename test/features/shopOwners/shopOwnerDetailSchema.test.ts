@@ -77,7 +77,7 @@ const value = (patch: Record<string, unknown>) => {
 }
 
 describe('shopOwnerDetailSchema — required fields', () => {
-	it('accepts a row that came back from the collection unchanged', () => {
+	it('accepts a document that came back from the collection unchanged', () => {
 		expect(messages()).toEqual([])
 	})
 
