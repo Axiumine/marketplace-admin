@@ -14,10 +14,10 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe) {\n\t\t\taccessToken\n\t\t}\n\t}\n": typeof types.LoginAdminDocument,
+    "\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!, $turnstileToken: String) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe, turnstileToken: $turnstileToken) {\n\t\t\taccessToken\n\t\t}\n\t}\n": typeof types.LoginAdminDocument,
 };
 const documents: Documents = {
-    "\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe) {\n\t\t\taccessToken\n\t\t}\n\t}\n": types.LoginAdminDocument,
+    "\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!, $turnstileToken: String) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe, turnstileToken: $turnstileToken) {\n\t\t\taccessToken\n\t\t}\n\t}\n": types.LoginAdminDocument,
 };
 
 /**
@@ -37,7 +37,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe) {\n\t\t\taccessToken\n\t\t}\n\t}\n"): (typeof documents)["\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe) {\n\t\t\taccessToken\n\t\t}\n\t}\n"];
+export function graphql(source: "\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!, $turnstileToken: String) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe, turnstileToken: $turnstileToken) {\n\t\t\taccessToken\n\t\t}\n\t}\n"): (typeof documents)["\n\tmutation LoginAdmin($email: String!, $password: String!, $rememberMe: Boolean!, $turnstileToken: String) {\n\t\tloginAdmin(email: $email, password: $password, rememberMe: $rememberMe, turnstileToken: $turnstileToken) {\n\t\t\taccessToken\n\t\t}\n\t}\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

@@ -5,7 +5,7 @@
 # platform to copy. Read the resolvers and write the slice by hand; anything that looks like a ready-
 # made SDL for this platform is not one.
 #
-# What is below was read off the resolvers and verified field by field on 2026-08-01:
+# What is below was read off the resolvers and verified field by field on 2026-08-09:
 #   src/graphQLPublic/schema/mutations.mts
 #   src/graphQLPublic/schema/mutations/loginAdmin.mts
 #   @axiumine/koa-utils/graphQL/schema/types/LoginAppType
@@ -28,7 +28,14 @@ type QueriesPublic {
 }
 
 type MutationsPublic {
-	loginAdmin(email: String!, password: String!, rememberMe: Boolean!): LoginAppType!
+	"""
+	⚠️ `turnstileToken` is nullable on purpose. The widget is disabled on a machine with no site key,
+	and the resolver's `assertTurnstile` verifies a token only where a secret key is configured — so a
+	deployment that holds the secret refuses the tokenless request, and a developer box waves it
+	through. Making the argument non-null would break exactly that setup and buy nothing: a client
+	cannot weaken the gate by omitting the field, it can only fail to help.
+	"""
+	loginAdmin(email: String!, password: String!, rememberMe: Boolean!, turnstileToken: String): LoginAppType!
 }
 
 """
