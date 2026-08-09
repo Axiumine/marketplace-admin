@@ -2,7 +2,7 @@
 
 Platform-operator SPA, `Admin` tier. Vite + React + TypeScript.
 
-**Read parent first** — `/media/nvme/websites/fullstack-marketplace-blueprint/CLAUDE.md`
+**Read parent first** — `../CLAUDE.md`
 (<https://github.com/Axiumine/fullstack-marketplace-blueprint> if you are reading this on GitHub).
 One of fifteen sub-repos; almost nothing here is changeable on its own.
 
