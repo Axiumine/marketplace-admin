@@ -57,7 +57,7 @@ both on purpose: `git merge --no-ff` never fires `pre-commit`, so the merge comm
 a commit-time scan never sees, and Qodana Cloud files each report under the branch it ran on — only
 the pre-push scan, standing on `main` after the merge, produces a report the "new problems" baseline
 can use. `SKIP_QODANA=1` skips the scan alone. The scan needs a `QODANA_TOKEN` from this repo's own
-qodana.cloud project. See `COVERAGE.md`.
+qodana.cloud project. See [`COVERAGE.md`](./COVERAGE.md).
 
 ## Endpoints
 

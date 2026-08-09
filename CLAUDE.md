@@ -2,15 +2,14 @@
 
 Platform-operator SPA, `Admin` tier. Vite + React + TypeScript.
 
-**Read parent first** — `../CLAUDE.md`
-(<https://github.com/Axiumine/fullstack-marketplace-blueprint> if you are reading this on GitHub).
+**Read parent first** — [`../CLAUDE.md`](https://github.com/Axiumine/fullstack-marketplace-blueprint/blob/main/CLAUDE.md)
 One of fifteen sub-repos; almost nothing here is changeable on its own.
 
 | Need | File |
 |---|---|
-| what the app is, for a human | `README.md` |
-| hooks, gate order, node selection, lint scope | `REPO.md` |
-| gate policy, thresholds | `COVERAGE.md` |
+| what the app is, for a human | [`README.md`](./README.md) |
+| hooks, gate order, node selection, lint scope | [`REPO.md`](./REPO.md) |
+| gate policy, thresholds | [`COVERAGE.md`](./COVERAGE.md) |
 | anything cross-repo | parent `CLAUDE.md` |
 
 ⚠️ **English only** — identifiers, UI text, form labels, comments, routes. No exception; these are the
@@ -102,7 +101,7 @@ what lets a page be rendered in a test without a router assertion in the way.
 
 ## Tests
 
-`yarn test:cov` 100 on all four metrics, `yarn test:mutation` 100. Both blocking. **Read `COVERAGE.md`
+`yarn test:cov` 100 on all four metrics, `yarn test:mutation` 100. Both blocking. **Read [`COVERAGE.md`](./COVERAGE.md)
 before touching either threshold** — the answer is always a test or a deleted branch, never a lower number.
 
 - **GraphQL is stubbed at `fetch`**, not with a mock urql client (`test/helpers/graphql.ts`). Everything
@@ -123,7 +122,7 @@ before touching either threshold** — the answer is always a test or a deleted 
 ## Gates
 
 commit → secret guard, lint, typecheck, coverage, Qodana. push → same + mutation. All blocking. Why, and
-what to do when one is missing a prerequisite: `REPO.md`.
+what to do when one is missing a prerequisite: [`REPO.md`](./REPO.md).
 
 ## Cross-repo
 
