@@ -91,7 +91,42 @@ describe('LoginPage', () => {
 		await waitFor(() => {
 			expect(stub.calls).toHaveLength(1)
 		})
-		expect(stub.calls[0]?.variables).toEqual({ email: 'operator@marketplace.test', password: 'short', rememberMe: false })
+		expect(stub.calls[0]?.variables).toEqual({
+			email: 'operator@marketplace.test',
+			password: 'short',
+			rememberMe: false,
+			turnstileToken: null
+		})
+	})
+
+	/*
+	 * ⚠️ `turnstileToken: null` is the correct request here, not a gap in the test. The widget is disabled
+	 * without a `VITE_TURNSTILE_SITE_KEY` — the state of every developer machine and of this suite — and
+	 * the resolver verifies a token only where a secret key is configured, so the two halves agree on
+	 * "off". What this asserts is that the variable is *sent*: an operator whose browser did solve a
+	 * challenge has to have the token reach `guardPublicLogin`, and a form that dropped it would look
+	 * identical on screen and fail only against a deployment that holds the secret.
+	 */
+	it('sends the Turnstile variable even when no widget is configured', async () => {
+		const stub = stubGraphQL({ LoginAdmin: { data: { loginAdmin: { accessToken: '' } } } })
+		await renderRoute('/', signedOut)
+
+		await fillIn('operator@marketplace.test', 'password123')
+		await submit()
+
+		await waitFor(() => {
+			expect(stub.calls).toHaveLength(1)
+		})
+		expect(stub.calls[0]?.variables).toHaveProperty('turnstileToken', null)
+	})
+
+	// The widget renders nothing without a site key, so the login card must not reserve space for it or
+	// mention it — an empty labelled box on a page that cannot fill it reads as a broken form.
+	it('shows no verification widget when no site key is configured', async () => {
+		stubGraphQL({})
+		await renderRoute('/', signedOut)
+
+		expect(document.getElementById('cf-turnstile-script')).toBeNull()
 	})
 
 	it('signs in, stores the token and lands on the dashboard', async () => {
@@ -129,7 +164,8 @@ describe('LoginPage', () => {
 			expect(stub.calls[0]?.variables).toEqual({
 				email: 'operator@marketplace.test',
 				password: 'password123',
-				rememberMe: true
+				rememberMe: true,
+				turnstileToken: null
 			})
 		})
 	})
