@@ -7,7 +7,7 @@ One of fifteen sub-repos; almost nothing here is changeable on its own.
 
 | Need | File |
 |---|---|
-| what the app is, for a human | [`README.md`](./README.md) |
+| what the app is | [`README.md`](./README.md) |
 | hooks, gate order, node selection, lint scope | [`REPO.md`](./REPO.md) |
 | gate policy, thresholds | [`COVERAGE.md`](./COVERAGE.md) |
 | anything cross-repo | parent `CLAUDE.md` |
@@ -65,17 +65,17 @@ what lets a page be rendered in a test without a router assertion in the way.
 - **Create and delete mutations need `additionalTypenames`.** The document cache invalidates by the
   `__typename`s a mutation's *response* mentions, and these answer a bare `Boolean` → nothing is
   invalidated unless the call site names the affected types.
-- ⚠️ **Snapshots are stale and must be regenerated.** `test/**/__snapshots__/*.snap` were translated
-  mechanically during the rename and still hold markup for features deleted before it (shop opening hours,
-  the shop card, the company list's old routes). They will not byte-match a real render. Run `yarn test -u`
-  and review the diff before trusting any snapshot assertion.
+- ⚠️ **Snapshots are stale and must be regenerated.** `test/**/__snapshots__/*.snap` hold markup for
+  features that no longer exist (shop opening hours, the shop card, superseded company-list routes), so
+  they will not byte-match a real render. Run `yarn test -u` and review the diff before trusting any
+  snapshot assertion.
 - **Never send an id to `adminUpdatePwd`.** It takes none. The account is the one the Redis session names;
   the platform has no role field, so a client-supplied id would be a way to set another operator's password.
 - **Adding an operation on a new endpoint** = a new `schema/` slice + a new `codegen.ts` project + a new
   `CTX_*` + a proxy entry in `vite.config.ts`. Not just a file in `src/api/operations/`.
 - **Every block in `eslint.config.js` carries a `files` glob.** A flat-config entry without one applies to
-  *every* file eslint walks into — `js.configs.recommended` with no glob once linted a minified Qodana HTML
-  report and turned `yarn lint` into 1601 `no-undef` errors in code nobody here wrote. The globs live in
+  *every* file eslint walks into, including minified Qodana HTML reports — thousands of `no-undef` errors
+  in code nobody here wrote. The globs live in
   `SOURCES` and `CONFIG_ROOT` at the top of the file; add a block by reusing them, never by omitting
   `files`. Ignoring a directory fixes one path; scoping makes the next one impossible.
 - **Tabs, not spaces** (eslint `indent: ['error','tab']`). Prettier here: no semicolons, single quotes,
