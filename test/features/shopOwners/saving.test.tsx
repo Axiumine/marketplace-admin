@@ -355,6 +355,14 @@ describe('SaveChanges', () => {
 		unblock()
 		expect(await screen.findByText('Changes saved.')).toBeInTheDocument()
 	})
+
+	it('renders', async () => {
+		render(<Page ids={['a']} order={[]} />)
+
+		await userEvent.click(screen.getByRole('button', { name: 'touch a' }))
+
+		expect(save().closest('div')).toMatchSnapshot()
+	})
 })
 
 /**

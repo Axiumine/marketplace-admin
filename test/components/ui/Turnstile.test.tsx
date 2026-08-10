@@ -244,6 +244,14 @@ describe('rendering the widget', () => {
 		expect(onToken).not.toHaveBeenCalled()
 		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 	})
+
+	// The container the widget renders into, before Cloudflare's script has had a chance to run — the
+	// state the form spends most of its life in.
+	it('renders', async () => {
+		const { container } = await mount()
+
+		expect(container.firstChild).toMatchSnapshot()
+	})
 })
 
 describe('the token', () => {
@@ -309,6 +317,14 @@ describe('when the script cannot load', () => {
 		await scriptFails()
 
 		expect(api.render).not.toHaveBeenCalled()
+	})
+
+	// Genuinely different markup from the normal state: the alert paragraph replaces an empty box.
+	it('renders the failed state', async () => {
+		const { container } = await mount()
+		await scriptFails()
+
+		expect(container.firstChild).toMatchSnapshot()
 	})
 
 	/*

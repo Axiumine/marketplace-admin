@@ -101,6 +101,17 @@ afterEach(() => {
 	vi.restoreAllMocks()
 })
 
+describe('ShopOwnerDetailPage — rendering', () => {
+	it('renders', async () => {
+		stubGraphQL(withCompanies)
+		await renderRoute(DETAIL)
+
+		await screen.findByRole('heading', { name: 'Shop owner info' })
+		expect(await screen.findByRole('button', { name: 'Change Legal name' })).toBeInTheDocument()
+		expect(screen.getByRole('main')).toMatchSnapshot()
+	})
+})
+
 /*
  * Nothing on this page is written until Save is pressed, so every edit lives in the browser and nowhere
  * else. A stray click on the breadcrumb throws away thirteen fields and however many shops, with no
