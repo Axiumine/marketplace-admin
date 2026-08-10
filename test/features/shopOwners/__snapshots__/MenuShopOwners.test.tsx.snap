@@ -1,0 +1,29 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MenuShopOwners > renders 1`] = `
+<nav
+  aria-label="Sections shopOwners"
+  class="flex flex-wrap gap-2"
+>
+  <a
+    aria-current="page"
+    class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm bg-third text-palette-white"
+    data-status="active"
+    href="/shopOwners"
+  >
+    Stats
+  </a>
+  <a
+    class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm"
+    href="/p/shopOwners/manage-shopOwners"
+  >
+    Manage
+  </a>
+  <a
+    class="rounded-box border border-palette-bg3/20 px-3 py-2 text-sm"
+    href="/p/shopOwners/add-shopOwner"
+  >
+    Add
+  </a>
+</nav>
+`;

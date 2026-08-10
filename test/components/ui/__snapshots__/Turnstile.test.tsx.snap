@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`rendering the widget > renders 1`] = `
+<div>
+  <div />
+</div>
+`;
+
+exports[`when the script cannot load > renders the failed state 1`] = `
+<div>
+  <div />
+  <p
+    class="text-xs text-app-error"
+    role="alert"
+  >
+    The verification widget could not load. Check your connection and reload the page.
+  </p>
+</div>
+`;

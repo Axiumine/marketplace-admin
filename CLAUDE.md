@@ -65,10 +65,10 @@ what lets a page be rendered in a test without a router assertion in the way.
 - **Create and delete mutations need `additionalTypenames`.** The document cache invalidates by the
   `__typename`s a mutation's *response* mentions, and these answer a bare `Boolean` → nothing is
   invalidated unless the call site names the affected types.
-- ⚠️ **Snapshots are stale and must be regenerated.** `test/**/__snapshots__/*.snap` hold markup for
-  features that no longer exist (shop opening hours, the shop card, superseded company-list routes), so
-  they will not byte-match a real render. Run `yarn test -u` and review the diff before trusting any
-  snapshot assertion.
+- **Every component under `src/components/`, `src/pages/` and `src/features/` carries a snapshot**, and
+  `test/**/__snapshots__/*.snap` byte-matches a real render. `vitest run` never updates a snapshot, so a
+  drifted one is a failing test rather than a silent rewrite. Regenerate with `yarn test -u` only after
+  an intended markup change, and read the diff — `-u` accepts a regression just as readily as a fix.
 - **Never send an id to `adminUpdatePwd`.** It takes none. The account is the one the Redis session names;
   the platform has no role field, so a client-supplied id would be a way to set another operator's password.
 - **Adding an operation on a new endpoint** = a new `schema/` slice + a new `codegen.ts` project + a new

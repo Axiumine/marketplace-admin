@@ -304,6 +304,15 @@ describe('Companies', () => {
 		expect(map()).toBeInTheDocument()
 		expect(map('White Trading Ltd')).toBeInTheDocument()
 	})
+
+	it('renders', async () => {
+		stubGraphQL(companies([company]))
+		await renderRoute(DETAIL)
+
+		const title = await screen.findByRole('heading', { name: 'Rivers Trading Ltd', level: 3 })
+
+		expect(title.closest('section')).toMatchSnapshot()
+	})
 })
 
 /**
