@@ -99,6 +99,7 @@ schema slices; it describes nothing that exists.
 | `/loading` | session restore, then `?redirect=` |
 | `/home` | dashboard |
 | `/settings` | change own password |
+| `/security` | cookie-signing keys — version, fingerprint, key ages, holders table, rotate |
 | `/shopOwners` | counters + section menu |
 | `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
 | `/p/shopOwners/add-shopOwner` | create form |
@@ -149,7 +150,7 @@ they guard against all render as a working screen.
 |---|---|---|
 | TanStack Virtual | not used | The table is server-paged at 20–100 rows. Virtualising a page that small adds a scroll container and buys nothing. |
 | Radix Dialog / Toast | not used | Nothing on the operator surface is modal, and errors belong next to what failed — `Alert` is inline and `role="alert"` only for the error tone. |
-| File-based routing | route tree in code | A generated `routeTree.gen.ts` cannot be tested, so it would have to be excluded from coverage and mutation — and every exclusion is a hole. Eight routes do not need a generator. |
+| File-based routing | route tree in code | A generated `routeTree.gen.ts` cannot be tested, so it would have to be excluded from coverage and mutation — and every exclusion is a hole. Nine routes do not need a generator. |
 | Schema from the server | `schema/*.graphql`, hand-maintained | The platform has no SDL: all nine services build their schema programmatically with graphql-js. These four files are hand-written slices, and they are a copy — verify against the resolvers, never the other way round. |
 
 ## License

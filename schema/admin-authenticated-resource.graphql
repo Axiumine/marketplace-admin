@@ -3,6 +3,9 @@
 # Hand-maintained slice — see the header of public-authorization.graphql for why there is no SDL to
 # pull. Verified on 2026-08-02 against every file under src/graphQLApi/schema/ of that service, plus
 # the two shared fragments in marketplace-common (GraphQLBaseAddressFrag, GraphQLPositionFrag).
+# The keygrip query, mutation and three types were transcribed on 2026-08-12, against
+# queries/keygripStatus.mts, mutations/keygripRotate.mts and types/GraphQLKeygripStatus.mts as they
+# stood after E01-S13 and E01-S14.
 #
 # This is the only endpoint that serves domain data to the operator app. Everything the app queries
 # that is not login / refresh / logout goes here.
@@ -71,6 +74,17 @@ type QueriesApi {
 	refused by the write.
 	"""
 	shopOwnerCompanies(idShopOwner: ID!): [GraphQLCompany!]!
+
+	"""
+	The cookie-signing key set as it stands right now, plus which services have read it and are signing
+	with what they read. No arguments, and in particular no `version`: this reads the live record, and
+	the platform keeps no older one to ask for.
+
+	⚠️ Nothing here is key material and nothing here ever may be — the ids are counters, `createdAt` is
+	a date and the fingerprint is a sha256 over the ordered ids. See the note on
+	`GraphQLKeygripStatus`.
+	"""
+	keygripStatus: GraphQLKeygripStatus!
 }
 
 type MutationsApi {
@@ -146,11 +160,74 @@ type MutationsApi {
 	so a retired company keeps its VAT number occupied and the same one cannot be registered again.
 	"""
 	companyDel(_id: ID!): Boolean!
+
+	"""
+	Mints a new cookie-signing key for the whole platform and retires the ones nothing can still be
+	signed with.
+
+	⚠️ No arguments, and in particular no key material and no version: what the new key is, and which
+	number it lands under, are decided by the service. A mutation that accepted either would let its
+	caller install a key of their choosing, which is the ability to mint a session cookie for any
+	account on the platform.
+
+	`Boolean!` for the same reason — the answer is "it happened", never the keys. What an operator
+	needs afterwards is `keygripStatus`, which reads the ids and never the material. 409 when another
+	rotation swapped the record first (the Lua compare-and-set lost), 500 when this service cannot
+	unwrap the record under its own `KEYGRIP_KEK`.
+	"""
+	keygripRotate: Boolean!
 }
 
 type GraphQLAdminInfoAfterLogin {
 	_id: ID!
 	email: String!
+}
+
+"""
+⚠️ **No type below has a `material` field, and none of them ever may** (ADR-034, E01-S14). These three
+describe the record that holds the platform's cookie-signing keys: a reader of one could sign a session
+cookie for any account on the platform, which is a strictly larger power than "may rotate the keys" —
+the one this screen exists to grant. The service asserts the absence by field name in its own schema
+test, so a field added there fails a test rather than changing a snapshot; transcribing one here would
+only make this slice lie about it.
+
+`version` is what a rotation bumps and `fingerprint` is the record's own — a sha256 over the ordered key
+ids, which is what makes publishing it harmless. Together they are how an operator tells two records
+apart without seeing either.
+"""
+type GraphQLKeygripStatus {
+	version: Int!
+	fingerprint: String!
+	keys: [GraphQLKeygripKeyInfo!]!
+	holders: [GraphQLKeygripHolder!]!
+}
+
+"""
+One key in the set. `ageDays` is computed by the service rather than left to the browser: the
+retirement rule is "older than the remembered-session cap", and it is the server's clock that decides,
+so a screen doing that arithmetic against the browser's clock could offer a key as retirable while the
+rotation refuses it. `createdAt` is a `String` and not the `DateTime` scalar — that is the service's
+own declaration, and it puts an ISO-8601 stamp on the wire either way.
+"""
+type GraphQLKeygripKeyInfo {
+	id: String!
+	createdAt: String!
+	ageDays: Int!
+}
+
+"""
+One service that has read the record and is signing with what it read.
+
+`current` is answered by the service rather than by the browser comparing two strings, for the reason
+`ageDays` is computed there: the comparison is against the record this very read returned, so the two
+cannot be a rotation apart. A row is absent rather than `current: false` once its service has stopped
+heartbeating for an hour — absent and stale mean different things: gone, versus here and behind.
+"""
+type GraphQLKeygripHolder {
+	service: String!
+	fingerprint: String!
+	lastSeen: String!
+	current: Boolean!
 }
 
 """

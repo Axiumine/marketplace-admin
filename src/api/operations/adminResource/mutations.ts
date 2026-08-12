@@ -113,3 +113,20 @@ export const CompanyDelDocument = graphql(`
 		companyDel(_id: $_id)
 	}
 `)
+
+/**
+ * Rotates the platform's cookie-signing key.
+ *
+ * No variables, deliberately: the new key and the version it lands under are decided by the service.
+ * An argument for either would let its sender install a key of their choosing, which is the ability to
+ * mint a session cookie for any account on the platform — see the note on the mutation in the schema
+ * slice. The operator asks for a rotation; they do not get to say what it produces.
+ *
+ * `Boolean!`, so the call site names `additionalTypenames` itself — `GraphQLKeygripStatus`, which is
+ * what the panel beside the button is rendering and what a rotation changes every field of.
+ */
+export const KeygripRotateDocument = graphql(`
+	mutation KeygripRotate {
+		keygripRotate
+	}
+`)

@@ -1,0 +1,350 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SecurityPage > renders 1`] = `
+<main
+  class="flex-1 overflow-auto p-6"
+>
+  <header
+    class="mb-6 flex flex-col gap-3 border-b border-tip pb-4"
+  >
+    <div
+      class="flex flex-wrap items-center justify-between gap-4"
+    >
+      <h1
+        class="text-2xl font-bold"
+      >
+        Security
+      </h1>
+    </div>
+  </header>
+  <h2
+    class="mb-4 text-lg font-bold"
+  >
+    Cookie-signing keys
+  </h2>
+  <div
+    class="flex flex-col gap-4"
+  >
+    <section
+      aria-labelledby=":id-0:"
+      class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+    >
+      <div
+        class="mb-2 flex items-center justify-between gap-2"
+      >
+        <h3
+          class="font-bold"
+          id=":id-0:"
+        >
+          Current key set
+        </h3>
+        <button
+          class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-tomato px-4"
+          type="button"
+        >
+          Rotate the key
+        </button>
+      </div>
+      <div
+        class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+      >
+        <span
+          class="text-tip"
+        >
+          Version
+        </span>
+        <span
+          class="text-right"
+        >
+          3
+        </span>
+      </div>
+      <div
+        class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+      >
+        <span
+          class="text-tip"
+        >
+          Fingerprint
+        </span>
+        <span
+          class="text-right"
+        >
+          <code>
+            a1b2c3d4e5f6
+          </code>
+        </span>
+      </div>
+    </section>
+    <section
+      aria-labelledby=":id-1:"
+      class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+    >
+      <div
+        class="mb-2 flex items-center justify-between gap-2"
+      >
+        <h3
+          class="font-bold"
+          id=":id-1:"
+        >
+          Keys
+        </h3>
+      </div>
+      <div
+        class="overflow-x-auto"
+      >
+        <table
+          class="w-full text-left text-sm"
+        >
+          <thead>
+            <tr>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                Key
+              </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                Created
+              </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                Age in days
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="border-b border-palette-bg3/10"
+            >
+              <td
+                class="p-2"
+              >
+                k3
+              </td>
+              <td
+                class="p-2"
+              >
+                12 August 2026 at 09:00:00
+              </td>
+              <td
+                class="p-2"
+              >
+                0
+              </td>
+            </tr>
+            <tr
+              class="border-b border-palette-bg3/10"
+            >
+              <td
+                class="p-2"
+              >
+                k2
+              </td>
+              <td
+                class="p-2"
+              >
+                20 July 2026 at 09:00:00
+              </td>
+              <td
+                class="p-2"
+              >
+                23
+              </td>
+            </tr>
+            <tr
+              class="border-b border-palette-bg3/10"
+            >
+              <td
+                class="p-2"
+              >
+                k1
+              </td>
+              <td
+                class="p-2"
+              >
+                10 June 2026 at 09:00:00
+              </td>
+              <td
+                class="p-2"
+              >
+                63
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section
+      aria-labelledby=":id-2:"
+      class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+    >
+      <div
+        class="mb-2 flex items-center justify-between gap-2"
+      >
+        <h3
+          class="font-bold"
+          id=":id-2:"
+        >
+          Holders
+        </h3>
+      </div>
+      <div
+        class="overflow-x-auto"
+      >
+        <table
+          class="w-full text-left text-sm"
+        >
+          <thead>
+            <tr>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                Service
+              </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                Fingerprint
+              </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                Last seen
+              </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                State
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="border-b border-palette-bg3/10"
+            >
+              <td
+                class="p-2"
+              >
+                marketplace-dev-authenticated-authorization
+              </td>
+              <td
+                class="p-2"
+              >
+                <code>
+                  a1b2c3d4e5f6
+                </code>
+              </td>
+              <td
+                class="p-2"
+              >
+                12 August 2026 at 09:05:00
+              </td>
+              <td
+                class="p-2 font-bold text-app-ok"
+              >
+                Current
+              </td>
+            </tr>
+            <tr
+              class="border-b border-palette-bg3/10"
+            >
+              <td
+                class="p-2"
+              >
+                marketplace-dev-authenticated-logout
+              </td>
+              <td
+                class="p-2"
+              >
+                <code>
+                  9f8e7d6c5b4a
+                </code>
+              </td>
+              <td
+                class="p-2"
+              >
+                12 August 2026 at 08:10:00
+              </td>
+              <td
+                class="p-2 font-bold text-app-error"
+              >
+                Behind
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+`;
+
+exports[`SecurityPage > says so when no service is holding the record 1`] = `
+<section
+  aria-labelledby=":id-0:"
+  class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+>
+  <div
+    class="mb-2 flex items-center justify-between gap-2"
+  >
+    <h3
+      class="font-bold"
+      id=":id-0:"
+    >
+      Holders
+    </h3>
+  </div>
+  <div
+    class="overflow-x-auto"
+  >
+    <table
+      class="w-full text-left text-sm"
+    >
+      <thead>
+        <tr>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Service
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Fingerprint
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Last seen
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            State
+          </th>
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+  </div>
+  <p
+    class="text-tip"
+  >
+    No service has reported holding this key set.
+  </p>
+</section>
+`;

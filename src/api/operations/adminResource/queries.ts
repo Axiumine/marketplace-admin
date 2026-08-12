@@ -147,6 +147,36 @@ export const ShopOwnerByIdDocument = graphql(`
 `)
 
 /**
+ * The cookie-signing key set, and which services are signing with it.
+ *
+ * ⚠️ The selection set is the whole type and stays that way. There is no `material` field to leave out —
+ * see the note on `GraphQLKeygripStatus` in the schema slice — so this document cannot be made safer by
+ * asking for less, and every field it names is on screen: the version and fingerprint identify the
+ * record, `ageDays` is what marks a key as retirable, and `current` is what marks a service as behind.
+ *
+ * `keys` comes back newest first, and `holders` sorted by service name; neither is re-sorted here.
+ */
+export const KeygripStatusDocument = graphql(`
+	query KeygripStatus {
+		keygripStatus {
+			version
+			fingerprint
+			keys {
+				id
+				createdAt
+				ageDays
+			}
+			holders {
+				service
+				fingerprint
+				lastSeen
+				current
+			}
+		}
+	}
+`)
+
+/**
  * The companies owned by one shopOwner.
  *
  * The Companies section renders a card per company. Whole documents, not a projection: the section edits the
