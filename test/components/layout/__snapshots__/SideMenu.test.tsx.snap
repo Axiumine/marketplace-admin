@@ -39,6 +39,14 @@ exports[`SideMenu > renders 1`] = `
         Settings
       </a>
     </li>
+    <li>
+      <a
+        class="block rounded-box px-3 py-2 text-sm "
+        href="/security"
+      >
+        Security
+      </a>
+    </li>
   </ul>
   <div
     class="mt-auto flex flex-col gap-2"

@@ -10,6 +10,7 @@ import { HomePage } from '@/pages/HomePage'
 import { LoadingPage } from '@/pages/LoadingPage'
 import { LoginPage } from '@/pages/LoginPage'
 import { ManageShopOwnersPage } from '@/pages/ManageShopOwnersPage'
+import { SecurityPage } from '@/pages/SecurityPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { ShopOwnerDetailPage } from '@/pages/ShopOwnerDetailPage'
 import { ShopOwnersPage } from '@/pages/ShopOwnersPage'
@@ -23,7 +24,7 @@ export const DEFAULT_PAGE_SIZE = 20
  * File-based routing would emit a `routeTree.gen.ts` that is checked in, linted, type-checked and — the
  * part that decides it — measured by the coverage and mutation gates this repo runs at 100. A generated
  * file cannot be tested, so it would have to be excluded from both, and every exclusion is a hole
- * someone can later hide real code in. Eight routes do not need a generator.
+ * someone can later hide real code in. Nine routes do not need a generator.
  *
  * It is a *factory* rather than a module-level constant, and that is a testing requirement rather than
  * a preference. Built at module scope, every path string, every `component:` reference and every search
@@ -116,6 +117,12 @@ const createAppRouteTree = () => {
 		component: SettingsPage
 	})
 
+	const securityRoute = createRoute({
+		getParentRoute: () => appRoute,
+		path: '/security',
+		component: SecurityPage
+	})
+
 	const shopOwnersRoute = createRoute({
 		getParentRoute: () => appRoute,
 		path: '/shopOwners',
@@ -179,6 +186,7 @@ const createAppRouteTree = () => {
 		appRoute.addChildren([
 			homeRoute,
 			settingsRoute,
+			securityRoute,
 			shopOwnersRoute,
 			manageShopOwnersRoute,
 			addShopOwnerRoute,
