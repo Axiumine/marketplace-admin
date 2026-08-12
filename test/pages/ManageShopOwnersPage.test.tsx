@@ -9,6 +9,8 @@ const MANAGE = '/p/shopOwners/manage-shopOwners'
 const rivers = {
 	_id: '65f0000000000000000000f1',
 	registeredAt: '2026-02-01T08:05:45.000Z',
+	email: 'mark.rivers@example.com',
+	waitApprov: null,
 	personalData: {
 		firstName: 'Mark',
 		lastName: 'Rivers',

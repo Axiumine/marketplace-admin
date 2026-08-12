@@ -239,13 +239,23 @@ const positionToSave = (values: DetailValues): { coordinates: number[] } | null 
 type ShopOwner = ShopOwnerByIdQuery['shopOwnerById']
 
 /**
+ * The same account, once its `personalData` is known to be there.
+ *
+ * ⚠️ The block is nullable on the wire and on the collection: a seller who signed themselves up through
+ * `shopOwnerRegister` has a login and nothing else until onboarding runs. This alias is what lets the
+ * form below go on reading `shopOwner.personalData.firstName` without a `?.` on every line — the null
+ * case never reaches it, because `ShopOwnerPersonalData` sends it to `FormAccountPending` instead.
+ */
+type ShopOwnerOnboarded = ShopOwner & { personalData: NonNullable<ShopOwner['personalData']> }
+
+/**
  * The server's answer, as form state.
  *
  * Every optional field becomes `''` and every nullable boolean becomes `false`, because that is what an
  * empty text box and an unticked box read back as — seeded with `null` they would come back dirty on
  * the first render and be written on a save the operator meant for another field.
  */
-const valuesInitial = (shopOwner: ShopOwner): DetailValues => ({
+const valuesInitial = (shopOwner: ShopOwnerOnboarded): DetailValues => ({
 	emailLogin: shopOwner.login.email,
 	firstName: shopOwner.personalData.firstName,
 	lastName: shopOwner.personalData.lastName,
@@ -279,7 +289,13 @@ const valuesInitial = (shopOwner: ShopOwner): DetailValues => ({
  * beside the `fetching` branch would seed every field with `undefined` and then never look again, so
  * every box would be empty and every field dirty.
  */
-const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner; registerSection: RegisterSection }) => {
+const FormPersonalData = ({
+	shopOwner,
+	registerSection
+}: {
+	shopOwner: ShopOwnerOnboarded
+	registerSection: RegisterSection
+}) => {
 	const [error, setError] = useState<string | undefined>(undefined)
 
 	// Whether the address editor is open, which is what tells the card to stop drawing its own map — the
@@ -641,6 +657,223 @@ const FormPersonalData = ({ shopOwner, registerSection }: { shopOwner: ShopOwner
 }
 
 /**
+ * Everything the page can write about an account that has not been through onboarding.
+ *
+ * The identity half of `shopOwnerDetailSchema` is not merely omitted from the form below, it is omitted
+ * from the rules: `handleSubmit` validates the *whole* schema, so an empty `firstName` under the
+ * required rule would refuse the save — and the save an operator presses on this page is the approval.
+ * Sharing one schema would make the one action this screen exists for the one action it cannot perform.
+ */
+export const shopOwnerPendingSchema = z.object({
+	emailLogin: z
+		.email('Enter a valid login email address')
+		.max(MAX_EMAIL, `The login email cannot exceed ${MAX_EMAIL} characters`),
+	disabled: z.boolean(),
+	waitApprov: z.boolean(),
+	rememberMe: z.boolean(),
+	onboardingDone: z.boolean(),
+	onboardingStep: z
+		.string()
+		.trim()
+		.max(MAX_ONBOARDING_STEP, `The onboarding step cannot exceed ${MAX_ONBOARDING_STEP} characters`),
+	notes: z.string().trim().max(MAX_NOTE, `The notes cannot exceed ${MAX_NOTE} characters`)
+})
+
+type PendingValues = z.infer<typeof shopOwnerPendingSchema>
+
+const FIELDS_PENDING_PREFERENCES = ['rememberMe', 'onboardingDone', 'onboardingStep'] as const
+
+/**
+ * The detail page for a seller who registered themselves and has not onboarded yet.
+ *
+ * What is on screen is what exists: a login address, the dates, the flags and the operator's note. There
+ * is no name, no date of birth, no address and no contacts — not because they are hidden, but because
+ * `shopOwnerRegister` collects an email and a password and nothing else. Drawing the empty rows anyway
+ * would read as data that failed to load, and making them editable would ask an operator to type a
+ * stranger's home address on their behalf, which is what onboarding is for.
+ *
+ * The one thing an operator does come here to do — untick "Awaiting approval" — works exactly as it does
+ * on a complete account: same mutation, same context, same invalidation.
+ */
+export const FormAccountPending = ({
+	shopOwner,
+	registerSection
+}: {
+	shopOwner: ShopOwner
+	registerSection: RegisterSection
+}) => {
+	const [error, setError] = useState<string | undefined>(undefined)
+
+	const [, runEmail] = useMutation(ShopOwnerUpdateEmailDocument)
+	const [, runStatus] = useMutation(ShopOwnerUpdateStatusDocument)
+	const [, runPreferences] = useMutation(ShopOwnerUpdatePreferencesDocument)
+	const [, runNote] = useMutation(ShopOwnerUpdateNoteDocument)
+
+	const {
+		register,
+		control,
+		handleSubmit,
+		reset,
+		formState: { errors, dirtyFields, isDirty }
+	} = useForm<PendingValues>({
+		resolver: zodResolver(shopOwnerPendingSchema),
+		defaultValues: {
+			emailLogin: shopOwner.login.email,
+			disabled: shopOwner.disabled === true,
+			waitApprov: shopOwner.waitApprov === true,
+			rememberMe: shopOwner.login.rememberMe === true,
+			onboardingDone: shopOwner.login.onboardingDone === true,
+			onboardingStep: shopOwner.login.onboardingStep ?? '',
+			notes: shopOwner.notes ?? ''
+		}
+	})
+
+	const note = useWatch({ control, name: 'notes' })
+
+	const failed = (error: Parameters<typeof messageOf>[0]) => {
+		setError(error === undefined ? 'Save failed.' : messageOf(error))
+		return false
+	}
+
+	const write = async (values: PendingValues): Promise<boolean> => {
+		if (dirtyFields.emailLogin === true) {
+			const result = await runEmail({ _id: shopOwner._id, email: values.emailLogin }, CTX_SAVE_SHOP_OWNER)
+
+			if (result.data?.shopOwnerUpdateEmail !== true) return failed(result.error)
+		}
+
+		if (dirtyFields.disabled === true || dirtyFields.waitApprov === true) {
+			const result = await runStatus(
+				{ _id: shopOwner._id, disabled: values.disabled, waitApprov: values.waitApprov },
+				CTX_SAVE_SHOP_OWNER
+			)
+
+			if (result.data?.shopOwnerUpdateStatus !== true) return failed(result.error)
+		}
+
+		if (FIELDS_PENDING_PREFERENCES.some((field) => dirtyFields[field] === true)) {
+			const result = await runPreferences(
+				{
+					_id: shopOwner._id,
+					rememberMe: values.rememberMe,
+					onboardingDone: values.onboardingDone,
+					onboardingStep: emptyInNull(values.onboardingStep)
+				},
+				CTX_SAVE_SHOP_OWNER
+			)
+
+			if (result.data?.shopOwnerUpdatePreferences !== true) return failed(result.error)
+		}
+
+		if (dirtyFields.notes === true) {
+			const result = await runNote({ _id: shopOwner._id, notes: values.notes }, CTX_SAVE_SHOP_OWNER)
+
+			if (result.data?.shopOwnerUpdateNote !== true) return failed(result.error)
+		}
+
+		reset(values)
+		setError(undefined)
+
+		return true
+	}
+
+	const save = async (): Promise<boolean> => {
+		if (!isDirty) return true
+
+		return await saveValidated(handleSubmit, write)
+	}
+
+	useSavableSection(shopOwner._id, registerSection, isDirty, save)
+
+	const { login, resetPwd } = shopOwner
+
+	return (
+		<div className="flex flex-col gap-6">
+			{error === undefined ? null : <Toast tone="error">{error}</Toast>}
+			<ToastValidation errors={errors} />
+
+			<section>
+				<h2 className="mb-2 text-lg font-bold">PersonalData</h2>
+				<div className="grid gap-4 md:grid-cols-3">
+					<Infobox title="ShopOwner">
+						<EditableRow label="Login email" value={login.email}>
+							<TextField
+								label="Login email"
+								type="email"
+								maxLength={MAX_EMAIL}
+								error={errors.emailLogin?.message}
+								{...register('emailLogin')}
+							/>
+						</EditableRow>
+						{/* Said in a sentence rather than as a column of empty rows: the fields are missing from
+						    the document, not from the response, and a row reading "First name: —" would send an
+						    operator looking for a bug in the query. */}
+						<p className="pt-2 text-sm text-tip">
+							This shop owner registered on the public site. Their name, date of birth, address and contacts arrive when they
+							complete onboarding.
+						</p>
+					</Infobox>
+
+					<Infobox title="Notes">
+						<EditableRow label="Notes" value={<span className="whitespace-pre-line">{handleNull(shopOwner.notes)}</span>}>
+							<TextareaField
+								label="Notes"
+								maxLength={MAX_NOTE}
+								remaining={MAX_NOTE - note.length}
+								error={errors.notes?.message}
+								{...register('notes')}
+							/>
+						</EditableRow>
+					</Infobox>
+				</div>
+			</section>
+
+			<section>
+				<h2 className="mb-2 text-lg font-bold">Account</h2>
+				<div className="grid gap-4 md:grid-cols-3">
+					<Infobox title="Account status" className={accountStatusClass(shopOwner)}>
+						<EditableRow label="Disabled" value={handleNullBoolYN(shopOwner.disabled)}>
+							<CheckboxField label="Disabled" {...register('disabled')} />
+						</EditableRow>
+						<InfoRow label="Deleted on" value={handleNullDate(shopOwner.deleted)} />
+						{/* The approval itself: unticking this box and pressing Save is what lets the account
+						    log in — see `checkShopOwnerApproval` in the public authorization service. */}
+						<EditableRow label="Awaiting approval" value={handleNullBoolYN(shopOwner.waitApprov)}>
+							<CheckboxField label="Awaiting approval" {...register('waitApprov')} />
+						</EditableRow>
+						<InfoRow label="Registered" value={handleNullDate(shopOwner.registeredAt)} />
+						<InfoRow label="First login" value={handleNullDate(login.firstLogin)} />
+						<InfoRow label="Last login" value={handleNullDate(login.lastLogin)} />
+					</Infobox>
+
+					<Infobox title="Preferences">
+						<EditableRow label="Remember me at login" value={handleNullBoolYN(login.rememberMe)}>
+							<CheckboxField label="Remember me at login" {...register('rememberMe')} />
+						</EditableRow>
+						<EditableRow label="Onboarding complete" value={handleNullBoolYN(login.onboardingDone)}>
+							<CheckboxField label="Onboarding complete" {...register('onboardingDone')} />
+						</EditableRow>
+						<EditableRow label="Onboarding step" value={handleNull(login.onboardingStep)}>
+							<TextField
+								label="Onboarding step"
+								maxLength={MAX_ONBOARDING_STEP}
+								error={errors.onboardingStep?.message}
+								{...register('onboardingStep')}
+							/>
+						</EditableRow>
+					</Infobox>
+
+					<Infobox title="Password">
+						<InfoRow label="Reset request" value={handleNullDate(resetPwd?.resetDateReq)} />
+						<InfoRow label="Recovery hash" value={handleNullHash(resetPwd?.resetHash)} />
+					</Infobox>
+				</div>
+			</section>
+		</div>
+	)
+}
+
+/**
  * The shopOwner detail page's personalData, address, account, preferences and password blocks.
  *
  * ⚠️ Every row here is a field the resolver actually returns. There is no `account` sub-document on
@@ -669,5 +902,13 @@ export const ShopOwnerPersonalData = ({
 
 	if (shopOwner == null) return <Alert tone="error">Shop owner not found.</Alert>
 
-	return <FormPersonalData shopOwner={shopOwner} registerSection={registerSection} />
+	const { personalData } = shopOwner
+
+	// ⚠️ The fork, and the reason `personalData` is nullable all the way from the collection to here: a
+	// self-registered seller has none until onboarding, and the panel below would read every one of its
+	// thirteen boxes off it. Destructured first because narrowing a property does not narrow the object
+	// it came from — the spread is what carries the proof into `FormPersonalData`'s type.
+	if (personalData == null) return <FormAccountPending shopOwner={shopOwner} registerSection={registerSection} />
+
+	return <FormPersonalData shopOwner={{ ...shopOwner, personalData }} registerSection={registerSection} />
 }

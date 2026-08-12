@@ -273,6 +273,46 @@ describe('ShopOwnerDetailPage — after saving', () => {
 		expect(screen.queryByText('Address is required')).not.toBeInTheDocument()
 	})
 
+	/*
+	 * The same short-circuit on the other panel — the one a self-registered seller gets.
+	 *
+	 * Its schema is narrower, but it still has a rule the untouched form must not be measured against, and
+	 * the login email below is past it: the panel caps the address at 250 characters while the platform
+	 * accepts 255 (`EMAIL_MAX_LEN` in `@axiumine/koa-utils`, which every registration goes through), so a
+	 * stored address can be longer than the form would let an operator type. Reaching `handleSubmit` here
+	 * would refuse the save on a card nobody opened, and the company write — which comes after it in the
+	 * save loop — is the one that would never leave.
+	 */
+	it('saves a company without validating the pending panel the operator never opened', async () => {
+		const shopOwner = withCompanies.ShopOwnerById.data.shopOwnerById
+		const stub = stubGraphQL({
+			...withCompanies,
+			ShopOwnerById: {
+				data: {
+					shopOwnerById: {
+						...shopOwner,
+						waitApprov: true,
+						personalData: null,
+						login: { ...shopOwner.login, email: `${'a'.repeat(239)}@example.com` }
+					}
+				}
+			},
+			CompanyUpdate: { data: { companyUpdate: true } }
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByRole('heading', { name: 'Shop owner info' })
+		expect(screen.getByText(/registered on the public site/)).toBeInTheDocument()
+
+		await userEvent.click(screen.getByRole('button', { name: 'Change Legal name' }))
+		fireEvent.change(screen.getByLabelText('Legal name'), { target: { value: 'Rivers Trading PLC' } })
+		await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+		expect(await screen.findByRole('button', { name: 'Change Legal name' })).toBeInTheDocument()
+		expect(stub.calls.map((call) => call.operationName)).toContain('CompanyUpdate')
+		expect(stub.calls.map((call) => call.operationName).filter((name) => name.startsWith('ShopOwnerUpdate'))).toEqual([])
+	})
+
 	// Only a save that went all the way through. A page left half-written still holds edits, and closing
 	// those rows would hide values the operator would have to type again.
 	it('leaves the open rows alone when the save was refused', async () => {

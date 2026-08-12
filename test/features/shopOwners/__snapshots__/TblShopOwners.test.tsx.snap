@@ -101,6 +101,16 @@ exports[`TblShopOwners > renders 1`] = `
         <thead>
           <tr>
             <th
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <span
+                class="font-bold"
+              >
+                Email
+              </span>
+            </th>
+            <th
               aria-sort="ascending"
               class="border-b border-palette-bg3/20 p-2"
               scope="col"
@@ -148,6 +158,16 @@ exports[`TblShopOwners > renders 1`] = `
                 Address
               </button>
             </th>
+            <th
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <span
+                class="font-bold"
+              >
+                Status
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -161,8 +181,13 @@ exports[`TblShopOwners > renders 1`] = `
                 class="underline"
                 href="/p/shopOwners/id/65f0000000000000000000f1"
               >
-                Rivers
+                mark.rivers@example.com
               </a>
+            </td>
+            <td
+              class="p-2"
+            >
+              Rivers
             </td>
             <td
               class="p-2"
@@ -179,6 +204,11 @@ exports[`TblShopOwners > renders 1`] = `
             >
               1 Main Street, 02109 Boston (MA)
             </td>
+            <td
+              class="p-2"
+            >
+              Active
+            </td>
           </tr>
           <tr
             class="border-b border-palette-bg3/10"
@@ -190,8 +220,13 @@ exports[`TblShopOwners > renders 1`] = `
                 class="underline"
                 href="/p/shopOwners/id/65f0000000000000000000f2"
               >
-                White
+                anna.white@example.com
               </a>
+            </td>
+            <td
+              class="p-2"
+            >
+              White
             </td>
             <td
               class="p-2"
@@ -207,6 +242,54 @@ exports[`TblShopOwners > renders 1`] = `
               class="p-2"
             >
               9 Broadway, 10001 New York (NY)
+            </td>
+            <td
+              class="p-2"
+            >
+              Active
+            </td>
+          </tr>
+          <tr
+            class="border-b border-palette-bg3/10"
+          >
+            <td
+              class="p-2"
+            >
+              <a
+                class="underline"
+                href="/p/shopOwners/id/65f0000000000000000000f3"
+              >
+                new.seller@example.com
+              </a>
+            </td>
+            <td
+              class="p-2"
+            >
+              —
+            </td>
+            <td
+              class="p-2"
+            >
+              —
+            </td>
+            <td
+              class="p-2"
+            >
+              02/04/2026
+            </td>
+            <td
+              class="p-2"
+            >
+              —
+            </td>
+            <td
+              class="p-2"
+            >
+              <span
+                class="account-wait-approv rounded-box px-2 py-1"
+              >
+                Pending approval
+              </span>
             </td>
           </tr>
         </tbody>

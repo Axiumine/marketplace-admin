@@ -1293,3 +1293,491 @@ describe('ShopOwnerPersonalData — note', () => {
 		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
 	})
 })
+
+/**
+ * A seller who registered themselves on the public site: an email, a password, a date and the approval
+ * flag. `personalData` is **absent**, not empty — `shopOwnerRegister` writes none of it, and onboarding
+ * is what fills it in later.
+ *
+ * ⚠️ Every other field here is null on purpose. `disabled`, `rememberMe`, `onboardingDone` and
+ * `onboardingStep` are optional on the collection and nothing writes them at registration, so this is
+ * the document shape the resolver really answers with — a fixture that seeded them `false` would hide
+ * every `=== true` that has to survive a null.
+ */
+const pending = {
+	__typename: 'GraphQLShopOwnerById',
+	_id: ID,
+	registeredAt: '2026-04-02T09:30:00.000Z',
+	deleted: null,
+	disabled: null,
+	waitApprov: true,
+	login: {
+		email: 'new.seller@example.com',
+		firstLogin: null,
+		lastLogin: null,
+		onboardingStep: null,
+		onboardingDone: null,
+		rememberMe: null
+	},
+	personalData: null,
+	notes: null,
+	resetPwd: null
+}
+
+const detailPending = (override: Record<string, unknown> = {}) => ({
+	ShopOwnerById: { data: { shopOwnerById: { ...pending, ...override } } },
+	ShopOwnerCompanies: { data: { shopOwnerCompanies: [] } }
+})
+
+/**
+ * The detail page of an account that has not onboarded.
+ *
+ * ⚠️ It is a **separate panel with a schema of its own**, and the reason is the one action the screen
+ * exists for. `handleSubmit` validates the whole schema before `write` runs, so reusing
+ * `shopOwnerDetailSchema` here would put "First name is required" between an operator and the approval
+ * of an account that has no first name by design — the save would be refused on thirteen boxes that are
+ * not on screen and cannot be filled in. The tests below are what pin that the approval goes through.
+ */
+describe('ShopOwnerPersonalData — an account that registered itself', () => {
+	it('shows the credentials and says why there is nothing else', async () => {
+		stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		expect(await screen.findByText('new.seller@example.com')).toBeInTheDocument()
+		expect(screen.getByText(/registered on the public site/)).toBeInTheDocument()
+	})
+
+	/*
+	 * The rows are absent, not empty, and that is the difference between the two readings of this page:
+	 * "First name: ---" says the query failed to bring it back, while no row at all says the field is not
+	 * on the document. The address card goes with them — it is the geocoder, the map and a pen for a
+	 * street the operator would be typing on a stranger's behalf.
+	 */
+	it('draws no identity rows at all', async () => {
+		stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		expect(screen.queryByText('First name')).not.toBeInTheDocument()
+		expect(screen.queryByText('Born on')).not.toBeInTheDocument()
+		expect(screen.queryByRole('region', { name: 'Address' })).not.toBeInTheDocument()
+		expect(screen.queryByTitle(/^Map of/)).not.toBeInTheDocument()
+	})
+
+	// The same yellow the table's badge uses, on the card that carries the tick that clears it.
+	it('tints the account status card as waiting', async () => {
+		stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		expect(screen.getByRole('region', { name: 'Account status' })).toHaveClass('account-wait-approv')
+	})
+
+	/*
+	 * The approved seller who has still not onboarded — the state this panel spends most of its life in,
+	 * since clearing the flag is what the operator comes here to do and onboarding happens afterwards, in
+	 * the shop-owner app.
+	 *
+	 * Every box is seeded from the document rather than from a constant, and all four flags are `=== true`
+	 * against a field that is absent far more often than it is `false`. A fixture with the flags down
+	 * would pass just as well against a form that hard-coded them down, which is why this one puts every
+	 * one of them up and leaves the note and the approval as the two that are not.
+	 */
+	it('seeds every box from the document, flags and all', async () => {
+		stubGraphQL(
+			detailPending({
+				disabled: true,
+				waitApprov: null,
+				login: { ...pending.login, rememberMe: true, onboardingDone: true, onboardingStep: '2' }
+			})
+		)
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Disabled')
+		await open('Awaiting approval')
+		await open('Remember me at login')
+		await open('Onboarding complete')
+		await open('Onboarding step')
+		await open('Notes')
+
+		expect(screen.getByRole('checkbox', { name: 'Disabled' })).toBeChecked()
+		expect(screen.getByRole('checkbox', { name: 'Awaiting approval' })).not.toBeChecked()
+		expect(screen.getByRole('checkbox', { name: 'Remember me at login' })).toBeChecked()
+		expect(screen.getByRole('checkbox', { name: 'Onboarding complete' })).toBeChecked()
+		expect(screen.getByLabelText('Onboarding step')).toHaveValue('2')
+		expect(box('Notes').getByLabelText('Notes')).toHaveValue('')
+		expect(box('Notes').getByText('2000 characters remaining')).toBeInTheDocument()
+		// Nothing has been saved yet, so nothing has been refused yet: the error toast is rendered by a
+		// failure and by nothing else.
+		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+	})
+
+	/*
+	 * ⚠️ The whole point of the panel: unticking the box and pressing Save writes the approval, and the
+	 * write is the same `shopOwnerUpdateStatus` a complete account uses. `disabled: false` travels with it
+	 * because the mutation takes both flags — the account's `disabled` is null on the document, and a
+	 * payload that carried that null through would refuse at the `Boolean!` argument.
+	 */
+	it('approves the account', async () => {
+		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Awaiting approval')
+		expect(screen.getByRole('checkbox', { name: 'Awaiting approval' })).toBeChecked()
+
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Awaiting approval' }))
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writes(stub)).toEqual([
+			expect.objectContaining({
+				operationName: 'ShopOwnerUpdateStatus',
+				variables: { _id: ID, disabled: false, waitApprov: false }
+			})
+		])
+	})
+
+	/*
+	 * The two flags share one mutation but not one condition, and this is the case that tells them apart.
+	 *
+	 * Blocking an account is not deciding on it: an operator who ticks "Disabled" on a registration they
+	 * are still investigating must not have the approval sent along with it. Both values travel — the
+	 * mutation takes both — but the one that was not touched travels as it was found.
+	 */
+	it('sends the block without deciding the approval', async () => {
+		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Disabled')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writes(stub)).toEqual([
+			expect.objectContaining({
+				operationName: 'ShopOwnerUpdateStatus',
+				variables: { _id: ID, disabled: true, waitApprov: true }
+			})
+		])
+	})
+
+	it('sends the login email on its own', async () => {
+		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdateEmail: { data: { shopOwnerUpdateEmail: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Login email')
+		write('Login email', 'seller@rivers.test')
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writes(stub)).toEqual([
+			expect.objectContaining({
+				operationName: 'ShopOwnerUpdateEmail',
+				variables: { _id: ID, email: 'seller@rivers.test' }
+			})
+		])
+	})
+
+	// `emptyInNull` again: the box seeds empty from a null and a typed step has to arrive as a string,
+	// while the two flags travel as the booleans the null was read into.
+	it('sends the preferences the operator touched', async () => {
+		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Onboarding step')
+		expect(screen.getByLabelText('Onboarding step')).toHaveValue('')
+
+		write('Onboarding step', '1')
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writes(stub)).toEqual([
+			expect.objectContaining({
+				operationName: 'ShopOwnerUpdatePreferences',
+				variables: { _id: ID, rememberMe: false, onboardingDone: false, onboardingStep: '1' }
+			})
+		])
+	})
+
+	// An operator's note about an account they are deciding on is the one piece of writing this screen
+	// invites, so the card is here in full — counter included.
+	it('sends the note, and counts what is left of it', async () => {
+		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Notes')
+		fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Called to confirm the VAT number.' } })
+
+		expect(box('Notes').getByText('1967 characters remaining')).toBeInTheDocument()
+
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writes(stub)).toEqual([
+			expect.objectContaining({
+				operationName: 'ShopOwnerUpdateNote',
+				variables: { _id: ID, notes: 'Called to confirm the VAT number.' }
+			})
+		])
+	})
+
+	/*
+	 * ⚠️ Padding is stripped before anything is sent, and both free-text boxes on this panel strip it.
+	 *
+	 * The step is the case that matters: a spacebar is how an operator clears a box, and `emptyInNull` maps
+	 * `''` to `null` — so a trimmed blank *removes* the field from the document while an untrimmed one
+	 * stores `'  '`, a step that is not a step, that no `??` fallback treats as absent and that every
+	 * `onboardingStep === '3'` comparison in the shop-owner app fails against. The note is the same rule
+	 * with lower stakes: leading spaces on an operator's note are noise the next reader has to see past.
+	 */
+	it('stores neither a padded step nor a padded note', async () => {
+		const stub = stubGraphQL({
+			...detailPending(),
+			ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } },
+			ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } }
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Onboarding step')
+		write('Onboarding step', '  ')
+		await open('Notes')
+		fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: '  Called back.  ' } })
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writes(stub)).toEqual([
+			expect.objectContaining({
+				operationName: 'ShopOwnerUpdatePreferences',
+				variables: { _id: ID, rememberMe: false, onboardingDone: false, onboardingStep: null }
+			}),
+			expect.objectContaining({ operationName: 'ShopOwnerUpdateNote', variables: { _id: ID, notes: 'Called back.' } })
+		])
+	})
+
+	it('fires every touched group, in order', async () => {
+		const stub = stubGraphQL({
+			...detailPending(),
+			ShopOwnerUpdateEmail: { data: { shopOwnerUpdateEmail: true } },
+			ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } },
+			ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } },
+			ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } }
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Login email')
+		write('Login email', 'seller@rivers.test')
+		await open('Awaiting approval')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Awaiting approval' }))
+		await open('Remember me at login')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Remember me at login' }))
+		await open('Notes')
+		fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Approved.' } })
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writeNames(stub)).toEqual([
+			'ShopOwnerUpdateEmail',
+			'ShopOwnerUpdateStatus',
+			'ShopOwnerUpdatePreferences',
+			'ShopOwnerUpdateNote'
+		])
+	})
+
+	// The panel's own schema still has rules, and the login email is the field that carries them: it is
+	// the only thing identifying this account, so a typo in it is unrecoverable rather than untidy.
+	it('refuses an invalid login email', async () => {
+		const stub = stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Login email')
+		// No TLD: jsdom runs the input's own validation before submit, so this is what an `<input
+		// type="email">` accepts and the zod rule still refuses.
+		write('Login email', 'seller@marketplace')
+		await userEvent.click(save())
+
+		expect(await page().findByText('Enter a valid login email address')).toBeInTheDocument()
+		expect(writes(stub)).toEqual([])
+	})
+
+	/*
+	 * The three caps this panel enforces, each on the field it belongs to.
+	 *
+	 * The values are pasted rather than typed: every box carries a `maxLength`, which stops a keystroke
+	 * and nothing else, so the rule underneath it is the one that has to hold — and the message has to
+	 * name the field, since one refused save can only be read on the card it names.
+	 *
+	 * ⚠️ The login email cap is **250, while the platform accepts 255** (`EMAIL_MAX_LEN` in
+	 * `@axiumine/koa-utils`, which every registration goes through). The five characters between them are
+	 * why this rule is reachable on a stored document at all rather than only on what an operator types.
+	 */
+	const CAPS_PENDING: readonly (readonly [string, string, string])[] = [
+		['Login email', `${'a'.repeat(239)}@example.com`, 'The login email cannot exceed 250 characters'],
+		['Onboarding step', '12345', 'The onboarding step cannot exceed 4 characters']
+	]
+
+	it.each(CAPS_PENDING)('refuses a %s past the cap', async (label, value, message) => {
+		const stub = stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open(label)
+		write(label, value)
+		await userEvent.click(save())
+
+		expect(await page().findByText(message)).toBeInTheDocument()
+		expect(writes(stub)).toEqual([])
+	})
+
+	// The note is the one box that is a textarea, and its card is named after it — hence the scoped
+	// lookup rather than the `write` helper the two rows above use.
+	it('refuses a note past the cap', async () => {
+		const stub = stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Notes')
+		fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'x'.repeat(2001) } })
+		await userEvent.click(save())
+
+		expect(await page().findByText('The notes cannot exceed 2000 characters')).toBeInTheDocument()
+		expect(writes(stub)).toEqual([])
+	})
+
+	it('shows the backend refusal', async () => {
+		stubGraphQL({
+			...detailPending(),
+			ShopOwnerUpdateStatus: { errors: [graphQLError('Error', 'Status not updatable', 500)], status: 500 }
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Awaiting approval')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Awaiting approval' }))
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Status not updatable')
+		expect(screen.queryByText('Changes saved.')).not.toBeInTheDocument()
+	})
+
+	/*
+	 * The other three groups' refusals, each read off the answer to its own write.
+	 *
+	 * ⚠️ A refused write carries **no data at all** — the 500 below has `errors` and nothing else — so
+	 * every one of these checks has to reach into the answer through an optional chain. One that did not
+	 * would throw on the way to the toast, and the operator would be looking at a blank card instead of
+	 * the reason their save did not land.
+	 */
+	const BACKEND_PENDING: readonly (readonly [string, string, string, string])[] = [
+		['Login email', 'seller@rivers.test', 'ShopOwnerUpdateEmail', 'Email not updatable'],
+		['Onboarding step', '2', 'ShopOwnerUpdatePreferences', 'Preferences not updatable']
+	]
+
+	it.each(BACKEND_PENDING)('reports the backend refusal of %s', async (label, value, operation, message) => {
+		stubGraphQL({ ...detailPending(), [operation]: { errors: [graphQLError('Error', message, 500)], status: 500 } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open(label)
+		write(label, value)
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent(message)
+	})
+
+	it('reports the backend refusal of the note write', async () => {
+		stubGraphQL({
+			...detailPending(),
+			ShopOwnerUpdateNote: { errors: [graphQLError('Error', 'Note not updatable', 500)], status: 500 }
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Notes')
+		fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Memo' } })
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Note not updatable')
+	})
+
+	/*
+	 * One case per group, as on the complete account: the four checks are four separate branches, and a
+	 * copy-paste that left one of them reading another group's answer would report a save that never
+	 * happened. `false` with no error at all is what `Boolean!` allows and no resolver sends.
+	 */
+	const REFUSALS_PENDING: readonly (readonly [string, string, string, Record<string, boolean>])[] = [
+		['Login email', 'seller@rivers.test', 'ShopOwnerUpdateEmail', { shopOwnerUpdateEmail: false }],
+		['Onboarding step', '1', 'ShopOwnerUpdatePreferences', { shopOwnerUpdatePreferences: false }]
+	]
+
+	it.each(REFUSALS_PENDING)('reports a bare refusal of %s', async (label, value, operation, data) => {
+		stubGraphQL({ ...detailPending(), [operation]: { data } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open(label)
+		write(label, value)
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+	})
+
+	it('reports a bare refusal of the approval', async () => {
+		stubGraphQL({ ...detailPending(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: false } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Awaiting approval')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Awaiting approval' }))
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+	})
+
+	// The Notes box is the one that is not a `TextField`, and its card is named after it — hence the
+	// scoped lookup rather than the `write` helper the two rows above use.
+	it('reports a bare refusal of the note write', async () => {
+		stubGraphQL({ ...detailPending(), ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: false } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Notes')
+		fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Memo' } })
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+	})
+
+	// The written values become the new baseline: the box the operator changed is no longer dirty, so the
+	// page's one Save button goes back to disabled rather than offering to send the same write again.
+	it('leaves nothing to save once the write went through', async () => {
+		stubGraphQL({ ...detailPending(), ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Notes')
+		fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Approved.' } })
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		await waitFor(() => {
+			expect(save()).toBeDisabled()
+		})
+	})
+
+	it('renders', async () => {
+		stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		expect(screen.getByRole('main')).toMatchSnapshot()
+	})
+})

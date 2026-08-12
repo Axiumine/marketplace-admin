@@ -220,7 +220,24 @@ type GraphQLShopOwnersPerPeriodPoint {
 type GraphQLShopOwnerActiveTbl {
 	_id: ID!
 	registeredAt: DateTime!
-	personalData: GraphQLPersonalData!
+	"""
+	The address the account authenticates with, flattened out of `login` by the resolver. On a
+	self-registered row it is the only thing identifying the account: `personalData` below is absent
+	until onboarding runs.
+	"""
+	email: String!
+	"""
+	⚠️ **Nullable, and the resolver agrees — do not "tidy" it back to `GraphQLPersonalData!`.** A seller
+	who signed themselves up through `shopOwnerRegister` has an address and a password and nothing else,
+	so this whole block is missing on exactly the rows an operator opened the table to approve. `items`
+	is a non-null list of non-null rows, so one such row under a `NonNull` here errors the entire page.
+	"""
+	personalData: GraphQLPersonalData
+	"""
+	Present and true while the account waits for an operator. `$unset` on approval, so it is never
+	`false` — render "pending" on truthiness, not on equality.
+	"""
+	waitApprov: Boolean
 }
 
 type GraphQLPersonalData {
@@ -239,7 +256,12 @@ type GraphQLShopOwnerAddressTbl {
 type GraphQLShopOwnerById {
 	_id: ID!
 	login: GraphQLShopOwnerLogin!
-	personalData: GraphQLShopOwnerPersonalDataById!
+	"""
+	⚠️ **Nullable, for the reason the table's is.** This is the page an operator opens to decide whether
+	to approve a self-registration, and a self-registration has no `personalData` at all — under a
+	`NonNull` the one account that needs looking at is the one that cannot be looked at.
+	"""
+	personalData: GraphQLShopOwnerPersonalDataById
 	registeredAt: DateTime!
 	deleted: DateTime
 	disabled: Boolean

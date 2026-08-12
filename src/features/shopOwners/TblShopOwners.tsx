@@ -27,23 +27,37 @@ export interface ShopOwnersQuery {
 
 interface Row {
 	_id: string
+	email: string
 	firstName: string
 	lastName: string
 	registeredAt: string
 	address: string
+	waitApprov: boolean
 }
 
 /**
- * Columns, in display order, each paired with the backend sort field it maps to.
+ * What a cell shows when the account has no `personalData` yet. An em dash rather than an empty cell:
+ * a blank reads as a rendering fault, a dash reads as "nothing here", and the row still has an email
+ * and a date that say who it is.
+ */
+export const EMPTY_CELL = '—'
+
+/**
+ * The **sortable** columns, each paired with the backend sort field it maps to. A column absent from
+ * this map renders a plain header rather than a button — see the header block below.
  *
  * First name and lastName are two columns, not one composed "First name" cell. A concatenation is not a sortable
  * thing — the backend indexes `personalData.firstName` and `personalData.lastName` separately and nothing
  * indexes the pair joined by a space — so splitting them is what makes either sort reachable at all.
- * Surname-first is the ordering an operator scanning a list of people expects. The row's link lives on
- * the lastName cell only: one link per row rather than two pointing at the same place.
+ * Surname-first is the ordering an operator scanning a list of people expects.
  *
  * `Address` sorts by CITY: the full address string is composed client-side and, again, is not an
  * index. Sorting by town is the part that is actually useful.
+ *
+ * ⚠️ **`email` and `status` are deliberately not here.** `login.email` is CSFLE ciphertext in MongoDB
+ * and no encryption algorithm on this platform preserves an ordering, so an email sort would have to
+ * fetch and sort the whole collection in memory; `waitApprov` has no index and only two states worth
+ * distinguishing. Adding either to this map does not add a column sort, it adds a server error.
  */
 const SORT_FIELD = {
 	lastName: 'LAST_NAME',
@@ -53,6 +67,10 @@ const SORT_FIELD = {
 } as const satisfies Record<string, GraphQlShopOwnersTblSortField>
 
 type SortableColumn = keyof typeof SORT_FIELD
+
+/** Whether this column can be ordered by, i.e. whether the backend has an index and an enum value for it. */
+const sortFieldOf = (columnId: string): GraphQlShopOwnersTblSortField | undefined =>
+	SORT_FIELD[columnId as SortableColumn] as GraphQlShopOwnersTblSortField | undefined
 
 const column = createColumnHelper<Row>()
 
@@ -120,26 +138,47 @@ export const TblShopOwners = ({
 	})
 
 	const page = result.data?.shopOwnersActiveTbl
+	// ⚠️ Every `personalData` read below is optional-chained, and has to be: a shop owner who registered
+	// themselves on the public site has none until onboarding fills it in, and those are precisely the
+	// rows an operator came here to approve. Reading `item.personalData.firstName` unguarded throws
+	// while mapping and takes the whole table down with it, pending rows and trading rows alike.
 	const rows: Row[] = (page?.items ?? []).map((item) => ({
 		_id: item._id,
-		firstName: item.personalData.firstName,
-		lastName: item.personalData.lastName,
+		email: item.email,
+		firstName: item.personalData?.firstName ?? EMPTY_CELL,
+		lastName: item.personalData?.lastName ?? EMPTY_CELL,
 		registeredAt: formatDate(item.registeredAt),
-		address: formatAddress(item.personalData.address)
+		// Not `item.personalData?.address` — `formatAddress` takes the whole block, so the guard has to be
+		// on the object rather than on one of its members.
+		address: item.personalData == null ? EMPTY_CELL : formatAddress(item.personalData.address),
+		// `waitApprov` is absent-or-true on the wire — it is `$unset` on approval, never written `false`
+		// — so the flag is derived from presence here and the rest of the component reads a boolean.
+		waitApprov: item.waitApprov === true
 	}))
 
 	const columns = [
-		column.accessor('lastName', {
-			header: 'Last name',
+		// The row's link, and it lives on the email cell rather than on the surname: the address is the
+		// one column that is filled in on every row, so a pending registration is still reachable. On the
+		// surname it would be an em dash for exactly the accounts an operator needs to open.
+		column.accessor('email', {
+			header: 'Email',
 			cell: (info) => (
 				<Link to="/p/shopOwners/id/$_id" params={{ _id: info.row.original._id }} className="underline">
 					{info.getValue()}
 				</Link>
 			)
 		}),
+		column.accessor('lastName', { header: 'Last name' }),
 		column.accessor('firstName', { header: 'First name' }),
 		column.accessor('registeredAt', { header: 'RegisteredAt' }),
-		column.accessor('address', { header: 'Address' })
+		column.accessor('address', { header: 'Address' }),
+		column.accessor('waitApprov', {
+			header: 'Status',
+			// The same `account-wait-approv` swatch the detail page paints the header with, so the state
+			// an operator sees in the list is the state they see after clicking through.
+			cell: (info) =>
+				info.getValue() ? <span className="account-wait-approv rounded-box px-2 py-1">Pending approval</span> : 'Active'
+		})
 	]
 
 	// The React Compiler skips auto-memoizing this component because `useReactTable` hands back functions
@@ -177,24 +216,34 @@ export const TblShopOwners = ({
 						{table.getHeaderGroups().map((group) => (
 							<tr key={group.id}>
 								{group.headers.map((header) => {
-									const field = SORT_FIELD[header.column.id as SortableColumn]
+									const field = sortFieldOf(header.column.id)
+									const label = flexRender(header.column.columnDef.header, header.getContext())
 
+									// ⚠️ A column with no entry in SORT_FIELD gets no button and no `aria-sort` at all.
+									// Rendering the button unconditionally would send `sortBy: undefined` to a NonNull
+									// enum argument, which the server refuses — the click would empty the table rather
+									// than sort it — and would promise a screen-reader user an ordering that does not
+									// exist.
 									return (
 										<th
 											key={header.id}
 											scope="col"
 											className="border-b border-palette-bg3/20 p-2"
-											aria-sort={ariaSort(field, query.sortBy, query.sortDir)}
+											aria-sort={field === undefined ? undefined : ariaSort(field, query.sortBy, query.sortDir)}
 										>
-											<button
-												type="button"
-												className="font-bold"
-												onClick={() => {
-													onQueryChange({ ...nextSort(field, query.sortBy, query.sortDir), page: 1 })
-												}}
-											>
-												{flexRender(header.column.columnDef.header, header.getContext())}
-											</button>
+											{field === undefined ? (
+												<span className="font-bold">{label}</span>
+											) : (
+												<button
+													type="button"
+													className="font-bold"
+													onClick={() => {
+														onQueryChange({ ...nextSort(field, query.sortBy, query.sortDir), page: 1 })
+													}}
+												>
+													{label}
+												</button>
+											)}
 										</th>
 									)
 								})}
