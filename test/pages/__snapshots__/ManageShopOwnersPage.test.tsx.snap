@@ -101,6 +101,16 @@ exports[`ManageShopOwnersPage > renders 1`] = `
         <thead>
           <tr>
             <th
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <span
+                class="font-bold"
+              >
+                Email
+              </span>
+            </th>
+            <th
               aria-sort="ascending"
               class="border-b border-palette-bg3/20 p-2"
               scope="col"
@@ -148,6 +158,16 @@ exports[`ManageShopOwnersPage > renders 1`] = `
                 Address
               </button>
             </th>
+            <th
+              class="border-b border-palette-bg3/20 p-2"
+              scope="col"
+            >
+              <span
+                class="font-bold"
+              >
+                Status
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -161,8 +181,13 @@ exports[`ManageShopOwnersPage > renders 1`] = `
                 class="underline"
                 href="/p/shopOwners/id/65f0000000000000000000f1"
               >
-                Rivers
+                mark.rivers@example.com
               </a>
+            </td>
+            <td
+              class="p-2"
+            >
+              Rivers
             </td>
             <td
               class="p-2"
@@ -178,6 +203,11 @@ exports[`ManageShopOwnersPage > renders 1`] = `
               class="p-2"
             >
               1 Main Street, 02109 Boston (MA)
+            </td>
+            <td
+              class="p-2"
+            >
+              Active
             </td>
           </tr>
         </tbody>

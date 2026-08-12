@@ -55,6 +55,11 @@ export const ShopOwnersPerPeriodDocument = graphql(`
  *
  * Every argument has a server-side default, so the variables here are the app's defaults, not the
  * schema's.
+ *
+ * ⚠️ `email` and `waitApprov` are what make this the approval queue rather than a directory, and
+ * `personalData` is nullable underneath them: a seller who registered themselves has none until
+ * onboarding, so the address is the only thing naming that row and the flag the only thing marking it
+ * as waiting. Dropping either from the selection leaves a page that renders and cannot be acted on.
  */
 export const ShopOwnersActiveTblDocument = graphql(`
 	query ShopOwnersActiveTbl(
@@ -69,6 +74,8 @@ export const ShopOwnersActiveTblDocument = graphql(`
 			items {
 				_id
 				registeredAt
+				email
+				waitApprov
 				personalData {
 					firstName
 					lastName
