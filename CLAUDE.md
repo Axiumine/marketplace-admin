@@ -17,6 +17,25 @@ names the database and the resolvers use, so a rename is never local to this rep
 `formatDateTime` renders with is a market choice, not a name: changing it changes every date on screen and
 every snapshot that shows one.
 
+## ⚠️ NEVER run the mutation gate by hand
+
+`yarn test:mutation` is **hook-only**. It runs when the `pre-push` hook calls it and at no other time —
+not to check a change, not before a commit, not on one file, not to confirm a survivor is fixed. Do not
+invoke `stryker` directly either.
+
+This does not weaken anything: the threshold stays 100, `pre-push` still blocks, and no survivor is ever
+answered by lowering a number. What changes is **who starts the run**. A full pass costs tens of minutes
+and holds the whole machine at 28 workers while it lasts, so an on-demand run is time taken from the
+person waiting for the work.
+
+A hand-started run is usually **wrong** as well as slow: `npx stryker run` skips what the `test:mutation`
+script exports (`TZ=UTC`), so the suite fails in Stryker's dry run on a timezone-dependent assertion and
+the whole run aborts before a single mutant is tested.
+
+A survivor is answered by writing the test it names and letting the next push run the gate. If a mutant
+has to be reproduced first, apply it by hand in the source and run `yarn test` — that is seconds, it
+names the tests that should have failed, and it costs nobody the machine.
+
 ## Do not trust `schema/*.graphql`
 
 The platform has **no SDL**. All nine backend services build their schema programmatically with graphql-js.
@@ -89,10 +108,11 @@ what lets a page be rendered in a test without a router assertion in the way.
 
 ## Version control
 
-- **This repo has no remote.** `git remote` is empty and there is no `remote.*` key in its config, so
-  nothing here has ever been published and `main` tracks nothing. Where it gets published, and under which
-  org, is the user's call and has not been made. It is **push-on-request**: never run `git push` unless the
-  user asked for it in that message.
+- **The remote exists and is empty.** `origin` is `https://github.com/Axiumine/marketplace-admin.git`, the
+  GitHub repo is there and **public**, and `git ls-remote --heads origin` returns nothing: not one branch
+  has ever been pushed, so `main` tracks nothing. The first push is therefore a *publication* of the whole
+  history to a public repository, not a routine sync. It is **push-on-request**: never run `git push`
+  unless the user asked for it in that message.
 - **Never commit on `main`.** Branch first: `git switch -c <type>/<slug>`. Merging is the user's call.
 - **Delete the branch once it is merged.** `git branch -d <slug>`, right after the merge. `-d`, never `-D`:
   it refuses a branch whose commits are not already reachable, so the safe case is quiet and the unsafe one
