@@ -100,6 +100,7 @@ schema slices; it describes nothing that exists.
 | `/home` | dashboard |
 | `/settings` | change own password |
 | `/security` | cookie-signing keys — version, fingerprint, key ages, holders table, rotate |
+| `/categories` | the whole `itemCategory` taxonomy — add, edit, retire; no search params, the list is unpaged |
 | `/shopOwners` | counters + section menu |
 | `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
 | `/p/shopOwners/add-shopOwner` | create form |
@@ -140,6 +141,16 @@ they guard against all render as a working screen.
 - **One statistic on the shopOwners page, because one query answers one.** Counters for "email to
   confirm", "confirmed", "disabled" and "deleted" all read naturally and none has a resolver.
   Add the backend query first — a placeholder counter is indistinguishable on screen from a broken one.
+- **The taxonomy's refusals are rewritten one by one, not funnelled into "Save failed."** The depth cap
+  and the duplicate slug are different mistakes about different boxes, and the service words both as a
+  GraphQL input path (`itemCategory.idParent: …`) that names nothing on screen. `features/categories/refusals.ts`
+  maps each to a sentence naming the box and the next step; anything unmapped still reaches the operator
+  in the service's own words.
+- **The category picker offers top-level categories only.** That is the depth cap read forwards: the one
+  save the service cannot accept is not one the operator can ask for. The card's own category is out too —
+  nothing else on the platform could stop a category being made its own parent.
+- **The position is capped at 999999999 here and nowhere else.** The resolver checks whole and
+  non-negative, and a wider number is refused by the collection's `$jsonSchema` as a 500 naming no field.
 - **Route paths are singular where the route is singular** (`…/add-shopOwner`). The plural
   reads better next to its section and serves no page; `to` is typed against the router's own union so
   `tsc` catches it, which is why no destination is ever passed as a bare string.
@@ -150,7 +161,7 @@ they guard against all render as a working screen.
 |---|---|---|
 | TanStack Virtual | not used | The table is server-paged at 20–100 rows. Virtualising a page that small adds a scroll container and buys nothing. |
 | Radix Dialog / Toast | not used | Nothing on the operator surface is modal, and errors belong next to what failed — `Alert` is inline and `role="alert"` only for the error tone. |
-| File-based routing | route tree in code | A generated `routeTree.gen.ts` cannot be tested, so it would have to be excluded from coverage and mutation — and every exclusion is a hole. Nine routes do not need a generator. |
+| File-based routing | route tree in code | A generated `routeTree.gen.ts` cannot be tested, so it would have to be excluded from coverage and mutation — and every exclusion is a hole. Ten routes do not need a generator. |
 | Schema from the server | `schema/*.graphql`, hand-maintained | The platform has no SDL: all nine services build their schema programmatically with graphql-js. These four files are hand-written slices, and they are a copy — verify against the resolvers, never the other way round. |
 
 ## License

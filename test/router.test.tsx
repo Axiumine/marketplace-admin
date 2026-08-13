@@ -153,6 +153,15 @@ describe('routes', () => {
 		expect(screen.getByRole('heading', { name: 'ShopOwners', level: 1 })).toBeInTheDocument()
 	})
 
+	// The only section with no search params of its own: the taxonomy is two levels deep and unpaged, so
+	// there is nothing for the URL to carry beyond the path.
+	it('serves the categories page', async () => {
+		stubGraphQL({ ItemCategories: { data: { itemCategories: [] } } })
+		await renderRoute('/categories')
+
+		expect(screen.getByRole('heading', { name: 'Categories', level: 1 })).toBeInTheDocument()
+	})
+
 	it('serves the add page', async () => {
 		stubGraphQL({})
 		await renderRoute('/p/shopOwners/add-shopOwner')

@@ -228,6 +228,28 @@ export const ReuseEventsDocument = graphql(`
 `)
 
 /**
+ * The whole taxonomy, flat.
+ *
+ * Whole documents rather than a projection, and every field is on screen: the category screen edits
+ * these four, and `idParent` is what the two levels are assembled from — a list without it renders as a
+ * flat alphabet soup in which no card knows whether it is a subcategory.
+ *
+ * No arguments and no paging, which is the resolver's own shape. The screen re-reads this after every
+ * write, so the three mutations name `GraphQLItemCategory` in `additionalTypenames`.
+ */
+export const ItemCategoriesDocument = graphql(`
+	query ItemCategories {
+		itemCategories {
+			_id
+			idParent
+			name
+			slug
+			position
+		}
+	}
+`)
+
+/**
  * The companies owned by one shopOwner.
  *
  * The Companies section renders a card per company. Whole documents, not a projection: the section edits the

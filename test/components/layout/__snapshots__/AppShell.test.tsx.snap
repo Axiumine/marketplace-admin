@@ -38,6 +38,14 @@ exports[`AppShell > renders 1`] = `
         <li>
           <a
             class="block rounded-box px-3 py-2 text-sm "
+            href="/categories"
+          >
+            Categories
+          </a>
+        </li>
+        <li>
+          <a
+            class="block rounded-box px-3 py-2 text-sm "
             href="/settings"
           >
             Settings

@@ -1,7 +1,7 @@
 import { PageHeader } from '@/components/layout/PageHeader'
+import { SaveChanges, useDiscardWarning, useSaving } from '@/features/saving'
 import { Companies } from '@/features/shopOwners/Companies'
 import { MenuShopOwners } from '@/features/shopOwners/MenuShopOwners'
-import { SaveChanges, useDiscardWarning, useSaving } from '@/features/shopOwners/saving'
 import { ShopOwnerPersonalData } from '@/features/shopOwners/ShopOwnerPersonalData'
 
 /**

@@ -7,8 +7,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 
 import { TextField } from '@/components/ui/TextField'
-import type { RegisterSection } from '@/features/shopOwners/saving'
-import { SaveChanges, saveValidated, useSavableSection, useSaving } from '@/features/shopOwners/saving'
+import type { RegisterSection } from '@/features/saving'
+import { SaveChanges, saveValidated, useSavableSection, useSaving } from '@/features/saving'
 
 /**
  * A stand-in for one editable block of the detail page.
