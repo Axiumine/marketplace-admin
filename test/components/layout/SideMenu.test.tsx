@@ -34,7 +34,7 @@ describe('isSectionActive', () => {
 })
 
 describe('SideMenu', () => {
-	it('lists the four sections', async () => {
+	it('lists the five sections', async () => {
 		stubGraphQL({})
 		await renderRoute('/home')
 
@@ -42,6 +42,7 @@ describe('SideMenu', () => {
 		expect(menu).toBeInTheDocument()
 		expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/home')
 		expect(screen.getByRole('link', { name: 'ShopOwners' })).toHaveAttribute('href', '/shopOwners')
+		expect(screen.getByRole('link', { name: 'Categories' })).toHaveAttribute('href', '/categories')
 		expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
 		expect(screen.getByRole('link', { name: 'Security' })).toHaveAttribute('href', '/security')
 	})

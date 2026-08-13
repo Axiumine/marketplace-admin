@@ -6,6 +6,11 @@
 # The keygrip query, mutation and three types were transcribed on 2026-08-12, against
 # queries/keygripStatus.mts, mutations/keygripRotate.mts and types/GraphQLKeygripStatus.mts as they
 # stood after E01-S13 and E01-S14.
+# The taxonomy — one query, three mutations, one type and one input — was transcribed on 2026-08-13,
+# against queries/itemCategories.mts, mutations/itemCategory{Add,Update,Del}.mts,
+# types/GraphQLItemCategory.mts, GraphQLInput/GraphQLInputItemCategory.mts and the three lib functions
+# behind them. The service had carried all four since before this app existed; E06-S07 is the story
+# that gave them a call site.
 #
 # This is the only endpoint that serves domain data to the operator app. Everything the app queries
 # that is not login / refresh / logout goes here.
@@ -105,6 +110,22 @@ type QueriesApi {
 	empty list, which is the ordinary case and not an error.
 	"""
 	reuseEvents(tier: GraphQLTier!, accountId: String!): [GraphQLReuseEvent!]!
+
+	"""
+	The whole live taxonomy, flat, sorted by `position` then `_id`.
+
+	No arguments and no paging: an operator is the only writer, so the list is bounded by hand, and the
+	screen needs every category at once to draw each parent with its own children under it. The `_id`
+	tiebreak is not decoration — `position` is not unique, so without it two categories sharing one swap
+	places between reads and the screen reorders itself for no reason.
+
+	Flat rather than nested because the depth cap is two: the client groups by `idParent` in one pass,
+	and a recursive GraphQL type would outlive the cap it was shaped around.
+
+	⚠️ The same query exists on the ShopOwner tier and answers the same documents. This is the only tier
+	that may write one.
+	"""
+	itemCategories: [GraphQLItemCategory!]!
 }
 
 type MutationsApi {
@@ -236,6 +257,49 @@ type MutationsApi {
 	left out of the total rather than claimed.
 	"""
 	revokeAllSessions(tier: GraphQLTier!, accountId: String!): Int!
+
+	"""
+	Creates one category, at either of the taxonomy's two levels.
+
+	**Admin-only, and that is the design of the taxonomy rather than a permission choice.** Two shops
+	selling the same kind of thing have to land in the same category or the customer-facing filter means
+	nothing, so no other tier has this mutation and the collection carries no `idShopOwner`.
+
+	409 on the slug, which is the collection's only unique index and is unique **across both levels** —
+	`/category/:slug` and `/category/:slug/:subSlug` share one namespace of first segments. 400 naming the
+	offending path for a name, a slug or a position outside its bounds, and two more the operator can
+	reach by hand: an `idParent` that is itself a subcategory (the depth cap), and a position that is
+	not a whole number. 404 when `idParent` names no live category.
+
+	`Boolean!`, not the new `_id`: the screen re-reads `itemCategories` after a save.
+	"""
+	itemCategoryAdd(itemCategory: GraphQLInputItemCategory!): Boolean!
+
+	"""
+	Saves one category, whole.
+
+	⚠️ **A save of the document, not a patch of it.** An omitted `idParent` means "top-level category"
+	rather than "leave the parent alone" — `funItemCategoryUpdate` `$unset`s it — which is what makes
+	promoting a subcategory back to the top level expressible at all. Send every field, not a diff.
+
+	Same 409 and 400 as `itemCategoryAdd`, plus the second half of the depth cap, which only this path
+	can trip: a category that already has subcategories cannot be given a parent, because every one of
+	those children would land three levels deep without a write naming them. 404 when `_id` matches no
+	category. A save that matched and changed nothing is a plain `true` — `matchedCount`, not
+	`modifiedCount`.
+	"""
+	itemCategoryUpdate(_id: ID!, itemCategory: GraphQLInputItemCategory!): Boolean!
+
+	"""
+	Retires one category — a soft delete, like every other delete on this tier.
+
+	⚠️ **Refused, not cascaded, while anything live still points at it**: 400 for a live subcategory, 400
+	for a live item. `item.idCategory` is required, so a cascade would silently withdraw an unbounded
+	number of other shop owners' items, and retiring a stocked category would leave every one of them
+	filed under something no read path returns. Re-filing them first is the operator's call to make
+	explicitly. 404 when `_id` matches no category.
+	"""
+	itemCategoryDel(_id: ID!): Boolean!
 }
 
 type GraphQLAdminInfoAfterLogin {
@@ -602,6 +666,30 @@ type GraphQLCompanyPosition {
 	coordinates: [Float!]!
 }
 
+"""
+One category of the platform-wide taxonomy.
+
+`idParent` is nullable and that nullability *is* the tree: absent means a top-level category, present
+means a subcategory of the one it names. Depth is capped at two by `throwIfParentNotTopLevel` and
+`throwIfHasChildren` on this service and **nowhere else** — a MongoDB validator sees one document at a
+time and the parent's own `idParent` lives in another, so the collection cannot state the rule.
+"""
+type GraphQLItemCategory {
+	_id: ID!
+	idParent: ID
+	name: String!
+	"""
+	URL segment of `/category/:slug` and of `/category/:slug/:subSlug`. Unique across both levels.
+	"""
+	slug: String!
+	"""
+	A sort ordinal the operator reorders the menu with — ⚠️ **not** the GeoJSON `position` of
+	`GraphQLCompanyPosition`. The two share a name and nothing else; this collection stores no
+	coordinates at all.
+	"""
+	position: Int!
+}
+
 input GraphQLInputLogin {
 	email: String!
 	password: String!
@@ -684,4 +772,24 @@ naming a field the operator never saw. The service writes the literal.
 """
 input GraphQLInputCompanyPosition {
 	coordinates: [Float!]!
+}
+
+"""
+Everything an operator types about a category, in one object — one form and one Save, which is also
+what lets `itemCategoryUpdate` `$set` the document in a single atomic write.
+
+`_id` is deliberately absent: it is minted by the service on the add path and is a separate argument on
+the update one.
+
+`idParent` is the only nullable field and is what the two levels are made of — send nothing for a
+top-level category, send the id of a *top-level* category for a subcategory. Sending the id of a
+subcategory is the one thing this input can express and the collection cannot refuse, so the service
+does. ⚠️ On the update path `null` is not "leave it alone": it is how a subcategory is promoted back to
+the top level, and there is no other value that says so.
+"""
+input GraphQLInputItemCategory {
+	name: String!
+	slug: String!
+	idParent: ID
+	position: Int!
 }

@@ -42,8 +42,8 @@ import {
 import { isAdult, maxBirthDate, MIN_AGE } from '@/lib/isAdult'
 import type { FoundAddress } from '@/lib/nominatim'
 
-import type { RegisterSection } from './saving'
-import { saveValidated, useSavableSection } from './saving'
+import type { RegisterSection } from '../saving'
+import { saveValidated, useSavableSection } from '../saving'
 
 /**
  * The account-status colour, as a class name rather than an inline style string.

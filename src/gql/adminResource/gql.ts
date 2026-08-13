@@ -24,6 +24,9 @@ type Documents = {
     "\n\tmutation CompanyAdd($idShopOwner: ID!, $company: GraphQLInputCompany!) {\n\t\tcompanyAdd(idShopOwner: $idShopOwner, company: $company)\n\t}\n": typeof types.CompanyAddDocument,
     "\n\tmutation CompanyUpdate($_id: ID!, $company: GraphQLInputCompany!) {\n\t\tcompanyUpdate(_id: $_id, company: $company)\n\t}\n": typeof types.CompanyUpdateDocument,
     "\n\tmutation CompanyDel($_id: ID!) {\n\t\tcompanyDel(_id: $_id)\n\t}\n": typeof types.CompanyDelDocument,
+    "\n\tmutation ItemCategoryAdd($itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryAdd(itemCategory: $itemCategory)\n\t}\n": typeof types.ItemCategoryAddDocument,
+    "\n\tmutation ItemCategoryUpdate($_id: ID!, $itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryUpdate(_id: $_id, itemCategory: $itemCategory)\n\t}\n": typeof types.ItemCategoryUpdateDocument,
+    "\n\tmutation ItemCategoryDel($_id: ID!) {\n\t\titemCategoryDel(_id: $_id)\n\t}\n": typeof types.ItemCategoryDelDocument,
     "\n\tmutation KeygripRotate {\n\t\tkeygripRotate\n\t}\n": typeof types.KeygripRotateDocument,
     "\n\tmutation KeygripRetire($id: String!) {\n\t\tkeygripRetire(id: $id)\n\t}\n": typeof types.KeygripRetireDocument,
     "\n\tmutation RevokeSession($tier: GraphQLTier!, $accountId: String!, $id: String!) {\n\t\trevokeSession(tier: $tier, accountId: $accountId, id: $id)\n\t}\n": typeof types.RevokeSessionDocument,
@@ -36,6 +39,7 @@ type Documents = {
     "\n\tquery KeygripStatus {\n\t\tkeygripStatus {\n\t\t\tversion\n\t\t\tfingerprint\n\t\t\tkeys {\n\t\t\t\tid\n\t\t\t\tcreatedAt\n\t\t\t\tageDays\n\t\t\t}\n\t\t\tholders {\n\t\t\t\tservice\n\t\t\t\tfingerprint\n\t\t\t\tlastSeen\n\t\t\t\tcurrent\n\t\t\t}\n\t\t}\n\t}\n": typeof types.KeygripStatusDocument,
     "\n\tquery Sessions($tier: GraphQLTier!, $accountId: String!) {\n\t\tsessions(tier: $tier, accountId: $accountId) {\n\t\t\tid\n\t\t\ttier\n\t\t\tmintedAt\n\t\t\tfamilyId\n\t\t}\n\t}\n": typeof types.SessionsDocument,
     "\n\tquery ReuseEvents($tier: GraphQLTier!, $accountId: String!) {\n\t\treuseEvents(tier: $tier, accountId: $accountId) {\n\t\t\tfamilyId\n\t\t\ttier\n\t\t\taccountId\n\t\t\taction\n\t\t\tat\n\t\t}\n\t}\n": typeof types.ReuseEventsDocument,
+    "\n\tquery ItemCategories {\n\t\titemCategories {\n\t\t\t_id\n\t\t\tidParent\n\t\t\tname\n\t\t\tslug\n\t\t\tposition\n\t\t}\n\t}\n": typeof types.ItemCategoriesDocument,
     "\n\tquery ShopOwnerCompanies($idShopOwner: ID!) {\n\t\tshopOwnerCompanies(idShopOwner: $idShopOwner) {\n\t\t\t_id\n\t\t\tlegalName\n\t\t\tvatNumber\n\t\t\ttaxCode\n\t\t\tcontactPerson\n\t\t\tadministrator\n\t\t\tuniqueCode\n\t\t\tcertifiedEmail\n\t\t\tregistryExtract\n\t\t\taddress {\n\t\t\t\tstreet\n\t\t\t\tpostalCode\n\t\t\t\tcity\n\t\t\t\tprovince\n\t\t\t\tposition {\n\t\t\t\t\ttype\n\t\t\t\t\tcoordinates\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n": typeof types.ShopOwnerCompaniesDocument,
 };
 const documents: Documents = {
@@ -49,6 +53,9 @@ const documents: Documents = {
     "\n\tmutation CompanyAdd($idShopOwner: ID!, $company: GraphQLInputCompany!) {\n\t\tcompanyAdd(idShopOwner: $idShopOwner, company: $company)\n\t}\n": types.CompanyAddDocument,
     "\n\tmutation CompanyUpdate($_id: ID!, $company: GraphQLInputCompany!) {\n\t\tcompanyUpdate(_id: $_id, company: $company)\n\t}\n": types.CompanyUpdateDocument,
     "\n\tmutation CompanyDel($_id: ID!) {\n\t\tcompanyDel(_id: $_id)\n\t}\n": types.CompanyDelDocument,
+    "\n\tmutation ItemCategoryAdd($itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryAdd(itemCategory: $itemCategory)\n\t}\n": types.ItemCategoryAddDocument,
+    "\n\tmutation ItemCategoryUpdate($_id: ID!, $itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryUpdate(_id: $_id, itemCategory: $itemCategory)\n\t}\n": types.ItemCategoryUpdateDocument,
+    "\n\tmutation ItemCategoryDel($_id: ID!) {\n\t\titemCategoryDel(_id: $_id)\n\t}\n": types.ItemCategoryDelDocument,
     "\n\tmutation KeygripRotate {\n\t\tkeygripRotate\n\t}\n": types.KeygripRotateDocument,
     "\n\tmutation KeygripRetire($id: String!) {\n\t\tkeygripRetire(id: $id)\n\t}\n": types.KeygripRetireDocument,
     "\n\tmutation RevokeSession($tier: GraphQLTier!, $accountId: String!, $id: String!) {\n\t\trevokeSession(tier: $tier, accountId: $accountId, id: $id)\n\t}\n": types.RevokeSessionDocument,
@@ -61,6 +68,7 @@ const documents: Documents = {
     "\n\tquery KeygripStatus {\n\t\tkeygripStatus {\n\t\t\tversion\n\t\t\tfingerprint\n\t\t\tkeys {\n\t\t\t\tid\n\t\t\t\tcreatedAt\n\t\t\t\tageDays\n\t\t\t}\n\t\t\tholders {\n\t\t\t\tservice\n\t\t\t\tfingerprint\n\t\t\t\tlastSeen\n\t\t\t\tcurrent\n\t\t\t}\n\t\t}\n\t}\n": types.KeygripStatusDocument,
     "\n\tquery Sessions($tier: GraphQLTier!, $accountId: String!) {\n\t\tsessions(tier: $tier, accountId: $accountId) {\n\t\t\tid\n\t\t\ttier\n\t\t\tmintedAt\n\t\t\tfamilyId\n\t\t}\n\t}\n": types.SessionsDocument,
     "\n\tquery ReuseEvents($tier: GraphQLTier!, $accountId: String!) {\n\t\treuseEvents(tier: $tier, accountId: $accountId) {\n\t\t\tfamilyId\n\t\t\ttier\n\t\t\taccountId\n\t\t\taction\n\t\t\tat\n\t\t}\n\t}\n": types.ReuseEventsDocument,
+    "\n\tquery ItemCategories {\n\t\titemCategories {\n\t\t\t_id\n\t\t\tidParent\n\t\t\tname\n\t\t\tslug\n\t\t\tposition\n\t\t}\n\t}\n": types.ItemCategoriesDocument,
     "\n\tquery ShopOwnerCompanies($idShopOwner: ID!) {\n\t\tshopOwnerCompanies(idShopOwner: $idShopOwner) {\n\t\t\t_id\n\t\t\tlegalName\n\t\t\tvatNumber\n\t\t\ttaxCode\n\t\t\tcontactPerson\n\t\t\tadministrator\n\t\t\tuniqueCode\n\t\t\tcertifiedEmail\n\t\t\tregistryExtract\n\t\t\taddress {\n\t\t\t\tstreet\n\t\t\t\tpostalCode\n\t\t\t\tcity\n\t\t\t\tprovince\n\t\t\t\tposition {\n\t\t\t\t\ttype\n\t\t\t\t\tcoordinates\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n": types.ShopOwnerCompaniesDocument,
 };
 
@@ -121,6 +129,18 @@ export function graphql(source: "\n\tmutation CompanyDel($_id: ID!) {\n\t\tcompa
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n\tmutation ItemCategoryAdd($itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryAdd(itemCategory: $itemCategory)\n\t}\n"): (typeof documents)["\n\tmutation ItemCategoryAdd($itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryAdd(itemCategory: $itemCategory)\n\t}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n\tmutation ItemCategoryUpdate($_id: ID!, $itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryUpdate(_id: $_id, itemCategory: $itemCategory)\n\t}\n"): (typeof documents)["\n\tmutation ItemCategoryUpdate($_id: ID!, $itemCategory: GraphQLInputItemCategory!) {\n\t\titemCategoryUpdate(_id: $_id, itemCategory: $itemCategory)\n\t}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n\tmutation ItemCategoryDel($_id: ID!) {\n\t\titemCategoryDel(_id: $_id)\n\t}\n"): (typeof documents)["\n\tmutation ItemCategoryDel($_id: ID!) {\n\t\titemCategoryDel(_id: $_id)\n\t}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n\tmutation KeygripRotate {\n\t\tkeygripRotate\n\t}\n"): (typeof documents)["\n\tmutation KeygripRotate {\n\t\tkeygripRotate\n\t}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -166,6 +186,10 @@ export function graphql(source: "\n\tquery Sessions($tier: GraphQLTier!, $accoun
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n\tquery ReuseEvents($tier: GraphQLTier!, $accountId: String!) {\n\t\treuseEvents(tier: $tier, accountId: $accountId) {\n\t\t\tfamilyId\n\t\t\ttier\n\t\t\taccountId\n\t\t\taction\n\t\t\tat\n\t\t}\n\t}\n"): (typeof documents)["\n\tquery ReuseEvents($tier: GraphQLTier!, $accountId: String!) {\n\t\treuseEvents(tier: $tier, accountId: $accountId) {\n\t\t\tfamilyId\n\t\t\ttier\n\t\t\taccountId\n\t\t\taction\n\t\t\tat\n\t\t}\n\t}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n\tquery ItemCategories {\n\t\titemCategories {\n\t\t\t_id\n\t\t\tidParent\n\t\t\tname\n\t\t\tslug\n\t\t\tposition\n\t\t}\n\t}\n"): (typeof documents)["\n\tquery ItemCategories {\n\t\titemCategories {\n\t\t\t_id\n\t\t\tidParent\n\t\t\tname\n\t\t\tslug\n\t\t\tposition\n\t\t}\n\t}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

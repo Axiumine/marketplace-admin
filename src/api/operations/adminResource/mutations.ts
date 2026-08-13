@@ -115,6 +115,39 @@ export const CompanyDelDocument = graphql(`
 `)
 
 /**
+ * The three writes on the platform-wide taxonomy, which the category screen sends.
+ *
+ * ⚠️ **This tier is the only one that has them**, and the collection carries no owner id: a shop owner
+ * picks from the taxonomy and cannot add to it, because two shops selling the same kind of thing have to
+ * land in the same category or the customer-facing filter means nothing.
+ *
+ * `ItemCategoryUpdate` takes the same input object as `ItemCategoryAdd` and saves the document whole —
+ * an omitted `idParent` is "top-level", not "leave the parent alone", so a card has to send every field
+ * and `null` is how a subcategory is promoted.
+ *
+ * `ItemCategoryDel` is a soft delete and is **refused rather than cascaded** while a live subcategory or
+ * a live item still points at the category. All three answer a bare `Boolean`, so the call site names
+ * `additionalTypenames` itself.
+ */
+export const ItemCategoryAddDocument = graphql(`
+	mutation ItemCategoryAdd($itemCategory: GraphQLInputItemCategory!) {
+		itemCategoryAdd(itemCategory: $itemCategory)
+	}
+`)
+
+export const ItemCategoryUpdateDocument = graphql(`
+	mutation ItemCategoryUpdate($_id: ID!, $itemCategory: GraphQLInputItemCategory!) {
+		itemCategoryUpdate(_id: $_id, itemCategory: $itemCategory)
+	}
+`)
+
+export const ItemCategoryDelDocument = graphql(`
+	mutation ItemCategoryDel($_id: ID!) {
+		itemCategoryDel(_id: $_id)
+	}
+`)
+
+/**
  * Rotates the platform's cookie-signing key.
  *
  * No variables, deliberately: the new key and the version it lands under are decided by the service.
