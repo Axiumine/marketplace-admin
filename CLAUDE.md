@@ -121,7 +121,8 @@ before touching either threshold** — the answer is always a test or a deleted 
 
 ## Gates
 
-commit → secret guard, lint, typecheck, coverage, Qodana. push → same + semgrep (SAST) + mutation. All blocking. Why, and
+commit → secret guard, lint, typecheck, coverage, Qodana. push → same + semgrep (SAST) + trivy
+(dependency advisories) + mutation. All blocking. Why, and
 what to do when one is missing a prerequisite: [`REPO.md`](./REPO.md).
 
 ## Cross-repo
