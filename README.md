@@ -48,7 +48,7 @@ yarn lint           # eslint --fix + prettier --write   (lint:check for CI)
 yarn test           # vitest run          (test:watch)
 yarn test:cov       # coverage, gated at 100 on all four metrics
 yarn test:mutation  # Stryker, gated at 100
-./qodana.sh         # Qodana Ultimate scan: inspections, SAST, SCA, licenses, coverage
+./qodana.sh         # Qodana Ultimate scan: inspections, SAST, licenses, coverage
 ```
 
 `.githooks/pre-push` runs typecheck → coverage → mutation → Qodana, all blocking, and
