@@ -52,6 +52,23 @@ const createAppRouteTree = () => {
 		sortDir: z.enum(['ASC', 'DESC']).catch('ASC')
 	})
 
+	/**
+	 * Which account the session console is looking at, as URL search params.
+	 *
+	 * ⚠️ `accountId` defaults to the **empty string**, and the console reads that as "ask nothing yet". An
+	 * id is a lookup key over a Redis keyspace, so a partial or absent one is a perfectly valid query that
+	 * answers "no sessions" — which reads exactly like a clean account. Opening the page on that answer for
+	 * nobody at all is the one wrong thing this screen could do.
+	 *
+	 * The tier is the backend's own vocabulary, `.catch()`ing to `shopOwner` because that is the tier an
+	 * operator is looking at when they have a ticket. A fifth tier is a fifth collection and a fifth service
+	 * pair (ADR-002); it is added here as well as to `GraphQLTier` on the service.
+	 */
+	const securitySearchSchema = z.object({
+		tier: z.enum(['admin', 'shopOwner', 'user']).catch('shopOwner'),
+		accountId: z.string().catch('')
+	})
+
 	const loadingSearchSchema = z.object({
 		/** Where to go once the session is restored. Validated at use — see `safeRedirect` in LoadingPage. */
 		redirect: z.string().optional().catch(undefined)
@@ -78,6 +95,9 @@ const createAppRouteTree = () => {
 
 	const validateLoadingSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof loadingSearchSchema> =>
 		loadingSearchSchema.parse(search)
+
+	const validateSecuritySearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof securitySearchSchema> =>
+		securitySearchSchema.parse(search)
 
 	// No `component`: a route without one renders an `<Outlet/>`, which is all the root has to do.
 	const rootRoute = createRootRoute()
@@ -120,7 +140,8 @@ const createAppRouteTree = () => {
 	const securityRoute = createRoute({
 		getParentRoute: () => appRoute,
 		path: '/security',
-		component: SecurityPage
+		validateSearch: validateSecuritySearch,
+		component: SecurityRoute
 	})
 
 	const shopOwnersRoute = createRoute({
@@ -149,7 +170,7 @@ const createAppRouteTree = () => {
 	})
 
 	/*
-	 * The three components below are function declarations, not arrow constants, so they can be named in
+	 * The four components below are function declarations, not arrow constants, so they can be named in
 	 * the route definitions above while reading their own route's hooks below. They are the only place
 	 * the URL is turned into props; the pages themselves stay pure and render from props alone.
 	 */
@@ -173,6 +194,25 @@ const createAppRouteTree = () => {
 		}
 
 		return <ManageShopOwnersPage query={query} onQueryChange={onQueryChange} />
+	}
+
+	/*
+	 * A replacement rather than a merge: the console's form submits both fields at once, and carrying an
+	 * old `accountId` forward under a newly chosen tier would look up an id in a keyspace it does not
+	 * belong to — a confident "no sessions" for an account that has several.
+	 */
+	function SecurityRoute() {
+		const query = securityRoute.useSearch()
+		const navigate = securityRoute.useNavigate()
+
+		return (
+			<SecurityPage
+				query={query}
+				onQueryChange={(next) => {
+					void navigate({ search: () => next })
+				}}
+			/>
+		)
 	}
 
 	function ShopOwnerDetailRoute() {

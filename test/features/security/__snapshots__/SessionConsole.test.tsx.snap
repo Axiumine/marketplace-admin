@@ -1,0 +1,221 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the account lookup > renders 1`] = `
+<section
+  aria-labelledby=":id-0:"
+  class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+>
+  <div
+    class="mb-2 flex items-center justify-between gap-2"
+  >
+    <h3
+      class="font-bold"
+      id=":id-0:"
+    >
+      Sessions
+    </h3>
+    <button
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+      type="button"
+    >
+      End every session
+    </button>
+  </div>
+  <div
+    class="overflow-x-auto"
+  >
+    <table
+      class="w-full text-left text-sm"
+    >
+      <thead>
+        <tr>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Session
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Signed in since
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Lineage
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Action
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          class="border-b border-palette-bg3/10"
+        >
+          <td
+            class="p-2 break-all"
+          >
+            <code>
+              a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1a3f1
+            </code>
+          </td>
+          <td
+            class="p-2"
+          >
+            10 August 2026 at 09:00:00
+          </td>
+          <td
+            class="p-2"
+          >
+            <code>
+              2f0b1d3c-8a55-4c1e-9d10-7c2f4a6b8e01
+            </code>
+          </td>
+          <td
+            class="p-2"
+          >
+            <button
+              class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+              type="button"
+            >
+              End
+            </button>
+          </td>
+        </tr>
+        <tr
+          class="border-b border-palette-bg3/10"
+        >
+          <td
+            class="p-2 break-all"
+          >
+            <code>
+              b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2b7c2
+            </code>
+          </td>
+          <td
+            class="p-2"
+          >
+            11 August 2026 at 14:30:00
+          </td>
+          <td
+            class="p-2"
+          >
+            <code>
+              6d4e9a17-2b30-4f8a-8e21-0c5b7d9f3a42
+            </code>
+          </td>
+          <td
+            class="p-2"
+          >
+            <button
+              class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+              type="button"
+            >
+              End
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+`;
+
+exports[`the account lookup > renders 2`] = `
+<section
+  aria-labelledby=":id-0:"
+  class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+>
+  <div
+    class="mb-2 flex items-center justify-between gap-2"
+  >
+    <h3
+      class="font-bold"
+      id=":id-0:"
+    >
+      Revoked lineages
+    </h3>
+  </div>
+  <div
+    class="overflow-x-auto"
+  >
+    <table
+      class="w-full text-left text-sm"
+    >
+      <thead>
+        <tr>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            When
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Lineage
+          </th>
+          <th
+            class="border-b border-palette-bg3/20 p-2"
+            scope="col"
+          >
+            Why
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          class="border-b border-palette-bg3/10"
+        >
+          <td
+            class="p-2"
+          >
+            29 July 2026 at 08:05:00
+          </td>
+          <td
+            class="p-2"
+          >
+            <code>
+              6d4e9a17-2b30-4f8a-8e21-0c5b7d9f3a42
+            </code>
+          </td>
+          <td
+            class="p-2"
+          >
+            A refresh token that had already been used was presented again
+          </td>
+        </tr>
+        <tr
+          class="border-b border-palette-bg3/10"
+        >
+          <td
+            class="p-2"
+          >
+            1 June 2026 at 23:15:00
+          </td>
+          <td
+            class="p-2"
+          >
+            <code>
+              2f0b1d3c-8a55-4c1e-9d10-7c2f4a6b8e01
+            </code>
+          </td>
+          <td
+            class="p-2"
+          >
+            The session reached the maximum age a login is allowed
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+`;

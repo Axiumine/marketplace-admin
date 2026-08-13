@@ -177,6 +177,57 @@ export const KeygripStatusDocument = graphql(`
 `)
 
 /**
+ * The live sessions one account holds (E17-S02).
+ *
+ * ⚠️ The selection set is the whole type, and asking for less would not make it safer: no field on
+ * `GraphQLSession` can hold token or key material, and the service's `schema.test.mts` enumerates the four
+ * against an exact expected set so a fifth fails a test rather than reaching this app. `id` is the session
+ * index field — the SHA-256 of the prefixed refresh token — which is why it can be rendered *and* sent back
+ * to `revokeSession`: every raw-token key on the platform carries an `access:` / `refresh:` prefix that a
+ * bare digest does not, so the digest names no live key and authenticates nothing.
+ *
+ * ⚠️ There is nothing network- or device-derived to ask for, deliberately. An operator cannot answer "where
+ * was this session used from" on this platform; the answer to a compromise report is to end the sessions.
+ *
+ * `mintedAt` is the login the session descends from rather than its last rotation, and `familyId` is the
+ * lineage handle: two rows sharing one are a single login seen either side of a rotation race, which is the
+ * only thing that explains a duplicate an operator would otherwise read as a second device.
+ */
+export const SessionsDocument = graphql(`
+	query Sessions($tier: GraphQLTier!, $accountId: String!) {
+		sessions(tier: $tier, accountId: $accountId) {
+			id
+			tier
+			mintedAt
+			familyId
+		}
+	}
+`)
+
+/**
+ * The lineages of one account that were revoked, and why (E17-S05).
+ *
+ * Newest first, as the service returns them, and capped there. It is the trail that explains a mass logout
+ * an operator would otherwise be handed as a mystery ticket: `familyId` ties a line here to the rows
+ * `sessions` has stopped returning.
+ *
+ * ⚠️ `accountId` comes back on every line even though the query named it. It is what makes a copied row
+ * self-describing in a ticket, and it is already the operator's own input rather than anything the service
+ * derived — no token, no digest of one, nothing about a device.
+ */
+export const ReuseEventsDocument = graphql(`
+	query ReuseEvents($tier: GraphQLTier!, $accountId: String!) {
+		reuseEvents(tier: $tier, accountId: $accountId) {
+			familyId
+			tier
+			accountId
+			action
+			at
+		}
+	}
+`)
+
+/**
  * The companies owned by one shopOwner.
  *
  * The Companies section renders a card per company. Whole documents, not a projection: the section edits the

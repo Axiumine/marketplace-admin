@@ -130,3 +130,64 @@ export const KeygripRotateDocument = graphql(`
 		keygripRotate
 	}
 `)
+
+/**
+ * Drops one cookie-signing key from the whole platform (E16-S04).
+ *
+ * ⚠️ **This is the one operation the app can send that logs customers out on purpose.** Every cookie the
+ * retired key signed stops verifying as each process picks the new record up. That is what an operator
+ * responding to a leaked key is asking for, and it is why this is a separate button from rotation rather
+ * than something rotation does quietly.
+ *
+ * One argument, and it is an *id* — never key material, never a version. The id is public by construction:
+ * `keygripStatus` renders it and the fingerprint is computed over the ids.
+ *
+ * ⚠️ **A 404 here means nothing was retired.** The service refuses an id nothing matches rather than
+ * answering the array unchanged, precisely so a suspected compromise cannot be closed on a success the
+ * operator misread; the panel has to show it as a failure. Retiring the key the platform is signing with is
+ * a 409 the panel never provokes — that row carries no button at all.
+ *
+ * `Boolean!`, so the call site names `additionalTypenames` itself.
+ */
+export const KeygripRetireDocument = graphql(`
+	mutation KeygripRetire($id: String!) {
+		keygripRetire(id: $id)
+	}
+`)
+
+/**
+ * Ends one session of one account (E17-S03).
+ *
+ * `id` is the row's own `id` — the session index field, a SHA-256 digest — handed straight back. See the
+ * note on `SessionsDocument` for why a value safe to render is also safe to accept: a bare digest carries
+ * none of the `access:` / `refresh:` prefixes a raw-token key does, so it names no live key.
+ *
+ * ⚠️ `false` is an *answer*, not a failure: the session was already gone. It must not be reported as an
+ * error, or an operator is trained to retry a call that has already done everything it can.
+ *
+ * ⚠️ The account keeps its access token until it expires — revocation ends the refresh lineage, and there
+ * is no way to recall a bearer token already in a browser. The confirmation text says so.
+ *
+ * `Boolean!`, so the call site names `additionalTypenames` itself.
+ */
+export const RevokeSessionDocument = graphql(`
+	mutation RevokeSession($tier: GraphQLTier!, $accountId: String!, $id: String!) {
+		revokeSession(tier: $tier, accountId: $accountId, id: $id)
+	}
+`)
+
+/**
+ * Ends every session one account holds, and answers how many there were (E17-S04).
+ *
+ * ⚠️ **Per account, and there is deliberately no "every account" form of it anywhere on the platform.** A
+ * button that logged out an entire tier is a platform-wide outage one click away, and no incident this
+ * console is for needs one.
+ *
+ * The count is what the operator reads back as the blast radius that actually landed, so it is worth
+ * announcing rather than collapsing into "done". `Int!`, which names no typename either — same rule.
+ */
+export const RevokeAllSessionsDocument = graphql(`
+	mutation RevokeAllSessions($tier: GraphQLTier!, $accountId: String!) {
+		revokeAllSessions(tier: $tier, accountId: $accountId)
+	}
+`)
