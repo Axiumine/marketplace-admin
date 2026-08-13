@@ -94,8 +94,25 @@ failureConditions:
 # in this repo: the only way to change those lines is to stop vendoring the pack.
 #
 # Scoped to those paths, NOT disabled globally.
+#
+# HardcodedPasswords on test/features/security/noLeak.test.tsx is the same class of finding, one
+# inspection narrower. That file is the E17-S07 leak test: it renders GraphQL replies carrying a
+# real-shaped access token, a real-shaped cookie-signing key and a real-shaped refresh token — none
+# of them selected by any document — and asserts none of it reaches the DOM or goes back on the wire.
+# The fixtures are deliberately worse than anything a service can send, because a fixture that looks
+# like a credential is the only kind that proves the app does not render one. Qodana's "jwt" default
+# rule matches the access token literal and reports it Critical, and the gate blocks at critical: 0.
+# Weakening the fixture to green the scan would weaken the assertion, which is the one thing the
+# gate policy forbids — so the inspection is excluded on that file and nowhere else. The values are
+# invented and match nothing on any host: the signature reads `s3cr3t-s1gnatur3-nobody-may-see`.
+#
+# Rule-scoped AND path-scoped. Adding a second leak test does NOT inherit this — list it here, with
+# its own reason, or keep its fixtures out of the detector's reach.
 exclude:
   - name: All
     paths:
       - src/gql
       - semgrep/vendor
+  - name: HardcodedPasswords
+    paths:
+      - test/features/security/noLeak.test.tsx
