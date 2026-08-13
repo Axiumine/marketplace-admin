@@ -70,15 +70,16 @@ const sessionWord = (count: number) => (count === 1 ? 'session' : 'sessions')
  * ⚠️ It names the blast radius — one session, and whose — because the id beside the button is a 64-character
  * digest that no operator reads across. The account is what they can check against the ticket.
  *
- * ⚠️ It also states the residual, which is the part that surprises people: the refresh lineage ends
- * immediately, but an access token already in a browser keeps working until it expires. A bearer token
- * cannot be recalled, and an operator who believed otherwise would close an incident early.
+ * ⚠️ It states what the click actually reaches, and since R54 that is both halves: the refresh lineage and
+ * the access token the session minted, which the session itself names. The text used to warn that the
+ * device kept working for up to 91 minutes; saying so now would send an operator looking for a window that
+ * has been closed, which is the same mistake in the other direction.
  */
 export const revokeOneWarning = (query: SessionQuery) =>
 	`End 1 session of ${query.tier} ${query.accountId}?\n\n` +
 	'That one session only. The account is not disabled and can sign in again straight away.\n\n' +
-	'Its access token keeps working until it expires — ending a session ends the refresh lineage, and a ' +
-	'token already in a browser cannot be recalled.'
+	'Its access token ends with it, so the device it is on stops working now rather than when the token ' +
+	'would have expired.'
 
 /**
  * The confirmation for ending every session one account holds.
@@ -93,7 +94,7 @@ export const revokeOneWarning = (query: SessionQuery) =>
 export const revokeAllWarning = (query: SessionQuery, count: number) =>
 	`End all ${count} ${sessionWord(count)} of ${query.tier} ${query.accountId}?\n\n` +
 	'Every device and browser this one account is signed in on, and no other account.\n\n' +
-	'Access tokens already issued keep working until they expire, as above.'
+	'Their access tokens end with them, as above.'
 
 /**
  * The session and revocation half of the security page (E17-S06).

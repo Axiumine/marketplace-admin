@@ -198,8 +198,9 @@ export const KeygripRetireDocument = graphql(`
  * ⚠️ `false` is an *answer*, not a failure: the session was already gone. It must not be reported as an
  * error, or an operator is trained to retry a call that has already done everything it can.
  *
- * ⚠️ The account keeps its access token until it expires — revocation ends the refresh lineage, and there
- * is no way to recall a bearer token already in a browser. The confirmation text says so.
+ * ⚠️ The access token that session minted ends with it (R54): the session hash records the key of its own
+ * access half, so the service deletes both and the device stops working on the click rather than up to 91
+ * minutes later. No deny list is involved, and the confirmation text says the same.
  *
  * `Boolean!`, so the call site names `additionalTypenames` itself.
  */
