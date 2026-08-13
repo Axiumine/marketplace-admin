@@ -389,8 +389,8 @@ describe('ending one session', () => {
 	/**
 	 * The confirmation names the blast radius: one session, and whose. The id beside the button is a
 	 * 64-character digest no operator reads across, so the account is the thing they can check against the
-	 * ticket — and the residual is spelled out, because an access token already in a browser cannot be
-	 * recalled and an operator who believed otherwise would close an incident early.
+	 * ticket — and what the click reaches is spelled out, both halves of it since R54: an operator who still
+	 * believed the device kept working for another 91 minutes would chase a window that is closed.
 	 */
 	it('asks first, stating what ends and what does not, and sends nothing when the operator says no', async () => {
 		const confirm = respond(false)
@@ -403,8 +403,8 @@ describe('ending one session', () => {
 		expect(confirm).toHaveBeenCalledWith(
 			`End 1 session of shopOwner ${ACCOUNT}?\n\n` +
 				'That one session only. The account is not disabled and can sign in again straight away.\n\n' +
-				'Its access token keeps working until it expires — ending a session ends the refresh lineage, and a ' +
-				'token already in a browser cannot be recalled.'
+				'Its access token ends with it, so the device it is on stops working now rather than when the token ' +
+				'would have expired.'
 		)
 		expect(callsTo(stub.calls, 'RevokeSession')).toHaveLength(0)
 	})
@@ -550,7 +550,7 @@ describe('ending every session an account holds', () => {
 		expect(confirm).toHaveBeenCalledWith(
 			`End all 2 sessions of shopOwner ${ACCOUNT}?\n\n` +
 				'Every device and browser this one account is signed in on, and no other account.\n\n' +
-				'Access tokens already issued keep working until they expire, as above.'
+				'Their access tokens end with them, as above.'
 		)
 		expect(callsTo(stub.calls, 'RevokeAllSessions')).toHaveLength(0)
 	})
