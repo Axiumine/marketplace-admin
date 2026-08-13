@@ -85,6 +85,26 @@ type QueriesApi {
 	`GraphQLKeygripStatus`.
 	"""
 	keygripStatus: GraphQLKeygripStatus!
+
+	"""
+	The live sessions one account is holding, newest login first (E17-S02).
+
+	Both halves of the account, always: ids come from three separate collections and nothing stops two of
+	them minting the same `ObjectId`, so a query by id alone could list — and then end — a stranger's
+	sessions. The tier is an enum rather than a `String` because it is a *lookup* key: a typo would
+	otherwise be a successful query over an empty keyspace, which reads exactly like a clean account.
+
+	⚠️ Nothing here is a credential and nothing here ever may be — see the note on `GraphQLSession`.
+	"""
+	sessions(tier: GraphQLTier!, accountId: String!): [GraphQLSession!]!
+
+	"""
+	The refresh-token replays recorded against one account, newest first (E17-S05).
+
+	Bounded and expiring at the store: the newest 50 lines, kept 30 days. An account with none answers an
+	empty list, which is the ordinary case and not an error.
+	"""
+	reuseEvents(tier: GraphQLTier!, accountId: String!): [GraphQLReuseEvent!]!
 }
 
 type MutationsApi {
@@ -176,6 +196,46 @@ type MutationsApi {
 	unwrap the record under its own `KEYGRIP_KEK`.
 	"""
 	keygripRotate: Boolean!
+
+	"""
+	Drops one cookie-signing key from the whole platform, logging out everyone whose cookie it signed.
+
+	One argument, and it is an id — never key material, never a version. The id is public by construction:
+	`keygripStatus` renders it and the fingerprint is computed over the ids.
+
+	⚠️ **The service refuses to retire the key that is currently signing**, and the panel does not offer it
+	at all — an operator who could reach that button would be one click from invalidating every cookie on
+	the platform, including their own. 404 when no key in the record has this id, which is a real failure
+	and must be shown as one: a stale screen naming a key a rotation has already replaced would otherwise
+	read as a successful retire that did nothing.
+	"""
+	keygripRetire(id: String!): Boolean!
+
+	"""
+	Ends one session of one account and stops it being listed (E17-S03).
+
+	`id` is the row's own id from `sessions` — the digest of the session key, never a token. Answers
+	whether a *live* session was ended: a row whose session had already expired answers `false` and still
+	prunes the index, and the screen says "already ended" rather than reporting an error, because an
+	operator told "error" retries a call that has already done everything it can.
+
+	⚠️ Ends the refresh lineage. An access token already minted from it keeps working until its own short
+	expiry — the residual is real, is the same one the `disabled` flag carries, and the confirmation text
+	says so.
+	"""
+	revokeSession(tier: GraphQLTier!, accountId: String!, id: String!): Boolean!
+
+	"""
+	Ends every session one account holds and answers how many there were (E17-S03, E17-S04).
+
+	⚠️ **One account, by construction — there is no "every account" form and there will not be one.** It
+	would be a single call that logs out the whole platform, and no incident this console exists for is
+	answered by it.
+
+	The count is what was actually revoked, never more: a login landing mid-revoke keeps its session and is
+	left out of the total rather than claimed.
+	"""
+	revokeAllSessions(tier: GraphQLTier!, accountId: String!): Int!
 }
 
 type GraphQLAdminInfoAfterLogin {
@@ -228,6 +288,86 @@ type GraphQLKeygripHolder {
 	fingerprint: String!
 	lastSeen: String!
 	current: Boolean!
+}
+
+"""
+Which collection an account authenticates against — the platform's whole notion of a role (ADR-002).
+
+Transcribed from `types/GraphQLTier.mts`, which builds its values from `TIER` rather than spelling them.
+A fifth tier appears there the moment it exists and cannot appear before, so the only way this list goes
+stale is a hand-edit here that the service's own schema test would not see. It is a segment of the session
+index key: a value the service did not know would name a key that has never existed, and the console would
+answer "no sessions" for an account holding several.
+"""
+enum GraphQLTier {
+	admin
+	shopOwner
+	user
+}
+
+"""
+Why a lineage was revoked (E17-S05).
+
+⚠️ **The one enum in this slice with a test on the other side proving the two lists are equal** (E17-S01):
+the service builds `GraphQLReuseEventAction` from `REUSE_EVENT_ACTIONS` and asserts the value sets match,
+so a third case added to that constant fails the service's suite until it is transcribed here. Without
+that, drift would surface as an operator reading a blank cell rather than as a failing build.
+
+⚠️ **An operator's own revocation is not a value here.** E17's open question 4 answered "not
+attributable"; a case for it would answer that question by accident and would need its own retention
+decision.
+"""
+enum GraphQLReuseEventAction {
+	"""
+	A consumed refresh token was presented again, past the grace window (E14-S02/S03).
+	"""
+	refreshTokenReplayed
+	"""
+	The session reached its absolute age cap, measured from the login it descends from (E14-S05).
+	"""
+	sessionCapReached
+}
+
+"""
+One live session of one account (E17-S02).
+
+⚠️ **No field here is capable of holding a token, and none ever may be** (BCON-01, E17 §2). `id` is the
+session index field — the SHA-256 of the prefixed refresh token — and it is safe to render *and* to send
+back because every raw-token key on the platform carries an `access:` / `refresh:` prefix that a bare
+digest does not: the digest names no live key and authenticates nothing. The service's schema test
+enumerates these four field names against an exact expected set, so a fifth fails a test rather than
+quietly reaching this screen.
+
+⚠️ **Nothing network- or device-derived either** — no address, not truncated, not hashed, not salted. That
+is the standing decision, and it is why an operator cannot answer "where was this session used from" here.
+The answer to a compromise report is to end the sessions.
+
+`mintedAt` is epoch millis as a string, and it is the *login* this session descends from rather than its
+last rotation — a session refreshing every fifteen minutes must not read as freshly created. Two rows
+sharing a `familyId` are one login seen either side of a rotation race, which is the only thing that
+explains a duplicate an operator would otherwise read as a second device.
+"""
+type GraphQLSession {
+	id: String!
+	tier: GraphQLTier!
+	mintedAt: String!
+	familyId: String!
+}
+
+"""
+One line of an account's reuse trail (E17-S05).
+
+⚠️ **Five fields, and the omissions are the contract** — no token, no digest of one, no prefix of one,
+nothing network-derived. `familyId` is the handle the revocation was issued against, which is what ties a
+line here to the rows `sessions` no longer returns: a mass logout an operator can explain instead of a
+mystery ticket. `at` is epoch millis as a string, as it is stored.
+"""
+type GraphQLReuseEvent {
+	familyId: String!
+	tier: GraphQLTier!
+	accountId: String!
+	action: GraphQLReuseEventAction!
+	at: String!
 }
 
 """

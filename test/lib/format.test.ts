@@ -52,6 +52,42 @@ describe('formatDate', () => {
 	})
 })
 
+describe('formatEpochMillis', () => {
+	/**
+	 * ⚠️ The whole reason this function exists: `new Date('1769933145000')` is `Invalid Date`, because a bare
+	 * digit string is not an ISO-8601 date and `Date` does not fall back to a numeric parse for one. Sent
+	 * through `formatDateTime`, every session row and every line of the reuse trail would render as `---`.
+	 */
+	it('renders a Redis epoch-millis string in the same long form as every other date', () => {
+		expect(format.formatEpochMillis('1769933145000')).toBe('1 February 2026 at 08:05:45')
+		expect(format.formatDateTime('1769933145000')).toBe(format.NO_VALUE)
+	})
+
+	/**
+	 * ⚠️ `Number('')` is `0`, which is 1 January 1970 — a plausible-looking date for a field the service
+	 * failed to write. An operator reading it on a session row would take a write fault for a session minted
+	 * before the platform existed, so the empty string is refused with the rest.
+	 */
+	it('renders NO_VALUE for an empty or blank value rather than 1 January 1970', () => {
+		expect(format.formatEpochMillis('')).toBe(format.NO_VALUE)
+		expect(format.formatEpochMillis('   ')).toBe(format.NO_VALUE)
+	})
+
+	it('renders NO_VALUE for a value that is not a number', () => {
+		expect(format.formatEpochMillis('not a number')).toBe(format.NO_VALUE)
+	})
+
+	// Beyond ±8.64e15 the `Date` is out of range. It formats as nothing rather than throwing, which is what
+	// keeps a corrupt record from taking the screen down with it.
+	it('renders NO_VALUE for a value beyond the range a Date can hold', () => {
+		expect(format.formatEpochMillis('9999999999999999')).toBe(format.NO_VALUE)
+	})
+
+	it('renders the epoch itself when the value really is zero', () => {
+		expect(format.formatEpochMillis('0')).toBe('1 January 1970 at 00:00:00')
+	})
+})
+
 describe('handleNull', () => {
 	it('renders NO_VALUE for null and for undefined', () => {
 		expect(format.handleNull(null)).toBe(format.NO_VALUE)

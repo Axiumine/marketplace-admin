@@ -54,6 +54,24 @@ export const formatDate = (iso: string): string => {
 	return Number.isNaN(date.getTime()) ? NO_VALUE : DATE_FORMAT.format(date)
 }
 
+/**
+ * A Redis timestamp — epoch milliseconds carried as a **string** — in the same shape as every other date
+ * on screen.
+ *
+ * ⚠️ It has to be `Number()`d first. `new Date('1754784000000')` is `Invalid Date`, because a bare digit
+ * string is not an ISO-8601 date and the `Date` constructor does not fall back to a numeric parse for one;
+ * handing these fields to `formatDateTime` renders every session as `---`. The session rows and the reuse
+ * trail are the only values on the platform stored this way — see the note on `GraphQLReuseEvent`, which
+ * keeps them strings so the same field is not a number in one process and a string in the next.
+ *
+ * The empty string is not zero here. `Number('')` is `0`, which would print 1 January 1970 for a field the
+ * service failed to write, so it is refused with the rest.
+ */
+export const formatEpochMillis = (millis: string): string => {
+	const date = new Date(millis.trim() === '' ? Number.NaN : Number(millis))
+	return Number.isNaN(date.getTime()) ? NO_VALUE : DATE_TIME_FORMAT.format(date)
+}
+
 /** A missing value renders as the placeholder, never as an empty cell or the string `null`. */
 export const handleNull = (val: string | number | null | undefined): string => (val == null ? NO_VALUE : String(val))
 

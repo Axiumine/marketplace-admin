@@ -20,7 +20,7 @@ exports[`SecurityPage > renders 1`] = `
   <h2
     class="mb-4 text-lg font-bold"
   >
-    Cookie-signing keys
+    Sessions
   </h2>
   <div
     class="flex flex-col gap-4"
@@ -35,6 +35,128 @@ exports[`SecurityPage > renders 1`] = `
         <h3
           class="font-bold"
           id=":id-0:"
+        >
+          Account
+        </h3>
+      </div>
+      <form
+        class="flex flex-col gap-3 sm:flex-row sm:items-end"
+      >
+        <div
+          class="sm:w-48"
+        >
+          <div
+            class="flex flex-col gap-1"
+          >
+            <label
+              class="text-sm font-semibold"
+              for=":id-1:"
+            >
+              Tier
+            </label>
+            <div
+              class="relative"
+            >
+              <select
+                aria-invalid="false"
+                class="w-full appearance-none rounded-box border-tip py-2 pl-3 pr-9 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white"
+                id=":id-1:"
+              >
+                <option
+                  value="admin"
+                >
+                  admin
+                </option>
+                <option
+                  value="shopOwner"
+                >
+                  shopOwner
+                </option>
+                <option
+                  value="user"
+                >
+                  user
+                </option>
+              </select>
+              <span
+                class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-tip"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="m6 9 6 6 6-6"
+                  />
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          class="grow"
+        >
+          <div
+            class="flex flex-col gap-1"
+          >
+            <label
+              class="text-sm font-semibold"
+              for=":id-2:"
+            >
+              Account id
+            </label>
+            <div
+              class="relative"
+            >
+              <input
+                aria-invalid="false"
+                class="w-full rounded-box border-tip py-2 pl-3 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white pr-3"
+                id=":id-2:"
+                placeholder="The account's _id"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+        <button
+          class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-third text-palette-white hover:bg-tomato px-4"
+          type="submit"
+        >
+          Look up
+        </button>
+      </form>
+    </section>
+    <div
+      class="rounded-box border px-4 py-3 text-sm border-third bg-secondary/40 text-palette-bg"
+      role="status"
+    >
+      Name an account to list the sessions it holds.
+    </div>
+  </div>
+  <h2
+    class="mt-8 mb-4 text-lg font-bold"
+  >
+    Cookie-signing keys
+  </h2>
+  <div
+    class="flex flex-col gap-4"
+  >
+    <section
+      aria-labelledby=":id-3:"
+      class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+    >
+      <div
+        class="mb-2 flex items-center justify-between gap-2"
+      >
+        <h3
+          class="font-bold"
+          id=":id-3:"
         >
           Current key set
         </h3>
@@ -75,9 +197,14 @@ exports[`SecurityPage > renders 1`] = `
           </code>
         </span>
       </div>
+      <p
+        class="pt-2 text-tip"
+      >
+        Neither takes effect everywhere at once. Each service picks the change up on its own — 37 ms measured across the five signing services, and up to 5 minutes if the notification is lost and the fallback poll is what finds it. Watch the Holders table below to see the fleet agree.
+      </p>
     </section>
     <section
-      aria-labelledby=":id-1:"
+      aria-labelledby=":id-4:"
       class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
     >
       <div
@@ -85,7 +212,7 @@ exports[`SecurityPage > renders 1`] = `
       >
         <h3
           class="font-bold"
-          id=":id-1:"
+          id=":id-4:"
         >
           Keys
         </h3>
@@ -116,6 +243,12 @@ exports[`SecurityPage > renders 1`] = `
               >
                 Age in days
               </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                State
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -137,6 +270,15 @@ exports[`SecurityPage > renders 1`] = `
               >
                 0
               </td>
+              <td
+                class="p-2"
+              >
+                <span
+                  class="font-bold"
+                >
+                  Signing
+                </span>
+              </td>
             </tr>
             <tr
               class="border-b border-palette-bg3/10"
@@ -155,6 +297,16 @@ exports[`SecurityPage > renders 1`] = `
                 class="p-2"
               >
                 23
+              </td>
+              <td
+                class="p-2"
+              >
+                <button
+                  class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+                  type="button"
+                >
+                  Retire
+                </button>
               </td>
             </tr>
             <tr
@@ -175,13 +327,23 @@ exports[`SecurityPage > renders 1`] = `
               >
                 63
               </td>
+              <td
+                class="p-2"
+              >
+                <button
+                  class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+                  type="button"
+                >
+                  Retire
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
     <section
-      aria-labelledby=":id-2:"
+      aria-labelledby=":id-5:"
       class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
     >
       <div
@@ -189,7 +351,7 @@ exports[`SecurityPage > renders 1`] = `
       >
         <h3
           class="font-bold"
-          id=":id-2:"
+          id=":id-5:"
         >
           Holders
         </h3>
