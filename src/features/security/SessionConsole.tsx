@@ -1,6 +1,9 @@
 import type { GraphQlReuseEventAction, GraphQlTier } from '@gql/adminResource/graphql'
 import type { OperationContext } from '@urql/core'
-import type { FormEvent } from 'react'
+// `SubmitEvent`, not `FormEvent`: React 19's types deprecate the latter ("FormEvent doesn't actually
+// exist") and type `onSubmit` as `SubmitEventHandler`. The name is also a DOM global — the import is what
+// makes it React's synthetic event here rather than the native one.
+import type { SubmitEvent } from 'react'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'urql'
 
@@ -149,7 +152,7 @@ export const SessionConsole = ({
 	const ended = revocation.error === undefined ? revocation.data?.revokeSession : undefined
 	const endedCount = massRevocation.error === undefined ? massRevocation.data?.revokeAllSessions : undefined
 
-	const submit = (event: FormEvent<HTMLFormElement>) => {
+	const submit = (event: SubmitEvent<HTMLFormElement>) => {
 		event.preventDefault()
 		onQueryChange({ tier, accountId: accountId.trim() })
 	}
