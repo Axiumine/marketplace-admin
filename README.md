@@ -151,6 +151,14 @@ they guard against all render as a working screen.
   nothing else on the platform could stop a category being made its own parent.
 - **The position is capped at 999999999 here and nowhere else.** The resolver checks whole and
   non-negative, and a wider number is refused by the collection's `$jsonSchema` as a 500 naming no field.
+- **The company card saves company data and publishes nothing.** Publishing has been a separate
+  operation on both tiers since 2026-08-14: `published` is not in `GraphQLInputCompany` on either
+  service, `companyAdd` stamps `false`, and `companyUpdatePublished` is the only writer. The operator app
+  calls neither that mutation nor `itemUpdatePublished`, so a company added here stays unpublished and no
+  screen states it. That is a missing screen, not a missing resolver — 4024 has carried both mutations
+  since the split, and the shop's three public fields (`publicName`, `slug`, `description`) have no box
+  on the card either, which the collection's `$expr` makes the first half of the same gap: it refuses
+  `published: true` unless a slug and a public name are stored.
 - **Route paths are singular where the route is singular** (`…/add-shopOwner`). The plural
   reads better next to its section and serves no page; `to` is typed against the router's own union so
   `tsc` catches it, which is why no destination is ever passed as a bare string.
