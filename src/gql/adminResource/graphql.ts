@@ -35,9 +35,18 @@ export type GraphQlInputBirth = {
  * separate argument on `companyAdd` and is nowhere on the update path, so a company cannot be moved to
  * another owner by editing its card.
  *
- * `taxCode` and `uniqueCode` are the two optional ones, mirroring the collection's `required` array. Both are
- * dropped rather than stored empty when blank — sending `null` for them is legal on the wire and the
- * service reads it as "not set".
+ * `taxCode` and `uniqueCode` are the two optional ones of the fields transcribed here, mirroring the
+ * collection's `required` array. Both are dropped rather than stored empty when blank — sending `null` for
+ * them is legal on the wire and the service reads it as "not set".
+ *
+ * ⚠️ **`published` is deliberately absent, on the service and therefore here.** Publishing is its own
+ * operation on both tiers — `companyUpdatePublished` — and not a side effect of saving the card.
+ *
+ * ⚠️ The service's own input carries three more optional fields this slice does not: `publicName`, `slug`
+ * and `description`, the shop's public listing. They are omitted rather than forgotten — the operator's
+ * form has no box for any of them, and the service drops an optional field it was not sent instead of
+ * clearing it, so a save from this app leaves whatever is stored alone. Transcribing them would only put
+ * three fields in a generated type that no form can fill.
  */
 export type GraphQlInputCompany = {
   address: GraphQlInputCompanyAddress;
