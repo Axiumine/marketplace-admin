@@ -2,9 +2,9 @@
 
 Marketplace platform-operator panel (`Admin` tier). Vite + React SPA, TypeScript strict.
 
-**Operator tier only.** It logs in through `loginAdmin` and manages *shopOwners*. The shop-owner
-(`ShopOwner`) and customer (`User`) frontends are separate apps — this is what they were copied
-from, not a shell to add their routes into.
+**Operator tier only.** It logs in through `loginAdmin` and manages *shopOwners* and *customers* — the
+accounts of both, never their own screens. The shop-owner (`ShopOwner`) and customer (`User`) frontends
+are separate apps — this is what they were copied from, not a shell to add their routes into.
 
 ## Stack
 
@@ -105,6 +105,7 @@ schema slices; it describes nothing that exists.
 | `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
 | `/p/shopOwners/add-shopOwner` | create form |
 | `/p/shopOwners/id/$_id` | detail — personalData + companies |
+| `/customers` | paginated customers table (`?page`, `?pageSize`, `?status=active\|suspended`, `?sortDir`) — email, registered date, status, and the enable/disable switch. No `?search`, no `?sortBy`: see below |
 
 Everything except `/` and `/loading` is behind a pathless guarded route. An empty session redirects to
 `/loading`, not to `/`: only a round-trip can tell "never signed in" from "signed in and reloaded".
@@ -138,6 +139,26 @@ they guard against all render as a working screen.
 - **Operator password recovery is a note, not a form.** No service exposes a recovery mutation for the
   `admin` collection at all, so a recovery form here would be a dead end that reads to the operator as
   a problem with their own credentials.
+- **The customers table has no search box, and one sortable column.** Not an omission — `user` is the
+  collection encrypted whole (ADR-029). Names, city and the address block are *randomly* encrypted, so a
+  `/^term/i` prefix match compares against base64 and returns zero rows for every term, on every account,
+  without erroring; a sort on one of them orders ciphertext, which is stable, arbitrary and looks like a
+  working sort. `login.email` is deterministic, so it decrypts on the way out and an equality lookup on it
+  works — it still cannot be ordered or prefix-matched. `registeredAt` and the three status flags were
+  never encrypted, which is why they are the whole of what the screen sorts and filters on. Adding a search
+  input, a name column or a second `UsersTblSortField` member is the change to refuse (E19-S05).
+- **The status filter exists because `usersActiveTbl` has no "either" state.** `disabled` and `deleted` are
+  `Boolean!` with server-side defaults, deliberately: they are the leading keys of
+  `tbl_active_registeredAt`, and a nullable "both" would unbind them and turn the sort into a blocking
+  in-memory one. So the screen names one state per page, and a suspended customer is visible under the
+  Suspended filter the success message points at — never mixed into the active list.
+- **`userUpdateStatus` sends the toggle's state, not a transition.** Re-disabling an already-disabled
+  customer revokes their sessions again, which costs one `hKeys` over an empty index. Reading the previous
+  state first to skip that would add a round trip on every save and open a window between the read and the
+  write for a login to slip through.
+- **The customers query names two `__typename`s in `additionalTypenames`, not one.**
+  `GraphQLUserActiveTbl` *and* `GraphQLUsersActiveTblPage`: a page with no rows carries only the second, so
+  a table listing one row and losing it to a suspension would never re-read itself.
 - **One statistic on the shopOwners page, because one query answers one.** Counters for "email to
   confirm", "confirmed", "disabled" and "deleted" all read naturally and none has a resolver.
   Add the backend query first — a placeholder counter is indistinguishable on screen from a broken one.
