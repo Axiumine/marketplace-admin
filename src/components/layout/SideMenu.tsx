@@ -5,7 +5,7 @@ import { useLogout } from '@/auth/useLogout'
 import { Button } from '@/components/ui/Button'
 
 /**
- * The five sections of the operator app.
+ * The six sections of the operator app.
  *
  * `/shopOwners` uses `activeOptions.exact: false` on purpose: the manage, add and detail
  * pages all live under `/p/shopOwners/…`, a different path prefix entirely, so the highlight is
@@ -16,6 +16,9 @@ import { Button } from '@/components/ui/Button'
 const SECTIONS = [
 	{ to: '/home', label: 'Dashboard', prefixes: ['/home'] },
 	{ to: '/shopOwners', label: 'ShopOwners', prefixes: ['/shopOwners', '/p/shopOwners'] },
+	// Alongside ShopOwners rather than under it: a customer belongs to the platform and orders from many
+	// shops, so there is no shop owner whose section they would sit inside (E19-S04).
+	{ to: '/customers', label: 'Customers', prefixes: ['/customers'] },
 	{ to: '/categories', label: 'Categories', prefixes: ['/categories'] },
 	{ to: '/settings', label: 'Settings', prefixes: ['/settings'] },
 	{ to: '/security', label: 'Security', prefixes: ['/security'] }

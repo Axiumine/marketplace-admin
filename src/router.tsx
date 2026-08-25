@@ -4,9 +4,11 @@ import { z } from 'zod'
 
 import { getSession } from '@/auth/session'
 import { AppShell } from '@/components/layout/AppShell'
+import type { CustomersQuery } from '@/features/customers/TblCustomers'
 import type { ShopOwnersQuery } from '@/features/shopOwners/TblShopOwners'
 import { AddShopOwnerPage } from '@/pages/AddShopOwnerPage'
 import { CategoriesPage } from '@/pages/CategoriesPage'
+import { CustomersPage } from '@/pages/CustomersPage'
 import { HomePage } from '@/pages/HomePage'
 import { LoadingPage } from '@/pages/LoadingPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -54,6 +56,25 @@ const createAppRouteTree = () => {
 	})
 
 	/**
+	 * The customers table state, as URL search params.
+	 *
+	 * ⚠️ **No `search` and no `sortBy`**, and neither is an omission: on `user` every field a search could
+	 * match is encrypted and the sort enum has exactly one member (E19-S05). A URL that carried either
+	 * would be a URL promising an ordering or a filter the service cannot answer.
+	 *
+	 * `status` is the screen's own vocabulary rather than the backend's, because the backend has no
+	 * "either" state — `disabled` and `deleted` are two required booleans there, and this is the one name
+	 * for the pair the operator picks between. `active` is what an arriving operator sees, which is the
+	 * answer `usersActiveTbl`'s own defaults give.
+	 */
+	const customersSearchSchema = z.object({
+		page: z.coerce.number().int().min(1).catch(1),
+		pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
+		status: z.enum(['active', 'suspended']).catch('active'),
+		sortDir: z.enum(['ASC', 'DESC']).catch('DESC')
+	})
+
+	/**
 	 * Which account the session console is looking at, as URL search params.
 	 *
 	 * ⚠️ `accountId` defaults to the **empty string**, and the console reads that as "ask nothing yet". An
@@ -93,6 +114,9 @@ const createAppRouteTree = () => {
 	const validateShopOwnersSearch = (
 		search: Record<string, unknown> & SearchSchemaInput
 	): z.infer<typeof shopOwnersSearchSchema> => shopOwnersSearchSchema.parse(search)
+
+	const validateCustomersSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof customersSearchSchema> =>
+		customersSearchSchema.parse(search)
 
 	const validateLoadingSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof loadingSearchSchema> =>
 		loadingSearchSchema.parse(search)
@@ -151,6 +175,15 @@ const createAppRouteTree = () => {
 		component: ShopOwnersPage
 	})
 
+	// A section of its own at the top level, not a page under `/p/shopOwners/…`: a customer belongs to the
+	// platform rather than to a shop, and there is no shop-owner page they are reached from.
+	const customersRoute = createRoute({
+		getParentRoute: () => appRoute,
+		path: '/customers',
+		validateSearch: validateCustomersSearch,
+		component: CustomersRoute
+	})
+
 	// No search params: the taxonomy is two levels deep and unpaged, so there is no page, no sort and no
 	// filter for a URL to carry — the whole list is what the screen edits.
 	const categoriesRoute = createRoute({
@@ -179,7 +212,7 @@ const createAppRouteTree = () => {
 	})
 
 	/*
-	 * The four components below are function declarations, not arrow constants, so they can be named in
+	 * The five components below are function declarations, not arrow constants, so they can be named in
 	 * the route definitions above while reading their own route's hooks below. They are the only place
 	 * the URL is turned into props; the pages themselves stay pure and render from props alone.
 	 */
@@ -203,6 +236,17 @@ const createAppRouteTree = () => {
 		}
 
 		return <ManageShopOwnersPage query={query} onQueryChange={onQueryChange} />
+	}
+
+	function CustomersRoute() {
+		const query = customersRoute.useSearch()
+		const navigate = customersRoute.useNavigate()
+
+		const onQueryChange = (next: Partial<CustomersQuery>) => {
+			void navigate({ search: (prev) => ({ ...prev, ...next }) })
+		}
+
+		return <CustomersPage query={query} onQueryChange={onQueryChange} />
 	}
 
 	/*
@@ -237,6 +281,7 @@ const createAppRouteTree = () => {
 			settingsRoute,
 			securityRoute,
 			shopOwnersRoute,
+			customersRoute,
 			categoriesRoute,
 			manageShopOwnersRoute,
 			addShopOwnerRoute,

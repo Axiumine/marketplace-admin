@@ -280,3 +280,42 @@ export const ShopOwnerCompaniesDocument = graphql(`
 		}
 	}
 `)
+
+/**
+ * One page of the customers table (E19-S02).
+ *
+ * ⚠️ **Four fields, and there is no fifth to ask for.** `user` carries a name, a city and several
+ * addresses, and every one of them is encrypted — randomly, for all but the login address (ADR-029) — so
+ * they are not merely absent from this selection, they are unreadable to a query and unsortable by one.
+ * Adding a column here is E19-S05's anti-story, and the symptom is not an error: a name column would
+ * render base64 and a name sort would order the customer base by ciphertext.
+ *
+ * `disabled` and `deleted` go in as `Boolean!` because the service has no "either" state to offer — the
+ * pair is what keeps the page on the `tbl_active_registeredAt` index — which is why the screen filters by
+ * status rather than showing every account at once.
+ *
+ * Both flags come back nullable and mean "absent or true": the collection stores `true` or `$unset`s,
+ * never `false`. Read them on truthiness.
+ */
+export const UsersActiveTblDocument = graphql(`
+	query UsersActiveTbl(
+		$offset: Int!
+		$limit: Int!
+		$disabled: Boolean!
+		$deleted: Boolean!
+		$sortBy: GraphQLUsersTblSortField!
+		$sortDir: GraphQLSortDirection!
+	) {
+		usersActiveTbl(offset: $offset, limit: $limit, disabled: $disabled, deleted: $deleted, sortBy: $sortBy, sortDir: $sortDir) {
+			total
+			items {
+				_id
+				registeredAt
+				email
+				disabled
+				deleted
+				emailVerified
+			}
+		}
+	}
+`)
