@@ -9,6 +9,9 @@ import { renderRoute } from './helpers/render'
 const emptyTable = { data: { shopOwnersActiveTbl: { total: 0, items: [] } } }
 
 const MANAGE = '/p/shopOwners/manage-shopOwners'
+const CUSTOMERS = '/customers'
+
+const emptyCustomers = { data: { usersActiveTbl: { __typename: 'GraphQLUsersActiveTblPage', total: 0, items: [] } } }
 
 /** The search state the route hands the table when the URL says nothing. */
 const DEFAULTS = { page: 1, pageSize: DEFAULT_PAGE_SIZE, search: '', sortBy: 'LAST_NAME', sortDir: 'ASC' }
@@ -142,6 +145,76 @@ describe('shopOwners search params', () => {
 	})
 })
 
+describe('customers search params', () => {
+	const searchOf = async (url: string) => {
+		stubGraphQL({ UsersActiveTbl: emptyCustomers })
+		const { router } = await renderRoute(url)
+		return router.state.location.search
+	}
+
+	it('fills in every default when the URL carries none', async () => {
+		expect(await searchOf(CUSTOMERS)).toEqual({ page: 1, pageSize: DEFAULT_PAGE_SIZE, status: 'active', sortDir: 'DESC' })
+	})
+
+	it('reads the whole state out of the URL', async () => {
+		expect(await searchOf(`${CUSTOMERS}?page=2&pageSize=50&status=suspended&sortDir=ASC`)).toEqual({
+			page: 2,
+			pageSize: 50,
+			status: 'suspended',
+			sortDir: 'ASC'
+		})
+	})
+
+	it('falls back on a page that is not a number', async () => {
+		expect((await searchOf(`${CUSTOMERS}?page=abc`)).page).toBe(1)
+	})
+
+	it('falls back on a page size past the maximum', async () => {
+		expect((await searchOf(`${CUSTOMERS}?pageSize=100000`)).pageSize).toBe(DEFAULT_PAGE_SIZE)
+	})
+
+	/*
+	 * `status` is the screen's own vocabulary and not the backend's, so the fallback is what keeps a
+	 * hand-edited URL from asking for a filter the pair of required booleans cannot express.
+	 */
+	it('falls back on a status the screen does not offer', async () => {
+		expect((await searchOf(`${CUSTOMERS}?status=deleted`)).status).toBe('active')
+	})
+
+	it('falls back on an empty status', async () => {
+		expect((await searchOf(`${CUSTOMERS}?status=`)).status).toBe('active')
+	})
+
+	// Named one at a time, as on the shopOwners enums: a value that fell out of the list would come back
+	// as the default and look identical to one that was never asked for.
+	it.each(['active', 'suspended'])('carries %s through to the query', async (status) => {
+		expect((await searchOf(`${CUSTOMERS}?status=${status}`)).status).toBe(status)
+	})
+
+	it('falls back on a sort direction that is not a direction', async () => {
+		expect((await searchOf(`${CUSTOMERS}?sortDir=SIDEWAYS`)).sortDir).toBe('DESC')
+	})
+
+	it('carries an ascending sort through to the query', async () => {
+		expect((await searchOf(`${CUSTOMERS}?sortDir=ASC`)).sortDir).toBe('ASC')
+	})
+
+	/**
+	 * ⚠️ **The schema has no `search` and no `sortBy`** (E19-S05), and a URL carrying them changes nothing
+	 * the screen reads. The router leaves parameters no route claims sitting in the location, so the
+	 * assertion is that the state it hands the table is the default one — the term and the column are
+	 * inert rather than honoured. That they never reach the wire either is asserted on the table itself.
+	 */
+	it('honours neither a search term nor a sort column from the URL', async () => {
+		expect(await searchOf(`${CUSTOMERS}?search=stone&sortBy=EMAIL`)).toMatchObject({
+			page: 1,
+			pageSize: DEFAULT_PAGE_SIZE,
+			status: 'active',
+			sortDir: 'DESC'
+		})
+	})
+})
+
 describe('routes', () => {
 	it('serves the shopOwners stats page', async () => {
 		stubGraphQL({
@@ -160,6 +233,15 @@ describe('routes', () => {
 		await renderRoute('/categories')
 
 		expect(screen.getByRole('heading', { name: 'Categories', level: 1 })).toBeInTheDocument()
+	})
+
+	// A section of its own at the top level, beside ShopOwners rather than under it: a customer belongs
+	// to the platform and orders from many shops, so there is no shop owner whose pages they sit inside.
+	it('serves the customers page', async () => {
+		stubGraphQL({ UsersActiveTbl: emptyCustomers })
+		await renderRoute(CUSTOMERS)
+
+		expect(screen.getByRole('heading', { name: 'Customers', level: 1 })).toBeInTheDocument()
 	})
 
 	it('serves the add page', async () => {

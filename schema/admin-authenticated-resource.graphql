@@ -24,6 +24,10 @@
 # only be drift with a codegen type attached. The operator tier moderates publication on the service and
 # nowhere else for now — see README, "Decisions that look wrong until you know why".
 #
+# The customers half — one query, one mutation and three types — was transcribed on 2026-08-25 against
+# queries/usersActiveTbl.mts, mutations/userUpdateStatus.mts and types/GraphQLUserActiveTbl.mts,
+# GraphQLUsersActiveTblPage.mts, GraphQLUsersTblSort.mts, as they stood after E19-S02 and E19-S03.
+#
 # This is the only endpoint that serves domain data to the operator app. Everything the app queries
 # that is not login / refresh / logout goes here.
 
@@ -138,6 +142,31 @@ type QueriesApi {
 	that may write one.
 	"""
 	itemCategories: [GraphQLItemCategory!]!
+
+	"""
+	One page of the operator's customers table (E19-S02). Every argument has a server-side default, so
+	`usersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
+
+	⚠️ **There is no `search` argument, and adding one is the anti-story E19-S05 refuses.** Every field a
+	search could match on `user` — the two names, the city, a partial email — is encrypted, randomly for
+	all but the login address (ADR-029). A regex over random ciphertext compares against base64 and
+	answers zero rows without erroring, which looks like a customer base with nobody in it.
+
+	⚠️ `disabled` and `deleted` are `Boolean!` with a default rather than nullable filters, so every page
+	names one state of each and the query stays on the `tbl_active_registeredAt` index. There is no
+	"either" state to ask for, which is why the screen carries a status filter rather than a checkbox:
+	suspending a customer moves the row to another page instead of changing it in place. `emailVerified`
+	is nullable because it sits outside that index and only narrows what the index already bounded.
+	"""
+	usersActiveTbl(
+		offset: Int! = 0
+		limit: Int! = 25
+		disabled: Boolean! = false
+		deleted: Boolean! = false
+		emailVerified: Boolean
+		sortBy: GraphQLUsersTblSortField! = REGISTERED_AT
+		sortDir: GraphQLSortDirection! = DESC
+	): GraphQLUsersActiveTblPage!
 }
 
 type MutationsApi {
@@ -319,6 +348,21 @@ type MutationsApi {
 	explicitly. 404 when `_id` matches no category.
 	"""
 	itemCategoryDel(_id: ID!): Boolean!
+
+	"""
+	The customer's disable switch — the only status lever `user` has, and the only one it will get
+	(E19-S03).
+
+	No `waitApprov` counterpart, unlike `shopOwnerUpdateStatus`: a customer registers and confirms their
+	address, and there is no manual gate between the two (E07 §6). `false` REMOVES the field rather than
+	storing it, so an enabled account has no `disabled` key at all.
+
+	⚠️ **Suspending also ends every session the customer holds**, in the same call, and both halves of each
+	one: since R54 the access session is retired alongside the refresh lineage, so the device the customer
+	is on stops working now rather than when its token would have expired. Re-enabling ends nothing — the
+	customer simply logs in again. 404 when `_id` matches no user.
+	"""
+	userUpdateStatus(_id: ID!, disabled: Boolean!): Boolean!
 }
 
 type GraphQLAdminInfoAfterLogin {
@@ -477,6 +521,65 @@ enum GraphQLShopOwnersTblSortField {
 enum GraphQLSortDirection {
 	ASC
 	DESC
+}
+
+"""
+One page of the operator's customers table. `total` is the size of the FILTERED set, not of the
+collection — it moves with the three filter arguments. There is no unfiltered headline count on this
+tier: `usersStats` does not exist (`phase5/epics/E19.md` §6, question 2).
+"""
+type GraphQLUsersActiveTblPage {
+	items: [GraphQLUserActiveTbl!]!
+	total: Int!
+}
+
+"""
+⚠️ **One member, and it stays one member** (E19-S05). `sortBy` becomes a key of the Mongo sort document,
+and on `user` the only clear field worth ordering by is the registration date: the names and the city are
+randomly encrypted (ADR-029), so a `LAST_NAME` here would sort the customer base by ciphertext — an order
+that is stable, arbitrary, and indistinguishable from a working sort until somebody checks.
+
+It is an enum rather than a dropped argument so the client shape matches the shop-owner table, not because
+a second column is planned.
+"""
+enum GraphQLUsersTblSortField {
+	REGISTERED_AT
+}
+
+"""
+One row of the customers table.
+
+⚠️ **No name, no address, no `personalData` of any kind, by design.** The shop-owner row carries all three
+because `shopOwner` leaves them in the clear for exactly that table; `user` was designed not to pay that
+bill (ADR-029). What is here is the identity a support request arrives with and the flags that say what the
+account can do.
+"""
+type GraphQLUserActiveTbl {
+	_id: ID!
+	registeredAt: DateTime!
+	"""
+	The address the account authenticates with, flattened out of `login` by the resolver, and the only
+	thing on this row that identifies a person. Deterministically encrypted, so the driver hands it back
+	as plaintext — which is what makes it renderable at all.
+	"""
+	email: String!
+	"""
+	Nullable, and not merely permissive: the flag is stored `true` or removed outright, so an enabled
+	account has no `disabled` key and reads as absent rather than `false`. Render on truthiness, as with
+	`waitApprov` on the shop-owner table.
+	"""
+	disabled: Boolean
+	"""
+	A timestamp, not a flag (ADR-011) — and today always absent, because nothing anywhere writes it: there
+	is no `userDel` on any tier and a customer cannot close their own account either (E19 §6, question 3).
+	"""
+	deleted: DateTime
+	"""
+	Whether the customer confirmed the address above — the one gate between registering and logging in on
+	this tier, since `user` has no `waitApprov` and never will (E07 §6). Nullable for the reason `disabled`
+	is: an unconfirmed account has no `emailVerify.valid` key rather than a `false` one.
+	"""
+	emailVerified: Boolean
 }
 
 """

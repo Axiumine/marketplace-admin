@@ -225,3 +225,22 @@ export const RevokeAllSessionsDocument = graphql(`
 		revokeAllSessions(tier: $tier, accountId: $accountId)
 	}
 `)
+
+/**
+ * Suspends or re-enables one customer (E19-S03).
+ *
+ * ⚠️ **Suspending ends every session the account holds, in the same call**, so this is `revokeAllSessions`
+ * plus a flag rather than a flag on its own. The residual is one access-token lifetime, the same window
+ * the session console warns about; the screen's confirmation says so. Re-enabling ends nothing.
+ *
+ * `disabled: false` REMOVES the field rather than storing it, which is why there is no partial form of
+ * this mutation: "leave it alone" and "clear it" would be the same wire value.
+ *
+ * `Boolean!`, so the call site names `additionalTypenames` itself — the response mentions no typename and
+ * a table left uninvalidated would go on listing the account that was just suspended.
+ */
+export const UserUpdateStatusDocument = graphql(`
+	mutation UserUpdateStatus($_id: ID!, $disabled: Boolean!) {
+		userUpdateStatus(_id: $_id, disabled: $disabled)
+	}
+`)
