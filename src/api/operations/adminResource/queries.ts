@@ -152,7 +152,9 @@ export const ShopOwnerByIdDocument = graphql(`
  * ⚠️ The selection set is the whole type and stays that way. There is no `material` field to leave out —
  * see the note on `GraphQLKeygripStatus` in the schema slice — so this document cannot be made safer by
  * asking for less, and every field it names is on screen: the version and fingerprint identify the
- * record, `ageDays` is what marks a key as retirable, and `current` is what marks a service as behind.
+ * record, `ageDays` is how old each key itself is, and `current` is what marks a service as behind.
+ * `ageDays` is not what decides a retirement — that runs from the demotion instant, server-side, and the
+ * panel neither recomputes it nor gates a button on it.
  *
  * `keys` comes back newest first, and `holders` sorted by service name; neither is re-sorted here.
  */
