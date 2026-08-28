@@ -390,11 +390,13 @@ type GraphQLKeygripStatus {
 }
 
 """
-One key in the set. `ageDays` is computed by the service rather than left to the browser: the
-retirement rule is "older than the remembered-session cap", and it is the server's clock that decides,
-so a screen doing that arithmetic against the browser's clock could offer a key as retirable while the
-rotation refuses it. `createdAt` is a `String` and not the `DateTime` scalar — that is the service's
-own declaration, and it puts an ISO-8601 stamp on the wire either way.
+One key in the set. `ageDays` is the key's own age, computed by the service rather than left to the
+browser because every keygrip decision is taken against the server's clock, and a browser one rotation
+behind would be measuring against a record that no longer exists. It is **not** the retirement rule:
+a rotation retires the last key once thirty days have passed since it stopped signing, which is a
+different instant under any cadence faster than monthly (ADR-034, amended 2026-08-28). `createdAt` is a
+`String` and not the `DateTime` scalar — that is the service's own declaration, and it puts an ISO-8601
+stamp on the wire either way.
 """
 type GraphQLKeygripKeyInfo {
 	id: String!
