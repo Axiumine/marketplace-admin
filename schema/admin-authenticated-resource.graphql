@@ -192,12 +192,19 @@ type MutationsApi {
 	shopOwnerUpdateEmail(_id: ID!, email: String!): Boolean!
 
 	"""
-	The disable switch and the manual-approval gate. Both arguments are required: a partial update
+	The disable switch and the manual-approval gate. Both flags are required: a partial update
 	cannot express turning a flag *off*, since "leave alone" and "clear it" are the same wire value.
 	`false` REMOVES the field rather than storing false — `waitApprov: { $exists: true }` is how the
 	approval queue is built.
+
+	⚠️ **`disabledReason` is nullable on the wire and mandatory in fact** (ADR-044). It is required
+	whenever `disabled` is `true` and refused when it is `false`, which is a conditional the argument
+	type cannot state — so the service validates it (400, at most 1000 characters) and the collection
+	backs the requirement up with `dependencies: { disabled: ['disabledReason'] }`. Suspending without
+	one does not half-work: the write is refused. Releasing `$unset`s the reason with the flag and the
+	operator who set it.
 	"""
-	shopOwnerUpdateStatus(_id: ID!, disabled: Boolean!, waitApprov: Boolean!): Boolean!
+	shopOwnerUpdateStatus(_id: ID!, disabled: Boolean!, waitApprov: Boolean!, disabledReason: String): Boolean!
 
 	"""
 	The three preference fields under `login`. Opposite rule to `shopOwnerUpdateStatus`: the two
@@ -361,8 +368,13 @@ type MutationsApi {
 	one: since R54 the access session is retired alongside the refresh lineage, so the device the customer
 	is on stops working now rather than when its token would have expired. Re-enabling ends nothing — the
 	customer simply logs in again. 404 when `_id` matches no user.
+
+	⚠️ **`disabledReason` is nullable on the wire and mandatory in fact** (ADR-044): required whenever
+	`disabled` is `true`, refused when it is `false`, at most 1000 characters, and backed by the
+	collection's own `dependencies: { disabled: ['disabledReason'] }`. Suspending without one is refused
+	outright rather than stored half-done.
 	"""
-	userUpdateStatus(_id: ID!, disabled: Boolean!): Boolean!
+	userUpdateStatus(_id: ID!, disabled: Boolean!, disabledReason: String): Boolean!
 }
 
 type GraphQLAdminInfoAfterLogin {
@@ -572,8 +584,18 @@ type GraphQLUserActiveTbl {
 	"""
 	disabled: Boolean
 	"""
-	A timestamp, not a flag (ADR-011) — and today always absent, because nothing anywhere writes it: there
-	is no `userDel` on any tier and a customer cannot close their own account either (E19 §6, question 3).
+	Who suspended this account and why (ADR-044), absent together on an account that is not suspended.
+	This row is the only place the reason is legible: it is randomly encrypted (ADR-029) and there is no
+	customer detail page to read it on instead. `disabledBy` is an attribution, not a foreign key.
+	"""
+	disabledBy: ID
+	disabledReason: String
+	"""
+	A timestamp, not a flag (ADR-011), written by `userDel` on the customer tier — a customer closing
+	their own account — and by nothing else: there is still no Admin counterpart to `shopOwnerDel`
+	(E19 §6, question 3). The stamp is permanent (ADR-041); what ends thirty days later is the personal
+	data, overwritten in place, unless the same address registers again first and takes the account back
+	(ADR-046).
 	"""
 	deleted: DateTime
 	"""
@@ -670,6 +692,17 @@ type GraphQLShopOwnerById {
 	registeredAt: DateTime!
 	deleted: DateTime
 	disabled: Boolean
+	"""
+	Who suspended this account and why (ADR-044), absent together on an account that is not suspended —
+	the resolver `$unset`s the trio as one.
+
+	⚠️ **This is the only surface where the reason is legible.** `disabledReason` is randomly encrypted
+	(ADR-029): a shell reading the collection sees `binData`, and the admin resource service decrypts it
+	because it holds the data key. `disabledBy` is an attribution and not a foreign key — nothing joins
+	on it, and it may name an operator who no longer exists.
+	"""
+	disabledBy: ID
+	disabledReason: String
 	waitApprov: Boolean
 	"""
 	The operator's free-text note about this account, at most 2000 characters. Absent until one is

@@ -87,6 +87,49 @@ const MAX_EMAIL = 250
 const MAX_ONBOARDING_STEP = 4
 const MAX_NOTE = 2000
 
+/**
+ * The suspension reason's cap, the service's own (ADR-044).
+ *
+ * ⚠️ **The collection does not carry this bound and never will.** `disabledReason` is randomly encrypted,
+ * so `$jsonSchema` sees `binData` and cannot measure a string it is not allowed to read — the service's
+ * check is the only one there is, and the count under the box is the only warning before it answers 400.
+ */
+const MAX_DISABLED_REASON = 1000
+
+/**
+ * What the form says when a suspension carries no reason.
+ *
+ * Shared by the two schemas below, which need the same sentence for the same rule: `dependencies:
+ * { disabled: ['disabledReason'] }` on the collection refuses the flag without one, so this is not a
+ * house style but the write the operator is about to attempt.
+ */
+const REASON_REQUIRED = 'Say why this account is suspended — the reason is stored with the suspension'
+
+/**
+ * The reason as a field: free text, capped, and blank on every account nobody suspended.
+ *
+ * Blank is a value here rather than a missing one — it is what an untouched box reads back as, and what
+ * `emptyInNull` turns into the `null` that tells the service there is no reason to store. The rule that
+ * makes it mandatory is not here but on the object, because it can only be read beside `disabled`.
+ */
+const disabledReasonField = () =>
+	z.string().trim().max(MAX_DISABLED_REASON, `The reason cannot exceed ${MAX_DISABLED_REASON} characters`)
+
+/**
+ * The reason is required exactly when the flag is raised, on both schemas.
+ *
+ * ⚠️ **Not a mirror of a server rule, but of a collection rule.** ADR-044 put
+ * `dependencies: { disabled: ['disabledReason'] }` on `shopOwner`, so a suspension without a reason is
+ * not a suspension with a blank note: it is a write MongoDB refuses, surfacing to the operator as an
+ * error about a validator. The service checks the same thing first and answers 400.
+ *
+ * ⚠️ Safe to apply to the whole form even though `handleSubmit` validates every field: the migration
+ * that added the path refuses to run while any suspended document lacks a reason, so a legacy record
+ * that would fail this rule while the operator edits a phone number cannot reach the page.
+ */
+const requireReasonWhenDisabled = <T extends { disabled: boolean; disabledReason: string }>(values: T) =>
+	!values.disabled || values.disabledReason !== ''
+
 const required = (label: string, max: number) =>
 	z.string().trim().min(1, `${label} is required`).max(max, `${label} cannot exceed ${max} characters`)
 
@@ -159,6 +202,7 @@ export const shopOwnerDetailSchema = z
 			.email('Enter a valid contact email address')
 			.max(MAX_EMAIL, `The contact email cannot exceed ${MAX_EMAIL} characters`),
 		disabled: z.boolean(),
+		disabledReason: disabledReasonField(),
 		waitApprov: z.boolean(),
 		rememberMe: z.boolean(),
 		onboardingDone: z.boolean(),
@@ -183,6 +227,7 @@ export const shopOwnerDetailSchema = z
 		message: 'Select the address from the list',
 		path: ['addressComplete']
 	})
+	.refine(requireReasonWhenDisabled, { message: REASON_REQUIRED, path: ['disabledReason'] })
 
 type DetailValues = z.infer<typeof shopOwnerDetailSchema>
 
@@ -209,7 +254,12 @@ const FIELDS_PERSONAL_DATA = [
 	'landline',
 	'contactEmail'
 ] as const
-const FIELDS_STATUS = ['disabled', 'waitApprov'] as const
+/*
+ * ⚠️ `disabledReason` belongs to the status group and not to a group of its own: it is written by
+ * `shopOwnerUpdateStatus` beside the flag, so editing the reason of a standing suspension has to send the
+ * flag with it — the mutation `$set`s the pair or `$unset`s the pair, and there is no third shape.
+ */
+const FIELDS_STATUS = ['disabled', 'disabledReason', 'waitApprov'] as const
 const FIELDS_PREFERENCES = ['rememberMe', 'onboardingDone', 'onboardingStep'] as const
 
 /**
@@ -275,6 +325,7 @@ const valuesInitial = (shopOwner: ShopOwnerOnboarded): DetailValues => ({
 	landline: shopOwner.personalData.contacts.landline ?? '',
 	contactEmail: shopOwner.personalData.contacts.email,
 	disabled: shopOwner.disabled === true,
+	disabledReason: shopOwner.disabledReason ?? '',
 	waitApprov: shopOwner.waitApprov === true,
 	rememberMe: shopOwner.login.rememberMe === true,
 	onboardingDone: shopOwner.login.onboardingDone === true,
@@ -325,6 +376,7 @@ const FormPersonalData = ({
 	// Watched for its length alone: the box is uncontrolled, so the count under it has nowhere else to
 	// come from, and it has to be right from the first render rather than from the first keystroke.
 	const note = useWatch({ control, name: 'notes' })
+	const reason = useWatch({ control, name: 'disabledReason' })
 
 	const dirty = (fields: readonly (keyof DetailValues)[]) => fields.some((field) => dirtyFields[field] === true)
 
@@ -398,7 +450,17 @@ const FormPersonalData = ({
 
 		if (dirty(FIELDS_STATUS)) {
 			const result = await runStatus(
-				{ _id: shopOwner._id, disabled: values.disabled, waitApprov: values.waitApprov },
+				{
+					_id: shopOwner._id,
+					disabled: values.disabled,
+					waitApprov: values.waitApprov,
+					// The reason travels only with a raised flag. Lifting a suspension `$unset`s it at the
+					// service, so what goes with `disabled: false` is `null` and not whatever the box still
+					// holds — and `null` rather than an omitted variable, which would read as "leave it as it
+					// was". The schema guarantees the string is non-empty whenever the flag is true, so there
+					// is nothing here for `emptyInNull` to do.
+					disabledReason: values.disabled ? values.disabledReason : null
+				},
 				CTX_SAVE_SHOP_OWNER
 			)
 
@@ -618,6 +680,27 @@ const FormPersonalData = ({
 						<EditableRow label="Disabled" value={handleNullBoolYN(shopOwner.disabled)}>
 							<CheckboxField label="Disabled" {...register('disabled')} />
 						</EditableRow>
+						{/* ⚠️ **The one screen on the platform where the reason is legible.** `disabledReason` is
+						    randomly encrypted (ADR-044), so the ShopOwner-tier services hold ciphertext they have
+						    no data key for — this tier decrypts it because it is the tier it was written for.
+						    `whitespace-pre-line` for the same reason as the note: an operator's paragraphs would
+						    otherwise run together into one. */}
+						<EditableRow
+							label="Suspension reason"
+							value={<span className="whitespace-pre-line">{handleNull(shopOwner.disabledReason)}</span>}
+						>
+							<TextareaField
+								label="Suspension reason"
+								maxLength={MAX_DISABLED_REASON}
+								remaining={MAX_DISABLED_REASON - reason.length}
+								error={errors.disabledReason?.message}
+								{...register('disabledReason')}
+							/>
+						</EditableRow>
+						{/* Who raised it, and no pen: an attribution the platform writes from the session, never
+						    an operator. It is the admin's `_id` and not a name — nothing joins it to a document,
+						    which is what ADR-002 leaves it as. */}
+						<InfoRow label="Suspended by" value={handleNull(shopOwner.disabledBy)} />
 						{/* The four timestamps below are the account's audit trail — written by the platform,
 						    never by an operator — so they have no pen. */}
 						<InfoRow label="Deleted on" value={handleNullDate(shopOwner.deleted)} />
@@ -664,20 +747,25 @@ const FormPersonalData = ({
  * required rule would refuse the save — and the save an operator presses on this page is the approval.
  * Sharing one schema would make the one action this screen exists for the one action it cannot perform.
  */
-export const shopOwnerPendingSchema = z.object({
-	emailLogin: z
-		.email('Enter a valid login email address')
-		.max(MAX_EMAIL, `The login email cannot exceed ${MAX_EMAIL} characters`),
-	disabled: z.boolean(),
-	waitApprov: z.boolean(),
-	rememberMe: z.boolean(),
-	onboardingDone: z.boolean(),
-	onboardingStep: z
-		.string()
-		.trim()
-		.max(MAX_ONBOARDING_STEP, `The onboarding step cannot exceed ${MAX_ONBOARDING_STEP} characters`),
-	notes: z.string().trim().max(MAX_NOTE, `The notes cannot exceed ${MAX_NOTE} characters`)
-})
+export const shopOwnerPendingSchema = z
+	.object({
+		emailLogin: z
+			.email('Enter a valid login email address')
+			.max(MAX_EMAIL, `The login email cannot exceed ${MAX_EMAIL} characters`),
+		disabled: z.boolean(),
+		disabledReason: disabledReasonField(),
+		waitApprov: z.boolean(),
+		rememberMe: z.boolean(),
+		onboardingDone: z.boolean(),
+		onboardingStep: z
+			.string()
+			.trim()
+			.max(MAX_ONBOARDING_STEP, `The onboarding step cannot exceed ${MAX_ONBOARDING_STEP} characters`),
+		notes: z.string().trim().max(MAX_NOTE, `The notes cannot exceed ${MAX_NOTE} characters`)
+	})
+	// The same rule as on the complete account, because it is the same collection and the same mutation.
+	// A seller who has not onboarded can still be suspended — that is most of what this screen does.
+	.refine(requireReasonWhenDisabled, { message: REASON_REQUIRED, path: ['disabledReason'] })
 
 type PendingValues = z.infer<typeof shopOwnerPendingSchema>
 
@@ -720,6 +808,7 @@ export const FormAccountPending = ({
 		defaultValues: {
 			emailLogin: shopOwner.login.email,
 			disabled: shopOwner.disabled === true,
+			disabledReason: shopOwner.disabledReason ?? '',
 			waitApprov: shopOwner.waitApprov === true,
 			rememberMe: shopOwner.login.rememberMe === true,
 			onboardingDone: shopOwner.login.onboardingDone === true,
@@ -729,6 +818,7 @@ export const FormAccountPending = ({
 	})
 
 	const note = useWatch({ control, name: 'notes' })
+	const reason = useWatch({ control, name: 'disabledReason' })
 
 	const failed = (error: Parameters<typeof messageOf>[0]) => {
 		setError(error === undefined ? 'Save failed.' : messageOf(error))
@@ -742,9 +832,19 @@ export const FormAccountPending = ({
 			if (result.data?.shopOwnerUpdateEmail !== true) return failed(result.error)
 		}
 
-		if (dirtyFields.disabled === true || dirtyFields.waitApprov === true) {
+		if (FIELDS_STATUS.some((field) => dirtyFields[field] === true)) {
 			const result = await runStatus(
-				{ _id: shopOwner._id, disabled: values.disabled, waitApprov: values.waitApprov },
+				{
+					_id: shopOwner._id,
+					disabled: values.disabled,
+					waitApprov: values.waitApprov,
+					// The reason travels only with a raised flag. Lifting a suspension `$unset`s it at the
+					// service, so what goes with `disabled: false` is `null` and not whatever the box still
+					// holds — and `null` rather than an omitted variable, which would read as "leave it as it
+					// was". The schema guarantees the string is non-empty whenever the flag is true, so there
+					// is nothing here for `emptyInNull` to do.
+					disabledReason: values.disabled ? values.disabledReason : null
+				},
 				CTX_SAVE_SHOP_OWNER
 			)
 
@@ -835,6 +935,27 @@ export const FormAccountPending = ({
 						<EditableRow label="Disabled" value={handleNullBoolYN(shopOwner.disabled)}>
 							<CheckboxField label="Disabled" {...register('disabled')} />
 						</EditableRow>
+						{/* ⚠️ **The one screen on the platform where the reason is legible.** `disabledReason` is
+						    randomly encrypted (ADR-044), so the ShopOwner-tier services hold ciphertext they have
+						    no data key for — this tier decrypts it because it is the tier it was written for.
+						    `whitespace-pre-line` for the same reason as the note: an operator's paragraphs would
+						    otherwise run together into one. */}
+						<EditableRow
+							label="Suspension reason"
+							value={<span className="whitespace-pre-line">{handleNull(shopOwner.disabledReason)}</span>}
+						>
+							<TextareaField
+								label="Suspension reason"
+								maxLength={MAX_DISABLED_REASON}
+								remaining={MAX_DISABLED_REASON - reason.length}
+								error={errors.disabledReason?.message}
+								{...register('disabledReason')}
+							/>
+						</EditableRow>
+						{/* Who raised it, and no pen: an attribution the platform writes from the session, never
+						    an operator. It is the admin's `_id` and not a name — nothing joins it to a document,
+						    which is what ADR-002 leaves it as. */}
+						<InfoRow label="Suspended by" value={handleNull(shopOwner.disabledBy)} />
 						<InfoRow label="Deleted on" value={handleNullDate(shopOwner.deleted)} />
 						{/* The approval itself: unticking this box and pressing Save is what lets the account
 						    log in — see `checkShopOwnerApproval` in the public authorization service. */}

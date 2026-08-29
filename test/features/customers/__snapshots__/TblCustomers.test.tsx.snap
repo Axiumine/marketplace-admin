@@ -184,6 +184,11 @@ exports[`TblCustomers > renders 1`] = `
               class="p-2"
             >
               Suspended
+              <span
+                class="block text-xs text-tip"
+              >
+                Chargeback fraud, ticket 4471.
+              </span>
             </td>
             <td
               class="p-2"
@@ -256,4 +261,72 @@ exports[`TblCustomers > renders 1`] = `
     </div>
   </div>
 </main>
+`;
+
+exports[`TblCustomers > renders the suspension form 1`] = `
+<div
+  aria-labelledby="suspend-heading"
+  class="flex flex-col gap-3 rounded-box border border-app-error p-4"
+  role="group"
+>
+  <h2
+    class="font-bold"
+    id="suspend-heading"
+  >
+    Suspend 
+    ada.stone@example.com
+  </h2>
+  <p
+    class="whitespace-pre-line text-sm text-tip"
+  >
+    They are signed out of every device now, and cannot sign in again until the account is re-enabled.
+
+Their access token ends with the sessions, so the device they are on stops working now rather than when the token would have expired.
+  </p>
+  <div
+    class="flex flex-col gap-1"
+  >
+    <label
+      class="text-sm font-semibold"
+      for=":id-0:"
+    >
+      Reason
+    </label>
+    <textarea
+      aria-describedby=":id-0:-remaining"
+      aria-invalid="false"
+      class="w-full resize-y rounded-box border-tip px-3 py-2 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white"
+      id=":id-0:"
+      rows="5"
+    />
+    <div
+      class="flex items-start justify-between gap-2"
+    >
+      <span
+        aria-live="polite"
+        class="ml-auto text-xs text-tip"
+        id=":id-0:-remaining"
+      >
+        1000
+         characters remaining
+      </span>
+    </div>
+  </div>
+  <div
+    class="flex gap-2"
+  >
+    <button
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+      type="button"
+    >
+      Suspend
+    </button>
+    <button
+      class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-secondary text-palette-bg hover:bg-primary px-4"
+      type="button"
+    >
+      Cancel
+    </button>
+  </div>
+</div>
 `;

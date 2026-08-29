@@ -52,6 +52,9 @@ const VALID = {
 	landline: '021234567',
 	contactEmail: 'contact@rivers.test',
 	disabled: false,
+	// Blank on an account nobody suspended, which is what the empty box reads back as — the rule that
+	// makes it mandatory only fires beside `disabled: true`.
+	disabledReason: '',
 	waitApprov: false,
 	rememberMe: false,
 	onboardingDone: false,
@@ -279,5 +282,53 @@ describe('shopOwnerDetailSchema — note', () => {
 	it("caps it at the collection's length", () => {
 		expect(messages({ notes: 'n'.repeat(2000) })).toEqual([])
 		expect(messages({ notes: 'n'.repeat(2001) })).toEqual(['The notes cannot exceed 2000 characters'])
+	})
+})
+
+/**
+ * ⚠️ **The reason is mandatory beside the flag, and this is a collection rule rather than a house style**
+ * (ADR-044). `dependencies: { disabled: ['disabledReason'] }` on `shopOwner` refuses a `disabled: true`
+ * that carries no reason, so a form letting one through would not suspend somebody with a blank note —
+ * it would fail the write and hand the operator an error about a validator.
+ *
+ * The cap is the service's alone: the field is randomly encrypted, so `$jsonSchema` sees `binData` and
+ * cannot measure a string it may not read.
+ */
+describe('shopOwnerDetailSchema — suspension reason', () => {
+	it('demands one when the account is being suspended', () => {
+		expect(messages({ disabled: true, disabledReason: '' })).toEqual([
+			'Say why this account is suspended — the reason is stored with the suspension'
+		])
+	})
+
+	it('accepts a suspension that says why', () => {
+		expect(messages({ disabled: true, disabledReason: 'Chargeback fraud, ticket 4471.' })).toEqual([])
+	})
+
+	// The other half of the rule, and the half a `&&` mutant would break: an enabled account needs no
+	// reason, so the empty box every unsuspended shopOwner carries has to parse.
+	it('asks for nothing when the account is not suspended', () => {
+		expect(messages({ disabled: false, disabledReason: '' })).toEqual([])
+	})
+
+	/*
+	 * Whitespace is not a reason. The trim runs before the emptiness test — the field transform first,
+	 * then the object rule over its output — so a box holding a newline is refused rather than stored.
+	 */
+	it('refuses a reason of nothing but whitespace', () => {
+		expect(messages({ disabled: true, disabledReason: '   \n  ' })).toEqual([
+			'Say why this account is suspended — the reason is stored with the suspension'
+		])
+	})
+
+	it('trims the reason before storing it', () => {
+		expect(value({ disabled: true, disabledReason: '  Chargeback fraud.  ' }).disabledReason).toBe('Chargeback fraud.')
+	})
+
+	// The service's cap, restated. Both sides of the boundary, because a `<=` for a `<` is a mutant a
+	// one-sided test cannot see.
+	it("caps it at the service's length", () => {
+		expect(messages({ disabled: true, disabledReason: 'x'.repeat(1000) })).toEqual([])
+		expect(messages({ disabled: true, disabledReason: 'x'.repeat(1001) })).toEqual(['The reason cannot exceed 1000 characters'])
 	})
 })

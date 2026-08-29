@@ -54,9 +54,18 @@ export const ShopOwnerUpdateEmailDocument = graphql(`
 	}
 `)
 
+/**
+ * The two account flags, and the reason behind one of them.
+ *
+ * ⚠️ **`disabledReason` is optional on the wire and mandatory in fact** (ADR-044). The service refuses a
+ * suspension without one — 400 — and the collection refuses it a second time through
+ * `dependencies: { disabled: ['disabledReason'] }`, so a form that omits it does not suspend somebody
+ * without a note on file: it fails. Send it only with `disabled: true`; releasing clears the reason and
+ * the operator who set it, and a reason sent beside `disabled: false` is refused.
+ */
 export const ShopOwnerUpdateStatusDocument = graphql(`
-	mutation ShopOwnerUpdateStatus($_id: ID!, $disabled: Boolean!, $waitApprov: Boolean!) {
-		shopOwnerUpdateStatus(_id: $_id, disabled: $disabled, waitApprov: $waitApprov)
+	mutation ShopOwnerUpdateStatus($_id: ID!, $disabled: Boolean!, $waitApprov: Boolean!, $disabledReason: String) {
+		shopOwnerUpdateStatus(_id: $_id, disabled: $disabled, waitApprov: $waitApprov, disabledReason: $disabledReason)
 	}
 `)
 
@@ -238,9 +247,14 @@ export const RevokeAllSessionsDocument = graphql(`
  *
  * `Boolean!`, so the call site names `additionalTypenames` itself — the response mentions no typename and
  * a table left uninvalidated would go on listing the account that was just suspended.
+ *
+ * ⚠️ **`disabledReason` is optional on the wire and mandatory in fact** (ADR-044): the service answers 400
+ * to a suspension without one, and `dependencies: { disabled: ['disabledReason'] }` on the collection
+ * refuses the write underneath it. Sent only with `disabled: true` — re-enabling clears the reason along
+ * with the flag.
  */
 export const UserUpdateStatusDocument = graphql(`
-	mutation UserUpdateStatus($_id: ID!, $disabled: Boolean!) {
-		userUpdateStatus(_id: $_id, disabled: $disabled)
+	mutation UserUpdateStatus($_id: ID!, $disabled: Boolean!, $disabledReason: String) {
+		userUpdateStatus(_id: $_id, disabled: $disabled, disabledReason: $disabledReason)
 	}
 `)
