@@ -325,3 +325,38 @@ export const UsersActiveTblDocument = graphql(`
 		}
 	}
 `)
+
+/**
+ * Headline count for the customers section. Unfiltered, so it counts the disabled and the closed too —
+ * NOT the `total` of `UsersActiveTbl`, which is the size of the currently filtered page's set.
+ *
+ * ⚠️ This exists even though the customers table has no search box, and the two are not in tension: a
+ * count touches no field, so ADR-029's random ciphertext has nothing to say about it. What is blocked
+ * on `user` is matching and ordering, not counting.
+ */
+export const UsersStatsDocument = graphql(`
+	query UsersStats {
+		usersStats
+	}
+`)
+
+/**
+ * The series behind the customers chart. Same shape and same rules as `ShopOwnersPerPeriod` — the
+ * server shares one library between them — and a separate document because the two are separate types
+ * in the schema, deliberately: one `PerPeriod` type would let a rename point this chart at shopOwner
+ * data and still compile.
+ *
+ * `granularity` comes back rather than going in, and asking for it is not optional: `date` is
+ * `YYYY-MM-DD` in both widths, so without it the component cannot tell a month bucket from a day one.
+ */
+export const UsersPerPeriodDocument = graphql(`
+	query UsersPerPeriod($period: GraphQLUsersPeriod!) {
+		usersPerPeriod(period: $period) {
+			granularity
+			points {
+				date
+				total
+			}
+		}
+	}
+`)
