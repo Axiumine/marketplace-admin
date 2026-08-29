@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import { clearSession, getSession, setSession, subscribeSession, useSession } from '@/auth/session'
 
-const ADMIN = { _id: '65f0000000000000000000a1', email: 'operator@marketplace.it' }
+const ADMIN = { _id: '65f0000000000000000000a1', email: 'admin@marketplace.it' }
 
 describe('the session store', () => {
 	it('starts empty', () => {
@@ -46,7 +46,7 @@ describe('the session store', () => {
 	})
 
 	// ⚠️ Nothing is persisted, and this asserts it. Backing the session store with `localStorage` is the
-	// obvious way to survive a reload, and it leaves the last operator's `_id` and email readable by
+	// obvious way to survive a reload, and it leaves the last admin's `_id` and email readable by
 	// anything running on the origin long after they signed out. The reload path is served by refreshing
 	// from the httpOnly cookie instead — see `LoadingPage`.
 	it('persists nothing', () => {

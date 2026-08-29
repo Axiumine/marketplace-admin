@@ -17,7 +17,7 @@ import { formatDateTime } from '@/lib/format'
  * See the note on `CTX_SAVE_COMPANY`: `keygripRotate` answers a bare `Boolean`, and the document cache
  * invalidates by the `__typename`s a mutation's *response* mentions — a boolean mentions none. Without
  * this the panel would keep showing the record the rotation replaced, which is the one screen on the
- * platform where a stale read is the whole failure: the operator rotated in order to watch the fleet
+ * platform where a stale read is the whole failure: the admin rotated in order to watch the fleet
  * converge, and would be watching the old fingerprint converge on itself.
  *
  * One typename. `keygripStatus` is the only query on the page, and the three types are nested inside its
@@ -33,7 +33,7 @@ const CTX_ROTATE_KEYGRIP: Partial<OperationContext> = Object.freeze({
  *
  * ⚠️ **These are measured numbers, not a target.** Adoption rides a Redis publish and was clocked at 37 ms
  * to all five signing services; `KEYGRIP_POLL_MS` = 5 minutes is the fallback poll, so it is the ceiling for
- * a *lost* message rather than the normal path. Both belong next to the buttons: an operator who thought a
+ * a *lost* message rather than the normal path. Both belong next to the buttons: an admin who thought a
  * retire took effect the instant the toast appeared would tell an incident channel that a compromised key
  * was out of use while a service that missed the nudge was still verifying with it. The Holders table below
  * is where they can watch it actually happen.
@@ -61,7 +61,7 @@ export const ROTATE_WARNING =
  * Shown before a key is dropped from the set (E16-S04).
  *
  * ⚠️ **This is the one button in the app that logs customers out on purpose.** Every cookie the retired key
- * signed stops verifying as each process picks the new record up, which is exactly what an operator
+ * signed stops verifying as each process picks the new record up, which is exactly what an admin
  * responding to a leaked key is asking for — and why it is a separate button from rotation rather than
  * something rotation does quietly. The warning says whose sessions end, because "the platform's users" is
  * the blast radius and no smaller word is honest about it.
@@ -102,7 +102,7 @@ export const KeygripPanel = () => {
 	/*
 	 * ⚠️ The same check, and here it is the story's own criterion rather than a nicety: E16-S04 refuses an id
 	 * nothing matches with a **404**, precisely so a retire cannot be closed on a success that never happened.
-	 * A confirmation shown under that error would tell an operator a compromised key is gone while every
+	 * A confirmation shown under that error would tell an admin a compromised key is gone while every
 	 * process still verifies with it.
 	 */
 	const retired = retirement.error === undefined && retirement.data?.keygripRetire === true
@@ -163,7 +163,7 @@ export const KeygripPanel = () => {
 								 * ⚠️ The first key is the one `Keygrip` signs with, and it carries **no retire
 								 * button at all** — not a disabled one. `retireKeygripKey` refuses it server-side
 								 * with a 409 because removing it would leave the platform signing with a key an
-								 * operator has just declared untrustworthy; rotation is what moves a suspect key
+								 * admin has just declared untrustworthy; rotation is what moves a suspect key
 								 * down the array, from where it can be taken. Offering the button and explaining
 								 * the refusal afterwards would be teaching that rule through a failed request.
 								 */
@@ -229,7 +229,7 @@ export const KeygripPanel = () => {
 									</td>
 									<td className={CELL}>{formatDateTime(holder.lastSeen)}</td>
 									{/*
-									 * The word, not only a colour: "behind" is the state an operator is on this screen
+									 * The word, not only a colour: "behind" is the state an admin is on this screen
 									 * to find, and a red cell that says the same thing as the green one beside it is
 									 * invisible to a colour-blind reader and to a screenshot in a black-and-white
 									 * ticket.

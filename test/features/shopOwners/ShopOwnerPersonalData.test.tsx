@@ -16,7 +16,7 @@ import { renderRoute } from '../../helpers/render'
 const ID = '65f0000000000000000000f1'
 const DETAIL = `/p/shopOwners/id/${ID}`
 
-/** The operator a standing suspension is stamped with — `disabledBy` holds an `admin` `_id`, not a name. */
+/** The admin a standing suspension is stamped with — `disabledBy` holds an `admin` `_id`, not a name. */
 const ADMIN = '65f00000000000000000000a'
 
 /** The refusal ADR-044's `dependencies: { disabled: ['disabledReason'] }` exists to keep off the wire. */
@@ -60,7 +60,7 @@ const shopOwner = {
 		// required. The fixture with a point is `withPosition` below, and it is the exception here.
 		address: { street: '1 Main Street', postalCode: '02109', city: 'Boston', province: 'MA', position: null }
 	},
-	// The operator's own note about the account. Absent until one is written — `shopOwnerUpdateNote`
+	// The admin's own note about the account. Absent until one is written — `shopOwnerUpdateNote`
 	// `$unset`s the key rather than storing an empty string.
 	notes: null,
 	resetPwd: null
@@ -174,7 +174,7 @@ describe('ShopOwnerPersonalData', () => {
 
 	// A dash says "not given"; an empty cell says "something broke". Every optional field on this page
 	// goes through `handleNull` for that reason — a label with nothing beside it reads as a rendering
-	// fault, and an operator cannot tell it apart from a field that failed to load.
+	// fault, and an admin cannot tell it apart from a field that failed to load.
 	it('renders a missing landline as a dash, not as a gap', async () => {
 		stubGraphQL(detail())
 		await renderRoute(DETAIL)
@@ -239,12 +239,12 @@ describe('ShopOwnerPersonalData', () => {
 	/*
 	 * The two halves of a standing suspension, since ADR-044: what was written and who wrote it.
 	 *
-	 * ⚠️ `disabledBy` is the operator's `_id` rather than a name, and it is shown as one. The Admin tier
-	 * has no query that turns an operator id into an email, and inventing a lookup here would mean a
+	 * ⚠️ `disabledBy` is the admin's `_id` rather than a name, and it is shown as one. The Admin tier
+	 * has no query that turns an admin id into an email, and inventing a lookup here would mean a
 	 * second read on every detail page for a row that is empty on almost all of them — the id is what the
 	 * document holds and what an audit trail is followed by.
 	 */
-	it('shows a standing suspension and the operator who raised it', async () => {
+	it('shows a standing suspension and the admin who raised it', async () => {
 		stubGraphQL(detail({ disabled: true, disabledBy: ADMIN, disabledReason: 'Chargeback fraud, ticket 4471.' }))
 		await renderRoute(DETAIL)
 
@@ -289,7 +289,7 @@ describe('ShopOwnerPersonalData', () => {
 		expect(rowValue('Password', 'Reset request')).toBe('1 May 2026 at 07:00:00')
 	})
 
-	// The note is the operator's own, and every shopOwner starts without one — a dash, so the empty card
+	// The note is the admin's own, and every shopOwner starts without one — a dash, so the empty card
 	// reads as "nothing written here" rather than as a card that failed to render.
 	it('shows the note, and a dash when there is none', async () => {
 		stubGraphQL(detail({ notes: 'Call before 6pm.\nCalled back on 3/4.' }))
@@ -327,7 +327,7 @@ describe('ShopOwnerPersonalData', () => {
 	})
 
 	// `shopOwnerById` is nullable: an `_id` that matches nothing answers `null` without an error, and
-	// a blank page would leave the operator to guess whether it loaded.
+	// a blank page would leave the admin to guess whether it loaded.
 	it('says so when the id matches nothing', async () => {
 		stubGraphQL({
 			ShopOwnerById: { data: { shopOwnerById: null } },
@@ -408,7 +408,7 @@ const writeNames = (stub: GraphQLStub) => writes(stub).map((call) => call.operat
  * Every row on the detail page is editable in place, and nothing is written until the one Save button at
  * the bottom is pressed.
  *
- * ⚠️ The four mutations are fired **only for the groups the operator touched**, and that is a
+ * ⚠️ The four mutations are fired **only for the groups the admin touched**, and that is a
  * correctness requirement rather than an optimisation: `shopOwnerUpdate` answers 500 when its `$set`
  * matched the document and modified nothing. Re-sending an untouched personalData alongside a changed
  * email would fail the save *after* the email had already been written, with nothing to roll it back.
@@ -427,7 +427,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	})
 
 	// `onboardingStep` is the one nullable field of the form. A null has to seed an empty box, not the
-	// word "null" for the operator to delete — and not a dirty box either, or the next save writes it.
+	// word "null" for the admin to delete — and not a dirty box either, or the next save writes it.
 	it('seeds an empty box for an shopOwner with no onboarding step', async () => {
 		stubGraphQL(detail({ login: { ...shopOwner.login, onboardingStep: null } }))
 		await renderRoute(DETAIL)
@@ -569,8 +569,8 @@ describe('ShopOwnerPersonalData — editing', () => {
 	/*
 	 * ADR-044's whole point at this end: the flag alone is not a suspension the collection will take.
 	 * `dependencies: { disabled: ['disabledReason'] }` refuses the pair without a reason, so a form that
-	 * let the tick through on its own would turn an operator's click into a write error rather than into
-	 * a sanction — and the operator would read it as the account being unsuspendable.
+	 * let the tick through on its own would turn an admin's click into a write error rather than into
+	 * a sanction — and the admin would read it as the account being unsuspendable.
 	 */
 	it('refuses to suspend without a reason', async () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } } })
@@ -588,7 +588,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	})
 
 	/*
-	 * The same refusal with the reason row still closed, which is the way an operator actually meets it:
+	 * The same refusal with the reason row still closed, which is the way an admin actually meets it:
 	 * the box is one row below the tick and there is no reason to open it until something says so.
 	 *
 	 * ⚠️ `page()` scopes to `main` and the toast portals to `body`, so this assertion is the toast and
@@ -725,7 +725,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	 * the corner names what is wrong, and both go away as the value is corrected — with no second press.
 	 *
 	 * That last part is what `handleSubmit` buys and `trigger()` did not: `isSubmitted` is what turns on
-	 * react-hook-form's `reValidateMode: 'onChange'`, so until this the operator had to press Save again to
+	 * react-hook-form's `reValidateMode: 'onChange'`, so until this the admin had to press Save again to
 	 * find out whether the correction had worked.
 	 *
 	 * ⚠️ The toast is looked up through `screen` and not `page()`: the same sentence is on screen twice —
@@ -755,7 +755,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	})
 
 	// The backend's own description, not a generic line: 409 on a duplicate email is the one refusal an
-	// operator can act on, and it is carried in `extensions.description` rather than in `message`.
+	// admin can act on, and it is carried in `extensions.description` rather than in `message`.
 	it('shows the backend refusal', async () => {
 		stubGraphQL({
 			...detail(),
@@ -798,7 +798,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	/*
 	 * `=== true` per flag, and each of the four on its own line. All four are nullable booleans, and a box
 	 * seeded from the wrong side of one of them fails silently: it does not come back dirty, so nothing is
-	 * written and nothing is flagged — the operator simply reads the opposite of what the collection holds
+	 * written and nothing is flagged — the admin simply reads the opposite of what the collection holds
 	 * and, worse, ticking it back to the truth is what finally sends a write.
 	 */
 	it('seeds each box from the flag it belongs to', async () => {
@@ -847,7 +847,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	})
 
 	// The name passed to `register` is what ties a box to the form, and getting it wrong is not a type
-	// error — the box simply detaches. What the operator typed then never reaches the payload and the
+	// error — the box simply detaches. What the admin typed then never reaches the payload and the
 	// stored value is re-sent in its place, which reads as a save that silently undid the edit.
 	it('sends what was typed into each of the remaining boxes', async () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdate: { data: { shopOwnerUpdate: true } } })
@@ -866,7 +866,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 		})
 	})
 
-	it('sends the onboarding flag the operator unticked', async () => {
+	it('sends the onboarding flag the admin unticked', async () => {
 		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } } })
 		await renderRoute(DETAIL)
 
@@ -890,7 +890,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	 *
 	 * ⚠️ An error reply carries **no `data` at all**, which is why each check reaches through it with `?.`.
 	 * Written as `result.data.shopOwnerUpdate` it is not a wrong message but a TypeError thrown mid
-	 * save: the promise rejects, nothing catches it, and the operator is left on a page that reports
+	 * save: the promise rejects, nothing catches it, and the admin is left on a page that reports
 	 * neither success nor failure. One test per mutation, because they are four separate checks.
 	 */
 	it('reports the backend refusal of the personalData write', async () => {
@@ -940,7 +940,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 	/*
 	 * All four writes answer a bare `Boolean`, which names no type for the document cache to invalidate —
 	 * so the query behind this page would go on serving what it fetched on mount, and every row the
-	 * operator did not have open would still show the old value after a successful save.
+	 * admin did not have open would still show the old value after a successful save.
 	 * `additionalTypenames` on the mutation context is what re-reads it.
 	 */
 	it('re-reads the shopOwner after a write that went through', async () => {
@@ -987,7 +987,7 @@ const mapEditor = () => screen.queryByTitle('Address map')
  * Every refusal the address box can be showing, and the reason they are asserted as a set.
  *
  * The box has one message for seven fields and shows the first of them that is in error, so a stale
- * refusal on any one field is indistinguishable from a stale refusal on any other — the operator sees
+ * refusal on any one field is indistinguishable from a stale refusal on any other — the admin sees
  * whichever comes first in that order and nothing about the rest. Checking that all seven are gone is
  * the only assertion that says the pick cleared the field it was really about.
  */
@@ -1065,7 +1065,7 @@ describe('ShopOwnerPersonalData — address', () => {
 	})
 
 	/*
-	 * The whole point of the card, and on this collection the only way a point arrives at all: the operator
+	 * The whole point of the card, and on this collection the only way a point arrives at all: the admin
 	 * types, OSM answers, and one click fills an address, a postal code, a city, a province **and** a position
 	 * where the record had none.
 	 */
@@ -1121,7 +1121,7 @@ describe('ShopOwnerPersonalData — address', () => {
 
 	// And takes the refusal back the moment one is picked. The composite rule is checked on
 	// `addressComplete`, the one field of the seven that has a box, so its name has to be in the list the
-	// pick re-validates as much as the five that do not — left out, the operator picks the address they
+	// pick re-validates as much as the five that do not — left out, the admin picks the address they
 	// were told to pick and is told again to pick it.
 	it('clears the refusal once an address is picked from the list', async () => {
 		stubNetwork(detail(), { results: [resultOsm()] })
@@ -1148,7 +1148,7 @@ describe('ShopOwnerPersonalData — address', () => {
 	 * A pick writes all six fields behind the box, so all six have to be asked again — and a record stored
 	 * before the address rules existed is refused on every one of them at once, which is what makes the
 	 * whole set observable in a single save. Any name missing from the list leaves its own refusal
-	 * standing, and the box goes on showing an error about a field the operator has just replaced.
+	 * standing, and the box goes on showing an error about a field the admin has just replaced.
 	 */
 	it('clears every field that was refused before the address was picked', async () => {
 		stubNetwork(detail(corrupted), { results: [resultOsm()] })
@@ -1173,7 +1173,7 @@ describe('ShopOwnerPersonalData — address', () => {
 	 * OSM answers for places that are not postal addresses — a bridge, a square, a hamlet — and those come
 	 * back without a `postcode`. The four fields it fills have no box of their own, so their errors have
 	 * nowhere to render unless the card gathers them: without that the save would refuse in silence and the
-	 * operator would press Save again. The field's own message comes first, because "select the address"
+	 * admin would press Save again. The field's own message comes first, because "select the address"
 	 * under an address that *was* selected sends them back to the list for nothing.
 	 */
 	it('reports a geocoder answer that carries no postal code', async () => {
@@ -1245,7 +1245,7 @@ describe('ShopOwnerPersonalData — address', () => {
 })
 
 /**
- * The operator's note, which is a mutation of its own for the same reason the login email is: it is the
+ * The admin's note, which is a mutation of its own for the same reason the login email is: it is the
  * one field on this page that is not part of the personalData, the flags or the preferences, and
  * `shopOwnerUpdate` answers **500** for a `$set` that changed nothing.
  */
@@ -1266,7 +1266,7 @@ describe('ShopOwnerPersonalData — note', () => {
 		expect(save()).toBeDisabled()
 	})
 
-	// An shopOwner with no note seeds an empty box, not the word "null" for the operator to delete —
+	// An shopOwner with no note seeds an empty box, not the word "null" for the admin to delete —
 	// and not a dirty box either, or the next save would write it.
 	it('seeds an empty box for an shopOwner with no note', async () => {
 		stubGraphQL(detail())
@@ -1456,7 +1456,7 @@ const detailPending = (override: Record<string, unknown> = {}) => ({
  *
  * ⚠️ It is a **separate panel with a schema of its own**, and the reason is the one action the screen
  * exists for. `handleSubmit` validates the whole schema before `write` runs, so reusing
- * `shopOwnerDetailSchema` here would put "First name is required" between an operator and the approval
+ * `shopOwnerDetailSchema` here would put "First name is required" between an admin and the approval
  * of an account that has no first name by design — the save would be refused on thirteen boxes that are
  * not on screen and cannot be filled in. The tests below are what pin that the approval goes through.
  */
@@ -1473,7 +1473,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 	 * The rows are absent, not empty, and that is the difference between the two readings of this page:
 	 * "First name: ---" says the query failed to bring it back, while no row at all says the field is not
 	 * on the document. The address card goes with them — it is the geocoder, the map and a pen for a
-	 * street the operator would be typing on a stranger's behalf.
+	 * street the admin would be typing on a stranger's behalf.
 	 */
 	it('draws no identity rows at all', async () => {
 		stubGraphQL(detailPending())
@@ -1497,7 +1497,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 
 	/*
 	 * The approved seller who has still not onboarded — the state this panel spends most of its life in,
-	 * since clearing the flag is what the operator comes here to do and onboarding happens afterwards, in
+	 * since clearing the flag is what the admin comes here to do and onboarding happens afterwards, in
 	 * the shop-owner app.
 	 *
 	 * Every box is seeded from the document rather than from a constant, and all four flags are `=== true`
@@ -1566,7 +1566,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 	/*
 	 * The two flags share one mutation but not one condition, and this is the case that tells them apart.
 	 *
-	 * Blocking an account is not deciding on it: an operator who ticks "Disabled" on a registration they
+	 * Blocking an account is not deciding on it: an admin who ticks "Disabled" on a registration they
 	 * are still investigating must not have the approval sent along with it. Both values travel — the
 	 * mutation takes both — but the one that was not touched travels as it was found.
 	 */
@@ -1612,7 +1612,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 
 	// `emptyInNull` again: the box seeds empty from a null and a typed step has to arrive as a string,
 	// while the two flags travel as the booleans the null was read into.
-	it('sends the preferences the operator touched', async () => {
+	it('sends the preferences the admin touched', async () => {
 		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } } })
 		await renderRoute(DETAIL)
 
@@ -1632,7 +1632,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 		])
 	})
 
-	// An operator's note about an account they are deciding on is the one piece of writing this screen
+	// An admin's note about an account they are deciding on is the one piece of writing this screen
 	// invites, so the card is here in full — counter included.
 	it('sends the note, and counts what is left of it', async () => {
 		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } } })
@@ -1658,11 +1658,11 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 	/*
 	 * ⚠️ Padding is stripped before anything is sent, and both free-text boxes on this panel strip it.
 	 *
-	 * The step is the case that matters: a spacebar is how an operator clears a box, and `emptyInNull` maps
+	 * The step is the case that matters: a spacebar is how an admin clears a box, and `emptyInNull` maps
 	 * `''` to `null` — so a trimmed blank *removes* the field from the document while an untrimmed one
 	 * stores `'  '`, a step that is not a step, that no `??` fallback treats as absent and that every
 	 * `onboardingStep === '3'` comparison in the shop-owner app fails against. The note is the same rule
-	 * with lower stakes: leading spaces on an operator's note are noise the next reader has to see past.
+	 * with lower stakes: leading spaces on an admin's note are noise the next reader has to see past.
 	 */
 	it('stores neither a padded step nor a padded note', async () => {
 		const stub = stubGraphQL({
@@ -1745,7 +1745,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 	 *
 	 * ⚠️ The login email cap is **250, while the platform accepts 255** (`EMAIL_MAX_LEN` in
 	 * `@axiumine/koa-utils`, which every registration goes through). The five characters between them are
-	 * why this rule is reachable on a stored document at all rather than only on what an operator types.
+	 * why this rule is reachable on a stored document at all rather than only on what an admin types.
 	 */
 	const CAPS_PENDING: readonly (readonly [string, string, string])[] = [
 		['Login email', `${'a'.repeat(239)}@example.com`, 'The login email cannot exceed 250 characters'],
@@ -1801,7 +1801,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 	 *
 	 * ⚠️ A refused write carries **no data at all** — the 500 below has `errors` and nothing else — so
 	 * every one of these checks has to reach into the answer through an optional chain. One that did not
-	 * would throw on the way to the toast, and the operator would be looking at a blank card instead of
+	 * would throw on the way to the toast, and the admin would be looking at a blank card instead of
 	 * the reason their save did not land.
 	 */
 	const BACKEND_PENDING: readonly (readonly [string, string, string, string])[] = [
@@ -1884,7 +1884,7 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
 	})
 
-	// The written values become the new baseline: the box the operator changed is no longer dirty, so the
+	// The written values become the new baseline: the box the admin changed is no longer dirty, so the
 	// page's one Save button goes back to disabled rather than offering to send the same write again.
 	it('leaves nothing to save once the write went through', async () => {
 		stubGraphQL({ ...detailPending(), ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } } })

@@ -1,6 +1,6 @@
 # marketplace-admin
 
-Platform-operator SPA, `Admin` tier. Vite + React + TypeScript.
+Platform-admin SPA, `Admin` tier. Vite + React + TypeScript.
 
 **Read parent first** — [`../CLAUDE.md`](https://github.com/Axiumine/fullstack-marketplace-blueprint/blob/main/CLAUDE.md)
 One of fifteen sub-repos; almost nothing here is changeable on its own.
@@ -89,7 +89,7 @@ what lets a page be rendered in a test without a router assertion in the way.
   drifted one is a failing test rather than a silent rewrite. Regenerate with `yarn test -u` only after
   an intended markup change, and read the diff — `-u` accepts a regression just as readily as a fix.
 - **Never send an id to `adminUpdatePwd`.** It takes none. The account is the one the Redis session names;
-  the platform has no role field, so a client-supplied id would be a way to set another operator's password.
+  the platform has no role field, so a client-supplied id would be a way to set another admin's password.
 - **Adding an operation on a new endpoint** = a new `schema/` slice + a new `codegen.ts` project + a new
   `CTX_*` + a proxy entry in `vite.config.ts`. Not just a file in `src/api/operations/`.
 - **Every block in `eslint.config.js` carries a `files` glob.** A flat-config entry without one applies to
@@ -131,7 +131,7 @@ before touching either threshold** — the answer is always a test or a deleted 
 - **`renderRoute(path)`** (`test/helpers/render.tsx`) mounts the real router at a real URL.
 - **jsdom enforces interactive form validation.** A value that fails an `<input type="email">`'s own check
   never fires submit, so a zod email rule is only reachable with something the HTML validator accepts —
-  `operator@marketplace` (no TLD), not `operator`.
+  `admin@marketplace` (no TLD), not `admin`.
 - **`fireEvent.change`, not `userEvent.type`,** for any field with a `maxLength` or a date input.
 - `Alert` is `role="alert"` only for the error tone; success and info are `role="status"`.
 - Snapshots normalise React's `useId` values (see `vitest.setup.ts`) — do not "fix" a snapshot by writing

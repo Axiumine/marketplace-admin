@@ -84,7 +84,7 @@ const withCompanies = {
 
 /**
  * jsdom has no `window.confirm` worth calling — the real one is `Not implemented` — so every test that
- * reaches the guard has to say what the operator answered. The spy is also what proves the question was
+ * reaches the guard has to say what the admin answered. The spy is also what proves the question was
  * asked at all, which is the half a `location.pathname` assertion cannot tell apart from a broken route.
  */
 const respond = (response: boolean) => vi.spyOn(window, 'confirm').mockReturnValue(response)
@@ -132,7 +132,7 @@ describe('ShopOwnerDetailPage — unsaved changes', () => {
 		void router.navigate({ to: '/settings' })
 
 		// Spelled out rather than compared against the exported constant: asserting the constant against
-		// itself passes whatever it holds, and this string is the whole of what the operator is told before
+		// itself passes whatever it holds, and this string is the whole of what the admin is told before
 		// an edit is thrown away.
 		await waitFor(() => {
 			expect(confirm).toHaveBeenCalledWith('There are unsaved changes. Do you really want to leave the page?')
@@ -158,7 +158,7 @@ describe('ShopOwnerDetailPage — unsaved changes', () => {
 		expect(router.state.location.pathname).toBe('/settings')
 	})
 
-	// The question is the cost of the guard, and a page nobody touched must not pay it: an operator who
+	// The question is the cost of the guard, and a page nobody touched must not pay it: an admin who
 	// only came to read has done nothing that leaving would lose.
 	it('says nothing when the page is untouched', async () => {
 		stubGraphQL(detail)
@@ -175,7 +175,7 @@ describe('ShopOwnerDetailPage — unsaved changes', () => {
 })
 
 /*
- * A save leaves the page looking the way it loaded: every row the operator opened is a value and a pen
+ * A save leaves the page looking the way it loaded: every row the admin opened is a value and a pen
  * again. Done by remounting both halves on a counter the successful save bumps, because `EditableRow`
  * has no close of its own — a row that closed while react-hook-form still held its edited value would
  * show the server's value and save a different one.
@@ -236,14 +236,14 @@ describe('ShopOwnerDetailPage — after saving', () => {
 	 * These forms are seeded from whatever the collection already holds, and the rules they enforce are
 	 * younger than some of the documents: this `personalData` carries a three-letter province and no street,
 	 * which the address card refuses outright. Validating it anyway would fail the page's save while the
-	 * operator was editing a company, on a card they never opened and cannot see the error on — and the
+	 * admin was editing a company, on a card they never opened and cannot see the error on — and the
 	 * companies come after the personalData in the save loop, so the write they *did* ask for is the one
 	 * that never leaves.
 	 *
 	 * The clean section short-circuits to `true` before `handleSubmit` is reached, which is the whole of
 	 * why the assertions below are about the company's write and not the shopOwner's.
 	 */
-	it('saves a company without validating a personalData the operator never opened', async () => {
+	it('saves a company without validating a personalData the admin never opened', async () => {
 		const stub = stubGraphQL({
 			...withCompanies,
 			ShopOwnerById: {
@@ -279,11 +279,11 @@ describe('ShopOwnerDetailPage — after saving', () => {
 	 * Its schema is narrower, but it still has a rule the untouched form must not be measured against, and
 	 * the login email below is past it: the panel caps the address at 250 characters while the platform
 	 * accepts 255 (`EMAIL_MAX_LEN` in `@axiumine/koa-utils`, which every registration goes through), so a
-	 * stored address can be longer than the form would let an operator type. Reaching `handleSubmit` here
+	 * stored address can be longer than the form would let an admin type. Reaching `handleSubmit` here
 	 * would refuse the save on a card nobody opened, and the company write — which comes after it in the
 	 * save loop — is the one that would never leave.
 	 */
-	it('saves a company without validating the pending panel the operator never opened', async () => {
+	it('saves a company without validating the pending panel the admin never opened', async () => {
 		const shopOwner = withCompanies.ShopOwnerById.data.shopOwnerById
 		const stub = stubGraphQL({
 			...withCompanies,
@@ -314,7 +314,7 @@ describe('ShopOwnerDetailPage — after saving', () => {
 	})
 
 	// Only a save that went all the way through. A page left half-written still holds edits, and closing
-	// those rows would hide values the operator would have to type again.
+	// those rows would hide values the admin would have to type again.
 	it('leaves the open rows alone when the save was refused', async () => {
 		stubGraphQL({ ...detail, ShopOwnerUpdate: { data: { shopOwnerUpdate: false } } })
 		await renderRoute(DETAIL)

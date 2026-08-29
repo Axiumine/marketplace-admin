@@ -40,7 +40,7 @@ const customer = (over: Record<string, unknown> = {}) => ({
 	disabled: null,
 	deleted: null,
 	// Absent on an account nobody suspended, and a pair rather than a flag since ADR-044: the reason is
-	// what the operator screen reads back, and `disabledBy` is who wrote it.
+	// what the admin screen reads back, and `disabledBy` is who wrote it.
 	disabledBy: null,
 	disabledReason: null,
 	emailVerified: true,
@@ -93,7 +93,7 @@ describe('statusOf', () => {
 		expect(statusOf({ disabled: null, deleted: null, emailVerified: null })).toBe('Awaiting confirmation')
 	})
 
-	// Precedence, not preference: an operator told "Awaiting confirmation" about a suspended account would
+	// Precedence, not preference: an admin told "Awaiting confirmation" about a suspended account would
 	// go and resend a link that changes nothing.
 	it('reports a suspended account as suspended even when the address was never confirmed', () => {
 		expect(statusOf({ disabled: true, deleted: null, emailVerified: null })).toBe('Suspended')
@@ -117,7 +117,7 @@ describe('nextDir', () => {
 describe('the form texts', () => {
 	/*
 	 * ⚠️ Both halves of every session go since R54, so the device stops working now. A warning about a
-	 * window in which it kept working would send an operator looking for a gap that has been closed.
+	 * window in which it kept working would send an admin looking for a gap that has been closed.
 	 */
 	it('says the device stops working now rather than when the token expires', () => {
 		expect(SUSPEND_WARNING).toContain('stops working now')
@@ -146,7 +146,7 @@ describe('the form texts', () => {
 /**
  * ⚠️ **The reason is mandatory at the collection, which is why it is checked here at all.** ADR-044 put
  * `dependencies: { disabled: ['disabledReason'] }` on `user`, so a suspension without one is not a
- * suspension with a blank note — it is a write the server refuses, reported to the operator as an error
+ * suspension with a blank note — it is a write the server refuses, reported to the admin as an error
  * about a validator. The cap is the service's, not the collection's: the field is randomly encrypted, so
  * `$jsonSchema` sees `binData` and cannot measure a string it may not read.
  */
@@ -156,7 +156,7 @@ describe('reasonProblem', () => {
 	})
 
 	// Whitespace is not a reason. A box holding a newline would otherwise satisfy a required field while
-	// telling the next operator to read it precisely nothing.
+	// telling the next admin to read it precisely nothing.
 	it('refuses a box holding nothing but whitespace', () => {
 		expect(reasonProblem('  \n\t ')).toContain('why this account is being suspended')
 	})
@@ -174,7 +174,7 @@ describe('reasonProblem', () => {
 	})
 
 	// Measured after the trim, because the trimmed string is what the submit sends — a reason refused for
-	// the trailing newline the operator never typed on purpose would be refused for nothing.
+	// the trailing newline the admin never typed on purpose would be refused for nothing.
 	it('measures the trimmed length, not the typed one', () => {
 		expect(reasonProblem(`  ${'x'.repeat(MAX_DISABLED_REASON)}  `)).toBeUndefined()
 	})
@@ -288,7 +288,7 @@ describe('TblCustomers', () => {
 		expect(screen.getByLabelText('Status')).toHaveValue('suspended')
 	})
 
-	// Back to the first page: the two sets are different sizes, and page 7 of the one the operator was
+	// Back to the first page: the two sets are different sizes, and page 7 of the one the admin was
 	// standing on is very often past the end of the one they asked for.
 	it('pushes a chosen filter into the URL and returns to the first page', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()], 100) })
@@ -391,7 +391,7 @@ describe('TblCustomers', () => {
 	 * reason is mandatory at the collection, so the click can only open the form that collects it — a
 	 * mutation fired here would be one the server refuses.
 	 *
-	 * The heading is what names the address, which is why it is the form's accessible name: an operator
+	 * The heading is what names the address, which is why it is the form's accessible name: an admin
 	 * who opened the form from the wrong row has one thing to read to find out.
 	 */
 	it('opens a reason form instead of writing, and names the account in it', async () => {
@@ -412,7 +412,7 @@ describe('TblCustomers', () => {
 
 	/*
 	 * ⚠️ Refused in the browser rather than at the server, because the server's refusal is a validator
-	 * error about a `dependencies` clause — true, and no use to the operator reading it.
+	 * error about a `dependencies` clause — true, and no use to the admin reading it.
 	 */
 	it('refuses a suspension with no reason, and sends nothing', async () => {
 		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
@@ -427,7 +427,7 @@ describe('TblCustomers', () => {
 	})
 
 	// A reason past the cap is refused here too: the service answers 400 to it, and the count under the box
-	// is the only warning an operator gets on the way there.
+	// is the only warning an admin gets on the way there.
 	it('refuses a reason past the cap', async () => {
 		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
@@ -444,10 +444,10 @@ describe('TblCustomers', () => {
 	})
 
 	/*
-	 * The error goes as the operator types rather than on the next submit. Left standing it reads as a
+	 * The error goes as the admin types rather than on the next submit. Left standing it reads as a
 	 * verdict on what is in the box now, which by then it is not.
 	 */
-	it('clears the error as the operator types', async () => {
+	it('clears the error as the admin types', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
@@ -471,7 +471,7 @@ describe('TblCustomers', () => {
 	})
 
 	/**
-	 * ⚠️ The trimmed reason, because the value is stored and read back by the next operator — and, being
+	 * ⚠️ The trimmed reason, because the value is stored and read back by the next admin — and, being
 	 * randomly encrypted, is never normalised by anything downstream that could tidy it later.
 	 */
 	it('sends the trimmed reason with the flag, and closes the form', async () => {
@@ -510,7 +510,7 @@ describe('TblCustomers', () => {
 	})
 
 	// A cancelled reason must not turn up in the next one. The state is per-form and cleared on both ways
-	// out, so the box an operator opens is always empty.
+	// out, so the box an admin opens is always empty.
 	it('opens the next form with an empty box', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer(), OTHER]) })
 		await renderRoute(CUSTOMERS)
@@ -549,8 +549,8 @@ describe('TblCustomers', () => {
 
 	/**
 	 * ⚠️ **Asymmetric on purpose: suspending asks for a reason, enabling asks for nothing.** Lifting a
-	 * suspension ends no session and needs no note — and the platform owner's ruling is that an operator is
-	 * the only one who can lift one at all, so the operator's click is the whole gesture. A second form
+	 * suspension ends no session and needs no note — and the platform owner's ruling is that an admin is
+	 * the only one who can lift one at all, so the admin's click is the whole gesture. A second form
 	 * here would train them to click through the one that matters.
 	 *
 	 * ⚠️ **`disabledReason: null` travels with it, and an omitted variable would not do.** The service
@@ -615,7 +615,7 @@ describe('TblCustomers', () => {
 
 	/**
 	 * A refused write says so and claims nothing. The success message is asserted absent in the same test
-	 * because the failure that matters is not "no toast" but "the wrong toast": an operator told the
+	 * because the failure that matters is not "no toast" but "the wrong toast": an admin told the
 	 * account is suspended stops watching it.
 	 */
 	it('reports a refused write and claims nothing', async () => {
@@ -637,7 +637,7 @@ describe('TblCustomers', () => {
 	/**
 	 * ⚠️ **No longer a hypothetical fixture.** `userDel` ships on the customer tier since 2026-08-26, so a
 	 * closed account is a document this service really can send. The screen still has no filter that asks
-	 * for one — that is E19 §6 question 3, an operator has no lever over a closed account — but the column
+	 * for one — that is E19 §6 question 3, an admin has no lever over a closed account — but the column
 	 * reads the flag rather than inferring the state from the filter, so one arriving on a cached page
 	 * reads as erased instead of as active.
 	 */

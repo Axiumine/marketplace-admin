@@ -13,7 +13,7 @@ export const DEFAULT_REDIRECT = '/home'
 /**
  * Where `/loading` is allowed to send the browser next.
  *
- * The target arrives in a query string, so it is attacker-controlled: anyone can hand an operator a
+ * The target arrives in a query string, so it is attacker-controlled: anyone can hand an admin a
  * link to `/loading?redirect=https://evil.example`, and following it after a successful login turns
  * this app into an open redirect wearing a trusted domain. Only same-site absolute paths pass. `//host`
  * is rejected explicitly — it is a protocol-relative URL, not a path, and it starts with a slash.

@@ -1,5 +1,5 @@
 /**
- * The three utilities the operator tables are built from, in one place rather than one copy per panel.
+ * The three utilities the admin tables are built from, in one place rather than one copy per panel.
  *
  * They are shared because the security section stacks four tables on a single screen — keys, holders,
  * sessions, revocations — and a table that disagreed by a border colour would read as a different kind of

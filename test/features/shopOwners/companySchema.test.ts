@@ -29,7 +29,7 @@ const VALID = {
 	uniqueCode: 'ABC1234',
 	certifiedEmail: 'certifiedEmail@rivers.test',
 	registryExtract: 'registryExtract.pdf',
-	// The one line the operator sees, spelling out the four fields under it. The rule at the bottom of the
+	// The one line the admin sees, spelling out the four fields under it. The rule at the bottom of the
 	// schema is the only thing that holds them together, so a fixture where they disagreed would fail
 	// every test in this file for a reason none of them are about.
 	addressComplete: '1 Main Street, 02109 Boston (MA)',
@@ -60,7 +60,7 @@ describe('companySchema — required fields', () => {
 	})
 
 	// One message per field, each naming the box it is about: a shared "field required" would leave the
-	// operator hunting for which of the four is empty.
+	// admin hunting for which of the four is empty.
 	it('names the field it is refusing', () => {
 		expect(messages({ legalName: '  ' })).toEqual(['Legal name is required'])
 		expect(messages({ registryExtract: '' })).toEqual(['Registry extract is required'])
@@ -204,7 +204,7 @@ describe('companySchema — composed address', () => {
 		expect(messages({ province: 'NY' })).toEqual(['Select the address from the list'])
 	})
 
-	// It is reported on the box, because the box is where the operator can do something about it: the
+	// It is reported on the box, because the box is where the admin can do something about it: the
 	// four fields it is really about have no input on the page at all.
 	it('reports it on the box and not on a field with no input', () => {
 		const result = outcome({ addressComplete: '2 Main Street, 02109 Boston (MA)' })

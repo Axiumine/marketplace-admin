@@ -7,7 +7,7 @@ export const MIN_AGE = 18
  * Two things make this less trivial than a subtraction.
  *
  * The calendar parts are read **local** (`getFullYear`, not `getUTCFullYear`) because "today" is the
- * operator's day, not UTC's — east of Greenwich they disagree for the first hours of every date. They
+ * admin's day, not UTC's — east of Greenwich they disagree for the first hours of every date. They
  * are then packed into a `Date.UTC` instant used purely as a calendar container: `toISOString` on a
  * locally-constructed date would convert back to UTC and hand back the previous day.
  *

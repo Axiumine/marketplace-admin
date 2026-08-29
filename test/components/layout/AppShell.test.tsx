@@ -11,11 +11,11 @@ describe('AppShell', () => {
 
 		expect(screen.getByRole('navigation', { name: 'Main menu' })).toBeInTheDocument()
 		expect(screen.getByRole('main')).toContainElement(screen.getByRole('heading', { name: 'Dashboard' }))
-		expect(screen.getByText('Marketplace — platform operator panel')).toBeInTheDocument()
+		expect(screen.getByText('Marketplace — platform admin panel')).toBeInTheDocument()
 	})
 
 	// The frame belongs to the pathless `app` route, so the two pages outside it — login and loading —
-	// get no sidebar. An operator who is not signed in should not be shown the sections they cannot open.
+	// get no sidebar. An admin who is not signed in should not be shown the sections they cannot open.
 	it('does not frame the login page', async () => {
 		stubGraphQL({})
 		await renderRoute('/', { token: null, session: null })

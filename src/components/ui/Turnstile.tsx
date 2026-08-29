@@ -13,7 +13,7 @@ import { env } from '@/env'
  * can only fail to help.
  *
  * The script is loaded on demand rather than in `<head>`: this app has exactly one page that needs it,
- * and an operator who is already signed in never sees that page at all.
+ * and an admin who is already signed in never sees that page at all.
  *
  * ⚠️ The script URL must be in the CSP `script-src` and `frame-src` — the widget renders in an iframe.
  * See `marketplace-nginx/snippets/security-headers-private.conf` in the parent workspace; a strict CSP without those

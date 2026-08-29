@@ -10,7 +10,7 @@ export const VALIDATION_HEADER = 'Fix these fields before saving:'
  * The toast a refused save puts up: what is wrong, spelled out.
  *
  * The red border and the red background on the boxes say *where* the problem is; this says *what* it is,
- * from the corner of the screen the operator is already looking at after pressing Save. The two are not
+ * from the corner of the screen the admin is already looking at after pressing Save. The two are not
  * redundant — the button is at the bottom of a page of three cards, and the box that refused may well be
  * scrolled off the top of it.
  *
@@ -18,7 +18,7 @@ export const VALIDATION_HEADER = 'Fix these fields before saving:'
  * self-clearing: a form with nothing left to correct renders nothing at all, so the toast goes away as
  * the last field is fixed rather than waiting for another press.
  *
- * ⚠️ Inherits the caveat written on `Toast`: a message the operator dismissed stays dismissed while it
+ * ⚠️ Inherits the caveat written on `Toast`: a message the admin dismissed stays dismissed while it
  * is mounted. An identical second refusal therefore shows nothing new — the red boxes are what carry it
  * that time.
  *

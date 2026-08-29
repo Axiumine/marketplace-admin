@@ -13,10 +13,10 @@ import { IconPen, IconTrash } from './icons'
  *
  * `onDelete` adds a bin next to the pen, for rows that are part of a list rather than fixed fields of
  * a document. It stays reachable once the row is open, which is the whole point: a row is usually
- * opened *before* the operator decides it should not exist.
+ * opened *before* the admin decides it should not exist.
  *
  * ⚠️ **The row never closes again, and that is deliberate.** A toggle would unmount the input the
- * moment the operator pressed the pen a second time, and react-hook-form keeps the value of an
+ * moment the admin pressed the pen a second time, and react-hook-form keeps the value of an
  * unmounted field — so the row would go back to showing the *server's* value while the form still held
  * the edited one, and the save would write a value the page had stopped displaying. One-way is the
  * shape with no way to disagree with itself. To abandon an edit, leave the page.
@@ -43,7 +43,7 @@ export const EditableRow = ({
 	actionDelete?: string
 	/**
 	 * Starts the row open. For a row that was just added: it has no stored value to display, so a closed
-	 * one would read as an empty label beside an empty value and the operator would have to find the pen
+	 * one would read as an empty label beside an empty value and the admin would have to find the pen
 	 * of a row that looks like a rendering bug.
 	 */
 	openInitial?: boolean

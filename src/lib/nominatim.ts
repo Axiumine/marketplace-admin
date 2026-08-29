@@ -110,7 +110,7 @@ const map = (result: z.infer<typeof resultSchema>): FoundAddress => {
  * Geocodes free text through Nominatim.
  *
  * Restricted to one country: every field around it — a five-digit postal code, a two-letter province — is a domestic
- * address, so a same-named street abroad is noise the operator has to read past. `signal` is required
+ * address, so a same-named street abroad is noise the admin has to read past. `signal` is required
  * rather than optional because the caller types faster than the network answers, and an unaborted
  * earlier request can land after a later one and overwrite the newer suggestions with older ones.
  *

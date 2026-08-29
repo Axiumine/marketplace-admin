@@ -1,7 +1,7 @@
 import { graphql } from '@gql/adminResource'
 
 /**
- * Proves the session is live and names the operator. Read straight out of the Redis session on the
+ * Proves the session is live and names the admin. Read straight out of the Redis session on the
  * backend — no database round-trip — which is why the app can call it on every boot without cost.
  */
 export const InfoAdminAfterLoginDocument = graphql(`
@@ -15,7 +15,7 @@ export const InfoAdminAfterLoginDocument = graphql(`
 
 /**
  * Headline count for the shopOwners section. Unfiltered: this is NOT the `total` of a table page,
- * which is the size of the searched set and moves as the operator types.
+ * which is the size of the searched set and moves as the admin types.
  */
 export const ShopOwnersStatsDocument = graphql(`
 	query ShopOwnersStats {
@@ -47,7 +47,7 @@ export const ShopOwnersPerPeriodDocument = graphql(`
  * One page of the shopOwners table.
  *
  * Paging, search and sort are all server-side. Asking for a flat list and narrowing it in the browser
- * would mean every operator downloading the entire collection to look at twenty rows, and the
+ * would mean every admin downloading the entire collection to look at twenty rows, and the
  * collection grows without bound.
  *
  * The four sortable columns each have a matching index in marketplace-db-setup, and a column outside the
@@ -190,12 +190,12 @@ export const KeygripStatusDocument = graphql(`
  * to `revokeSession`: every raw-token key on the platform carries an `access:` / `refresh:` prefix that a
  * bare digest does not, so the digest names no live key and authenticates nothing.
  *
- * ⚠️ There is nothing network- or device-derived to ask for, deliberately. An operator cannot answer "where
+ * ⚠️ There is nothing network- or device-derived to ask for, deliberately. An admin cannot answer "where
  * was this session used from" on this platform; the answer to a compromise report is to end the sessions.
  *
  * `mintedAt` is the login the session descends from rather than its last rotation, and `familyId` is the
  * lineage handle: two rows sharing one are a single login seen either side of a rotation race, which is the
- * only thing that explains a duplicate an operator would otherwise read as a second device.
+ * only thing that explains a duplicate an admin would otherwise read as a second device.
  */
 export const SessionsDocument = graphql(`
 	query Sessions($tier: GraphQLTier!, $accountId: String!) {
@@ -212,11 +212,11 @@ export const SessionsDocument = graphql(`
  * The lineages of one account that were revoked, and why (E17-S05).
  *
  * Newest first, as the service returns them, and capped there. It is the trail that explains a mass logout
- * an operator would otherwise be handed as a mystery ticket: `familyId` ties a line here to the rows
+ * an admin would otherwise be handed as a mystery ticket: `familyId` ties a line here to the rows
  * `sessions` has stopped returning.
  *
  * ⚠️ `accountId` comes back on every line even though the query named it. It is what makes a copied row
- * self-describing in a ticket, and it is already the operator's own input rather than anything the service
+ * self-describing in a ticket, and it is already the admin's own input rather than anything the service
  * derived — no token, no digest of one, nothing about a device.
  */
 export const ReuseEventsDocument = graphql(`

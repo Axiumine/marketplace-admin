@@ -48,7 +48,7 @@ describe('SideMenu', () => {
 		expect(screen.getByRole('link', { name: 'Security' })).toHaveAttribute('href', '/security')
 	})
 
-	it('highlights the section the operator is standing in', async () => {
+	it('highlights the section the admin is standing in', async () => {
 		stubGraphQL({})
 		await renderRoute('/home')
 
@@ -58,7 +58,7 @@ describe('SideMenu', () => {
 
 	// The reason `isSectionActive` exists at all: the manage page lives under `/p/shopOwners/…`, a
 	// different prefix from the section's own `/shopOwners`, so exact matching would unlight the
-	// sidebar the moment an operator opened the table.
+	// sidebar the moment an admin opened the table.
 	it('keeps ShopOwners highlighted on a page under the other prefix', async () => {
 		stubGraphQL({ ShopOwnersActiveTbl: emptyTable })
 		await renderRoute('/p/shopOwners/manage-shopOwners')
@@ -78,7 +78,7 @@ describe('SideMenu', () => {
 	})
 
 	// The window `useLogout` opens: it clears the session and only then navigates, so the menu renders
-	// once with no operator. The address has to go with it — a stale email under a "Sign out" button that
+	// once with no admin. The address has to go with it — a stale email under a "Sign out" button that
 	// has already fired is worse than none.
 	//
 	// The two positive assertions are what make this a test of the empty state rather than a test that

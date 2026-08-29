@@ -29,7 +29,7 @@ export const mapPoint = (coordinates: number[] | undefined): { lat: number; lon:
  * The same pair, as the two forms that edit an address seed their boxes with.
  *
  * `?? ''` and not a cast: a pair of the wrong length is the one broken shape `[Float!]!` can carry, and
- * `String(undefined)` would seed the box with the word "undefined" for the operator to delete. Shared
+ * `String(undefined)` would seed the box with the word "undefined" for the admin to delete. Shared
  * rather than written twice because the fallback is unobservable through the form — a coordinate has no
  * input of its own, and both an empty box and a nonsense one are refused with the same message, so the
  * only place the empty string can be pinned down is a test that calls this directly.
@@ -81,7 +81,7 @@ export type ErrorsAddress = {
  * **The composite rule comes last**, even though the box is its own field. A wrong field makes the
  * composed line stop matching too, so the two fire together and only one of them says what is actually
  * broken: "select the address from the list" under an address that *was* selected, and whose postal code is
- * the problem, sends the operator back to the list to pick it again for nothing.
+ * the problem, sends the admin back to the list to pick it again for nothing.
  *
  * Shared by all three cards that edit an address — personalData, company, shop. It was written
  * out three times, which meant an eighth field could be added to the schemas and left out of one of the

@@ -74,7 +74,7 @@ exports[`AppShell > renders 1`] = `
         <p
           class="text-xs break-all text-tip"
         >
-          operator@marketplace.it
+          admin@marketplace.it
         </p>
         <button
           class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-secondary text-palette-bg hover:bg-primary px-4"
@@ -126,7 +126,7 @@ exports[`AppShell > renders 1`] = `
       <footer
         class="border-t border-tip px-6 py-3 text-xs text-tip"
       >
-        Marketplace — platform operator panel
+        Marketplace — platform admin panel
       </footer>
     </div>
   </div>

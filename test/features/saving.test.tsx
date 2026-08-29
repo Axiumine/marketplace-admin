@@ -160,7 +160,7 @@ describe('useSaving', () => {
 	})
 
 	// Stopping at the first refusal is the whole reason `save` answers a boolean: carrying on would
-	// leave the operator with several half-applied blocks and one error message.
+	// leave the admin with several half-applied blocks and one error message.
 	it('stops at the first section that refuses', async () => {
 		const order: string[] = []
 		render(<Page ids={['a', 'b', 'c']} outcomes={{ b: false }} order={order} />)
@@ -235,7 +235,7 @@ describe('useSaving', () => {
 	/*
 	 * The counter the page remounts its sections on, which is what puts every opened row back to a value
 	 * and a pen after Save. It moves only for a save that went all the way through: a page left
-	 * half-written still holds edits, and remounting would throw away the values the operator would then
+	 * half-written still holds edits, and remounting would throw away the values the admin would then
 	 * have to type again.
 	 */
 	it('counts a save that went through, and ignores one that did not', async () => {

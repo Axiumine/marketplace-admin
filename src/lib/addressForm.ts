@@ -4,7 +4,7 @@ import { composedAddress } from '@/lib/address'
 import type { FoundAddress } from '@/lib/nominatim'
 
 /**
- * The seven boxes an address occupies in every form on the detail page — the one the operator can see
+ * The seven boxes an address occupies in every form on the detail page — the one the admin can see
  * and the six behind it — named once so the write and the revalidation can never disagree about the set.
  */
 export const FIELDS_ADDRESS = ['addressComplete', 'street', 'postalCode', 'city', 'province', 'latitude', 'longitude'] as const

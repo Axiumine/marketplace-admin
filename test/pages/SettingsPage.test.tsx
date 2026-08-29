@@ -41,7 +41,7 @@ describe('SettingsPage', () => {
 /**
  * ⚠️ Every test below asserts either a blocked round-trip or a sent one. A password form is the one
  * screen where "looks right" and "works" are indistinguishable by eye: the fields fill, the button
- * clicks and the operator walks away believing the password changed. Only the call count says whether
+ * clicks and the admin walks away believing the password changed. Only the call count says whether
  * it did.
  */
 describe('PasswordChangeForm', () => {
@@ -71,7 +71,7 @@ describe('PasswordChangeForm', () => {
 
 	/**
 	 * 72 is where bcrypt truncates, so anything past it is silently not part of the password — an
-	 * operator who set a 90-character password would find the first 72 of it also worked.
+	 * admin who set a 90-character password would find the first 72 of it also worked.
 	 *
 	 * Set through `fireEvent` rather than typed, because the input carries `maxLength={72}` and typing
 	 * stops there. That is not a contrived path: a password manager fills a field programmatically, and
@@ -103,7 +103,7 @@ describe('PasswordChangeForm', () => {
 	})
 
 	// A "change" that changes nothing still ends with a success message, which is the worst outcome: the
-	// operator believes the old password is retired when it is the one still in use.
+	// admin believes the old password is retired when it is the one still in use.
 	it('refuses a new password identical to the current one', async () => {
 		const stub = stubGraphQL({})
 		await renderRoute('/settings')
@@ -119,7 +119,7 @@ describe('PasswordChangeForm', () => {
 	 * The mutation takes no `_id`: the account comes from the Redis session server-side. The exact
 	 * variables are asserted, not just the call count, because an `_id` added here would be a value the
 	 * sender controls — and the platform has no role field to check it against, so it would let any
-	 * operator set another operator's password.
+	 * admin set another admin's password.
 	 */
 	it('sends only the two passwords, to the admin-resource endpoint', async () => {
 		const stub = stubGraphQL({ AdminUpdatePwd: { data: { adminUpdatePwd: true } } })
@@ -171,7 +171,7 @@ describe('PasswordChangeForm', () => {
 	 * A single failed attempt cannot tell them apart: the effect is keyed on the success flag, which
 	 * starts false, so a failure never moves it and the effect never re-runs. It takes a success to raise
 	 * the flag and a failure to lower it again before the difference is observable — and by then the
-	 * operator has typed two more passwords that would be thrown away.
+	 * admin has typed two more passwords that would be thrown away.
 	 */
 	it('keeps what was typed when a second attempt fails after a first one succeeded', async () => {
 		const THIRD = 'password-terza'
@@ -197,7 +197,7 @@ describe('PasswordChangeForm', () => {
 	})
 
 	// GraphQL allows a response to carry data *and* errors. Announcing "Password updated" next to a
-	// red alert would leave the operator to guess which half is true.
+	// red alert would leave the admin to guess which half is true.
 	it('does not confirm when the answer carries an error alongside the data', async () => {
 		stubGraphQL({
 			AdminUpdatePwd: {
@@ -217,7 +217,7 @@ describe('PasswordChangeForm', () => {
 	})
 
 	// `false` with no error is the backend refusing without saying why. Treating it as success would
-	// tell the operator their password changed when it did not.
+	// tell the admin their password changed when it did not.
 	it('does not confirm when the mutation answers false', async () => {
 		stubGraphQL({ AdminUpdatePwd: { data: { adminUpdatePwd: false } } })
 		await renderRoute('/settings')

@@ -95,7 +95,7 @@ describe('Categories', () => {
 		expect(screen.queryByText(/No category yet/)).not.toBeInTheDocument()
 	})
 
-	// Not "no data": an empty taxonomy is a catalogue nothing can be filed into, and the operator reading
+	// Not "no data": an empty taxonomy is a catalogue nothing can be filed into, and the admin reading
 	// this screen is the only person who can fix that.
 	it('says what an empty taxonomy costs', async () => {
 		stubGraphQL(taxonomy([]))
@@ -168,7 +168,7 @@ describe('Categories', () => {
 	 * ⚠️ A subcategory whose parent is not in the list. The platform's own writes cannot produce it —
 	 * `itemCategoryDel` refuses a category while a live subcategory points at it — but this collection has
 	 * been reachable by hand since before the screen existed, and a card that is not drawn is a category the
-	 * operator cannot repair. It goes last, under its bare name, and its parent row says the id resolved to
+	 * admin cannot repair. It goes last, under its bare name, and its parent row says the id resolved to
 	 * nothing rather than inventing a name for it.
 	 */
 	it('keeps a subcategory whose parent is gone, at the end', async () => {
@@ -265,7 +265,7 @@ describe('Categories — editing', () => {
 
 	/*
 	 * The picker is the depth cap read forwards: only top-level categories are on offer, so the one save
-	 * that cannot succeed is not one the operator can ask for. Its own card is out too — a category cannot
+	 * that cannot succeed is not one the admin can ask for. Its own card is out too — a category cannot
 	 * be its own parent, and this is the only place that choice could be made by hand.
 	 */
 	it('offers only top-level categories, and never the card itself', async () => {
@@ -281,7 +281,7 @@ describe('Categories — editing', () => {
 		expect(offered).toEqual(['Top-level category', 'Books'])
 	})
 
-	// Said before the save rather than after it: the service refuses this move, and an operator should not
+	// Said before the save rather than after it: the service refuses this move, and an admin should not
 	// have to press Save to find out that the picker in front of them cannot be used.
 	it('warns on a card whose own subcategories block the move', async () => {
 		stubGraphQL(taxonomy([home, garden]))
@@ -421,14 +421,14 @@ describe('Categories — editing', () => {
  * The taxonomy is the only thing in this app whose writes are turned down for reasons that are neither
  * "that box is wrong" nor "no such document": the depth cap, the slug's global uniqueness, and the two
  * things a delete refuses to cascade over. Each arrives from the service as a sentence naming a GraphQL
- * input path — `itemCategory.idParent: …` — and each has to reach the operator naming a box on screen and
+ * input path — `itemCategory.idParent: …` — and each has to reach the admin naming a box on screen and
  * a next step instead.
  *
  * The distinctness is the point: the depth cap and the duplicate slug are different mistakes about
- * different boxes, and one shared "Save failed." would leave the operator guessing which of the two levels
+ * different boxes, and one shared "Save failed." would leave the admin guessing which of the two levels
  * they had broken.
  */
-describe('Categories — the refusals, as the operator reads them', () => {
+describe('Categories — the refusals, as the admin reads them', () => {
 	const refuse = async (description: string, status: number) => {
 		stubGraphQL({ ...taxonomy([home, books]), ItemCategoryUpdate: refused(description, status) })
 		await renderRoute(CATEGORIES)
@@ -459,7 +459,7 @@ describe('Categories — the refusals, as the operator reads them', () => {
 		expect(alert).not.toHaveTextContent('itemCategory.idParent')
 	})
 
-	it('tells the operator which of their own subcategories is in the way', async () => {
+	it('tells the admin which of their own subcategories is in the way', async () => {
 		const alert = await refuse('itemCategory.idParent: this category has subcategories — move or remove them first', 400)
 
 		expect(alert).toHaveTextContent('Parent: this category has subcategories of its own.')
@@ -481,7 +481,7 @@ describe('Categories — the refusals, as the operator reads them', () => {
 		expect(await screen.findByRole('alert')).toHaveTextContent(shown)
 	})
 
-	// A refusal nobody mapped still reaches the operator in the service's own words — never as silence, and
+	// A refusal nobody mapped still reaches the admin in the service's own words — never as silence, and
 	// never as a generic line that throws away what the server took the trouble to say.
 	it('passes an unmapped refusal through', async () => {
 		const alert = await refuse('itemCategory.position: whole number required', 400)
@@ -515,7 +515,7 @@ describe('Categories — deletion', () => {
 		expect(save()).toBeEnabled()
 	})
 
-	// The one way back out, and the reason the title row stays sharp: the trash the operator has to press
+	// The one way back out, and the reason the title row stays sharp: the trash the admin has to press
 	// again is the only control the mask must not cover.
 	it('takes the deletion back', async () => {
 		stubGraphQL(taxonomy([home]))
@@ -609,7 +609,7 @@ describe('Categories — deletion', () => {
 })
 
 /**
- * A category the operator is adding: the same four fields as the card above it, the same schema and the
+ * A category the admin is adding: the same four fields as the card above it, the same schema and the
  * same Save button, sent to `itemCategoryAdd` — which takes no id, because the taxonomy belongs to the
  * platform rather than to anybody in it.
  */
@@ -721,7 +721,7 @@ describe('Categories — new category', () => {
 	/*
 	 * ⚠️ Each card is keyed by a uuid of its own, and this is what says so. Keyed by position instead,
 	 * discarding the first of two would hand its React state — an empty form — to the second, and the typing
-	 * would vanish from a card the operator never touched.
+	 * would vanish from a card the admin never touched.
 	 */
 	it("keeps a second card's contents when the first is discarded", async () => {
 		stubGraphQL(taxonomy([]))
@@ -742,7 +742,7 @@ describe('Categories — new category', () => {
 	 * ⚠️ The card is seeded with an empty string per field rather than with nothing at all. react-hook-form
 	 * hands the schema whatever it was given: `''` fails the rule the form wrote under the box it belongs
 	 * to — `undefined` fails zod's type check instead, with "expected string, received undefined" shown to
-	 * an operator.
+	 * an admin.
 	 */
 	it("refuses an untouched card in this form's own words", async () => {
 		const stub = stubGraphQL({ ...taxonomy([]), ...OK_ADD })

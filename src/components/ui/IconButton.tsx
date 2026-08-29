@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
  *
  * `name` is required and is spent twice: as `aria-label`, because the glyph inside is `aria-hidden` and
  * the button would otherwise reach a screen reader with no accessible name at all, and as `title`,
- * because a sighted operator has only a shape to go on.
+ * because a sighted admin has only a shape to go on.
  *
  * `type="button"` is not decoration. These sit inside the detail page's editors, and the default
  * `submit` would post the enclosing form on the first press.

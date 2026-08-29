@@ -9,10 +9,10 @@ import { Toast } from '@/components/ui/Toast'
  * One savable block of the detail page — the personalData, or one shop.
  *
  * `save` answers whether the write went through, so the page can stop at the first failure instead of
- * firing the rest and leaving the operator with several half-applied blocks and one error message.
+ * firing the rest and leaving the admin with several half-applied blocks and one error message.
  */
 export interface SavableSection {
-	/** True when the operator changed something inside this section. */
+	/** True when the admin changed something inside this section. */
 	changed: boolean
 	save: () => Promise<boolean>
 }
@@ -24,7 +24,7 @@ export type RegisterSection = (id: string, section: SavableSection | null) => vo
  * The page-level registry behind the single Save button.
  *
  * It exists because the detail page's blocks fetch independently — the personalData and the shops hit
- * different resolvers, on purpose — while the operator gets one button at the bottom for all of them.
+ * different resolvers, on purpose — while the admin gets one button at the bottom for all of them.
  * The button therefore has to reach forms it does not render, and the forms have to tell it whether
  * they are dirty.
  *
@@ -96,7 +96,7 @@ export const useSaving = () => {
 			}
 
 			// Only a save that went through all the way bumps it — a page left half-written is a page the
-			// operator still has edits on, and closing their rows would hide the values they would have to
+			// admin still has edits on, and closing their rows would hide the values they would have to
 			// retype.
 			setVersion((number) => number + 1)
 
@@ -113,7 +113,7 @@ export const useSaving = () => {
  * ⚠️ **`trigger()` is not interchangeable with this and was what every section used to call.** It
  * validates and fills `formState.errors`, but it does *not* set `isSubmitted`, and `isSubmitted` is what
  * turns on react-hook-form's default `reValidateMode: 'onChange'`. Without it a field marked red by a
- * refused save stays red while it is being corrected, until the operator presses Save a second time to
+ * refused save stays red while it is being corrected, until the admin presses Save a second time to
  * find out whether they fixed it. `handleSubmit` sets the flag, after which each keystroke re-runs the
  * schema for that one field and clears its own error — which is the whole mechanism behind the red
  * background disappearing as the box becomes valid.
@@ -131,7 +131,7 @@ export const saveValidated = async <T extends FieldValues>(
 	write: (values: T) => Promise<boolean>
 ): Promise<boolean> => (await handleSubmit(write)()) === true
 
-/** What the operator is asked before an edit is thrown away. */
+/** What the admin is asked before an edit is thrown away. */
 export const DISCARD_WARNING = 'There are unsaved changes. Do you really want to leave the page?'
 
 /**
@@ -201,7 +201,7 @@ export const useSavableSection = (id: string, register: RegisterSection, changed
  * unconditional button would turn "I pressed save twice" into a server error.
  *
  * The confirmation is shown for a save that succeeded *and* has not been superseded: the moment the
- * operator edits anything again the section goes dirty and the message goes away, so "Changes
+ * admin edits anything again the section goes dirty and the message goes away, so "Changes
  * saved" can never sit above a form holding unsaved changes.
  */
 export const SaveChanges = ({ changed, saveAll }: { changed: boolean; saveAll: () => Promise<boolean> }) => {

@@ -7,8 +7,8 @@ import { SessionConsole } from '@/features/security/SessionConsole'
  * The platform's security section: the sessions one account holds, and the keys the whole platform signs
  * with.
  *
- * Its own page rather than a card under Settings: Settings is where an operator changes something about
- * their own account, and everything here is about the platform every operator shares.
+ * Its own page rather than a card under Settings: Settings is where an admin changes something about
+ * their own account, and everything here is about the platform every admin shares.
  *
  * One page rather than two, because the two halves are read together during the same incident. A leaked
  * signing key is answered by retiring it, which ends every session it signed; a compromised account is

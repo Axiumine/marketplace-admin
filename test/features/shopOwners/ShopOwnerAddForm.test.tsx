@@ -325,10 +325,10 @@ describe('ShopOwnerAddForm', () => {
 
 	/*
 	 * The repeat box, which exists because the password is typed blind and is never seen again: a typo in
-	 * it creates an account nobody can sign into, and the only cure is an operator resetting it by hand.
+	 * it creates an account nobody can sign into, and the only cure is an admin resetting it by hand.
 	 *
 	 * The error is reported under the repeat, not under the password. Both values are equally "wrong" to
-	 * a comparison, and the one the operator meant is almost always the first.
+	 * a comparison, and the one the admin meant is almost always the first.
 	 */
 	it('refuses two passwords that do not match', async () => {
 		const stub = stubNetwork({})
@@ -435,7 +435,7 @@ describe('ShopOwnerAddForm', () => {
 	 * nothing.
 	 *
 	 * Saying so at the pick rather than at submit is the difference between one correction and a form
-	 * that looked accepted until the operator pressed the button.
+	 * that looked accepted until the admin pressed the button.
 	 */
 	it('says at once when the picked point is not a street address', async () => {
 		stubNetwork({}, { results: [resultOsm({ address: undefined, display_name: 'Riverside Bridge, Concord, USA' })] })

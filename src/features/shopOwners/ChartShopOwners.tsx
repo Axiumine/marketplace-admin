@@ -14,7 +14,7 @@ import { bars, bounds, seriesTotal } from '@/lib/chart'
 /**
  * Registrations over time, as a bar per bucket.
  *
- * The range is the operator's choice; the **bucket width is not**, and comes back in the response. A
+ * The range is the admin's choice; the **bucket width is not**, and comes back in the response. A
  * day-by-day series over the whole life of the platform is one bar per day since it opened, which is
  * neither readable nor cheap to group, so the server answers `ALL` by month and the two bounded
  * ranges by day. The chart reads `granularity` to label the axis rather than deciding from the number

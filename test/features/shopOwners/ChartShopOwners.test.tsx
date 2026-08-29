@@ -96,7 +96,7 @@ describe('ChartShopOwners', () => {
 		expect(call?.variables).toEqual({ period: 'ALL' })
 	})
 
-	it('re-asks with the range the operator picked', async () => {
+	it('re-asks with the range the admin picked', async () => {
 		const stub = stubGraphQL({ ...stats, ShopOwnersPerPeriod: threeMonths })
 		await renderRoute('/shopOwners')
 

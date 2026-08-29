@@ -5,7 +5,7 @@ import type { CustomersQuery } from '@/features/customers/TblCustomers'
 import { TblCustomers } from '@/features/customers/TblCustomers'
 
 /**
- * The customers screen — the operator's fourth surface, and a section of its own rather than a page under
+ * The customers screen — the admin's fourth surface, and a section of its own rather than a page under
  * a shop owner: a customer belongs to the platform, orders from many shops, and is reached from no shop's
  * detail page.
  *

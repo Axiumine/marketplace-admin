@@ -113,7 +113,7 @@ describe('ChartCustomers', () => {
 		expect(stub.calls.map((c) => c.operationName)).not.toContain('ShopOwnersPerPeriod')
 	})
 
-	it('re-asks with the range the operator picked', async () => {
+	it('re-asks with the range the admin picked', async () => {
 		const stub = stubGraphQL({ ...rest, UsersPerPeriod: threeMonths })
 		await renderRoute('/customers')
 

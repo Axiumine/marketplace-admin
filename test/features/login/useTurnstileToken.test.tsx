@@ -39,7 +39,7 @@ describe('useTurnstileToken', () => {
 	/*
 	 * ⚠️ `onToken` has to be stable. `Turnstile` lists it in an effect dependency, so a fresh function per
 	 * render would tear down and re-render the widget on every keystroke in the surrounding form — which
-	 * also discards the token the operator already earned.
+	 * also discards the token the admin already earned.
 	 */
 	it('keeps one identity for onToken across renders', () => {
 		const { result, rerender } = renderHook(() => useTurnstileToken())

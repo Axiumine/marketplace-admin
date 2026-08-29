@@ -32,7 +32,7 @@ describe('route guard', () => {
 
 	// The remembered target is the *validated* URL, not the one that was typed: the guard runs after
 	// `validateSearch`, so the defaults are already filled in. That is what makes the round trip lossless
-	// — an operator who followed a link to page 3 comes back to page 3, not to page 1.
+	// — an admin who followed a link to page 3 comes back to page 3, not to page 1.
 	it('carries the search params of the page that was asked for', async () => {
 		stubGraphQL({ InfoAdminAfterLogin: { pending: true } })
 		const { router } = await renderRoute(`${MANAGE}?page=3`, { session: null })
@@ -42,7 +42,7 @@ describe('route guard', () => {
 		})
 	})
 
-	it('lets a signed-in operator through', async () => {
+	it('lets a signed-in admin through', async () => {
 		stubGraphQL({})
 		const { router } = await renderRoute('/settings')
 
@@ -95,7 +95,7 @@ describe('shopOwners search params', () => {
 	})
 
 	// The upper bound is what stops `?pageSize=100000` from asking the backend for the whole collection
-	// in one document. The value reaches Mongo as a `limit`, so without a ceiling here any operator with
+	// in one document. The value reaches Mongo as a `limit`, so without a ceiling here any admin with
 	// a URL bar can turn a paged query back into a full scan.
 	it('falls back on a page size past the maximum', async () => {
 		expect((await searchOf(`${MANAGE}?pageSize=100000`)).pageSize).toBe(DEFAULT_PAGE_SIZE)

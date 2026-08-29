@@ -53,7 +53,7 @@ const TONE_CLASS: Record<AlertTone, string> = {
  *
  * Shown for as long as its parent renders it — the same declarative contract `Alert` has, and the
  * reason converting a call site is a one-word change. ⚠️ The corollary is that **a repeat of the same
- * message needs a remount**: a toast the operator dismissed stays dismissed while it is mounted, so a
+ * message needs a remount**: a toast the admin dismissed stays dismissed while it is mounted, so a
  * condition that goes true, false, true shows it twice while one that simply stays true shows it once.
  * Every call site here is driven by a urql result, and urql clears a mutation's result when it is
  * executed again, which is what makes the round trip happen on its own.
@@ -62,7 +62,7 @@ const TONE_CLASS: Record<AlertTone, string> = {
  * wrong for "saved".
  *
  * ⚠️ Only the success tone counts down. A confirmation has been read by the time it is understood and
- * the operator has nothing left to do about it; a failure is the opposite — it names something that
+ * the admin has nothing left to do about it; a failure is the opposite — it names something that
  * did not happen, and one that faded on its own would leave a page that looks saved and is not. So an
  * error or an info toast gets no countdown bar — and since the bar is the clock, no clock either — and
  * goes away when the cross is pressed.
@@ -81,7 +81,7 @@ export const Toast = ({ tone, children }: { tone: AlertTone; children: ReactNode
 		<div
 			role={tone === 'error' ? 'alert' : 'status'}
 			className={`pointer-events-auto overflow-hidden rounded-box border shadow-lg ${TONE_CLASS[tone]}`}
-			// The pause is what makes a five-second message readable: an operator who moves the mouse onto
+			// The pause is what makes a five-second message readable: an admin who moves the mouse onto
 			// it is reading it. Focus pauses it for the same reason and for a second one — the cross is a
 			// tab stop, and a toast that closed under a keyboard user's fingers would throw focus back to
 			// the body mid-press.

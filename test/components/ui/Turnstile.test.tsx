@@ -132,7 +132,7 @@ describe('Turnstile without a site key', () => {
 describe('loading the script', () => {
 	/*
 	 * On demand rather than in `<head>`: it is third-party JavaScript, this app has exactly one page that
-	 * needs it, and an operator who is already signed in never sees that page at all.
+	 * needs it, and an admin who is already signed in never sees that page at all.
 	 */
 	it('appends the widget script when it mounts', async () => {
 		await mount()
@@ -220,7 +220,7 @@ describe('rendering the widget', () => {
 	})
 
 	/*
-	 * The effect can be torn down while the script is in flight — an operator who navigated away from the
+	 * The effect can be torn down while the script is in flight — an admin who navigated away from the
 	 * login form. Rendering into the unmounted node would leak a widget nothing can ever remove.
 	 */
 	it('does not render into a component that already unmounted', async () => {
@@ -299,7 +299,7 @@ describe('when the script cannot load', () => {
 	 * renders in an iframe. A strict CSP missing either shows an empty box and no console error worth
 	 * reading, which is exactly the failure this message exists to make visible.
 	 */
-	it('tells the operator, out loud', async () => {
+	it('tells the admin, out loud', async () => {
 		await mount()
 		await scriptFails()
 

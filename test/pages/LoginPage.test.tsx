@@ -25,19 +25,19 @@ describe('LoginPage', () => {
 		stubGraphQL({})
 		const { container } = await renderRoute('/', signedOut)
 
-		expect(screen.getByRole('heading', { name: 'Marketplace — operator panel' })).toBeInTheDocument()
+		expect(screen.getByRole('heading', { name: 'Marketplace — admin panel' })).toBeInTheDocument()
 		expect(container).toMatchSnapshot()
 	})
 
 	// ⚠️ The platform's only recovery pair looks the address up in the `shopOwner` collection, so it
-	// answers "not found" for every operator account. The note is asserted, and the absence of a button
+	// answers "not found" for every admin account. The note is asserted, and the absence of a button
 	// with it: a recovery form added later without a matching `admin`-scoped resolver is a dead end that
-	// reads as a problem with the operator's own credentials.
-	it('explains that operator password recovery is manual instead of offering a dead form', async () => {
+	// reads as a problem with the admin's own credentials.
+	it('explains that admin password recovery is manual instead of offering a dead form', async () => {
 		stubGraphQL({})
 		await renderRoute('/', signedOut)
 
-		expect(screen.getByText(/Standalone recovery is not available for operator accounts/)).toBeInTheDocument()
+		expect(screen.getByText(/Standalone recovery is not available for admin accounts/)).toBeInTheDocument()
 		expect(screen.queryByRole('button', { name: /Recover/ })).not.toBeInTheDocument()
 	})
 
@@ -53,7 +53,7 @@ describe('LoginPage', () => {
 		expect(screen.getByLabelText('Remember me on this device')).not.toBeChecked()
 	})
 
-	// `operator@marketplace`, not `operator`: the field is `type="email"`, so a value with no `@` fails
+	// `admin@marketplace`, not `admin`: the field is `type="email"`, so a value with no `@` fails
 	// the browser's own constraint validation and the submit event never fires — nothing to assert about
 	// this app. A missing TLD is the gap between the two checks: the HTML validator accepts it, the zod
 	// schema does not, and that is the branch under test.
@@ -61,7 +61,7 @@ describe('LoginPage', () => {
 		const stub = stubGraphQL({})
 		await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace', 'password123')
+		await fillIn('admin@marketplace', 'password123')
 		await submit()
 
 		expect(await screen.findByText('Enter a valid email address')).toBeInTheDocument()
@@ -72,7 +72,7 @@ describe('LoginPage', () => {
 		const stub = stubGraphQL({})
 		await renderRoute('/', signedOut)
 
-		await userEvent.type(screen.getByLabelText('Email'), 'operator@marketplace.test')
+		await userEvent.type(screen.getByLabelText('Email'), 'admin@marketplace.test')
 		await submit()
 
 		expect(await screen.findByText('Enter the password')).toBeInTheDocument()
@@ -85,14 +85,14 @@ describe('LoginPage', () => {
 		const stub = stubGraphQL({ LoginAdmin: { errors: [graphQLError('Invalid credentials', undefined, 400)], status: 400 } })
 		await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.test', 'short')
+		await fillIn('admin@marketplace.test', 'short')
 		await submit()
 
 		await waitFor(() => {
 			expect(stub.calls).toHaveLength(1)
 		})
 		expect(stub.calls[0]?.variables).toEqual({
-			email: 'operator@marketplace.test',
+			email: 'admin@marketplace.test',
 			password: 'short',
 			rememberMe: false,
 			turnstileToken: null
@@ -103,7 +103,7 @@ describe('LoginPage', () => {
 	 * ⚠️ `turnstileToken: null` is the correct request here, not a gap in the test. The widget is disabled
 	 * without a `VITE_TURNSTILE_SITE_KEY` — the state of every developer machine and of this suite — and
 	 * the resolver verifies a token only where a secret key is configured, so the two halves agree on
-	 * "off". What this asserts is that the variable is *sent*: an operator whose browser did solve a
+	 * "off". What this asserts is that the variable is *sent*: an admin whose browser did solve a
 	 * challenge has to have the token reach `guardPublicLogin`, and a form that dropped it would look
 	 * identical on screen and fail only against a deployment that holds the secret.
 	 */
@@ -111,7 +111,7 @@ describe('LoginPage', () => {
 		const stub = stubGraphQL({ LoginAdmin: { data: { loginAdmin: { accessToken: '' } } } })
 		await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.test', 'password123')
+		await fillIn('admin@marketplace.test', 'password123')
 		await submit()
 
 		await waitFor(() => {
@@ -136,7 +136,7 @@ describe('LoginPage', () => {
 		})
 		const { router } = await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.test', 'password123')
+		await fillIn('admin@marketplace.test', 'password123')
 		await submit()
 
 		expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
@@ -148,7 +148,7 @@ describe('LoginPage', () => {
 
 	// `rememberMe` controls the lifetime of the refresh-token cookie server-side, so the checkbox has to
 	// reach the mutation — a form that renders it but hardcodes `false` looks identical on screen and
-	// silently gives every operator a session that dies with the browser.
+	// silently gives every admin a session that dies with the browser.
 	it('sends rememberMe when the box is ticked', async () => {
 		const stub = stubGraphQL({
 			LoginAdmin: { data: { loginAdmin: { accessToken: 'tok-1' } } },
@@ -156,13 +156,13 @@ describe('LoginPage', () => {
 		})
 		await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.test', 'password123')
+		await fillIn('admin@marketplace.test', 'password123')
 		await userEvent.click(screen.getByLabelText('Remember me on this device'))
 		await submit()
 
 		await waitFor(() => {
 			expect(stub.calls[0]?.variables).toEqual({
-				email: 'operator@marketplace.test',
+				email: 'admin@marketplace.test',
 				password: 'password123',
 				rememberMe: true,
 				turnstileToken: null
@@ -179,7 +179,7 @@ describe('LoginPage', () => {
 		})
 		const { router } = await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.test', 'password123')
+		await fillIn('admin@marketplace.test', 'password123')
 		await submit()
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Email or password not correct')
@@ -188,13 +188,13 @@ describe('LoginPage', () => {
 	})
 
 	// The one case the schema cannot express: `accessToken` is non-null, so an empty string is the
-	// service answering without minting a session. Treating it as success stores `''`, and the operator
+	// service answering without minting a session. Treating it as success stores `''`, and the admin
 	// lands on a dashboard whose every query then fails with no explanation of why.
 	it('reports an empty token as a failed login', async () => {
 		stubGraphQL({ LoginAdmin: { data: { loginAdmin: { accessToken: '' } } } })
 		const { router } = await renderRoute('/', signedOut)
 
-		await fillIn('operator@marketplace.test', 'password123')
+		await fillIn('admin@marketplace.test', 'password123')
 		await submit()
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Invalid credentials')

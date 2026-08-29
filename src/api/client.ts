@@ -15,7 +15,7 @@ const REFRESH_RACE_RETRIES = 2
 export interface CreateGraphQLClientOptions {
 	/**
 	 * Called when the refresh mutation cannot mint a new access token. The session is over: the caller
-	 * drops the operator back to the login page. Kept as a callback rather than a router import so the
+	 * drops the admin back to the login page. Kept as a callback rather than a router import so the
 	 * API layer stays independent of TanStack Router, and so a test can observe it directly.
 	 */
 	onSessionLost: () => void
@@ -49,7 +49,7 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 		 *
 		 * It is also the right call independently of Apollo: `credentials: 'include'` plus a GET is the
 		 * exact shape CSRF prevention exists to stop, and a query string ends up in nginx access logs
-		 * and browser history — an operator searching for a person would log that person's name.
+		 * and browser history — an admin searching for a person would log that person's name.
 		 */
 		preferGetMethod: false,
 		exchanges: [
@@ -69,7 +69,7 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 				 * Refresh *before* sending, when there is no token to send and the endpoint needs one.
 				 * This is the whole page-reload story: the access token lives in memory, a reload wipes
 				 * it, and the first authenticated operation after the reload silently re-mints it from
-				 * the httpOnly cookie instead of bouncing the operator to the login page.
+				 * the httpOnly cookie instead of bouncing the admin to the login page.
 				 */
 				willAuthError(operation) {
 					return getAccessToken() === null && requiresAuth(operation.context.url)
@@ -89,7 +89,7 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 				 * the grace window it answers `REFRESH_RACE_RETRY` instead of revoking the family. By then
 				 * the winner's `Set-Cookie` is in the jar both tabs share, so the retry sends the current
 				 * token and succeeds — which is why there is no backoff here: the thing being waited for has
-				 * already happened, and a timer would only delay the operator's first screen.
+				 * already happened, and a timer would only delay the admin's first screen.
 				 *
 				 * Bounded at `REFRESH_RACE_RETRIES` because the loop is otherwise unbounded on a backend
 				 * that keeps answering the same code. Two is a race lost twice in a row; a third is not a
@@ -121,7 +121,7 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 			 * `authExchange` only knows about 498, because 498 is the only status a refresh can fix. The
 			 * three in `isSessionGone` — 401 no session, 412 account disabled/deleted/awaiting approval,
 			 * 499 token required — are terminal, and they arrive on ordinary domain operations rather
-			 * than on the refresh. Without this the operator would sit on a screen showing a red Alert,
+			 * than on the refresh. Without this the admin would sit on a screen showing a red Alert,
 			 * still nominally "logged in", with every subsequent action failing the same way.
 			 *
 			 * Placed below `authExchange` in the chain, so results reach it on the way back up before the

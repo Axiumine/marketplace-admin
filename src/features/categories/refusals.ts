@@ -3,13 +3,13 @@ import type { CombinedError } from '@urql/core'
 import { messageOf } from '@/api/errors'
 
 /**
- * The taxonomy's refusals, in the operator's words.
+ * The taxonomy's refusals, in the admin's words.
  *
  * The three category mutations are the only writes in this app that can be turned down for a reason
  * other than "that field is wrong" or "no such document": the depth cap, the slug's global uniqueness
  * and the two things a delete refuses to cascade over. Handed to `messageOf` like every other failure
  * they arrive as the service's own sentences — `itemCategory.idParent: the taxonomy is two levels deep`
- * names a GraphQL input path the operator never typed, and `slug already used by another category` does
+ * names a GraphQL input path the admin never typed, and `slug already used by another category` does
  * not say that a subcategory cannot reuse a top-level slug either, which is the part that surprises.
  * Each one is therefore rewritten here, naming the box it is about and what to do next.
  *
@@ -17,7 +17,7 @@ import { messageOf } from '@/api/errors'
  * live in `marketplace-dev-admin-authenticated-resource` — `funItemCategoryAdd`, `funItemCategoryUpdate`,
  * `funItemCategoryDelete`, `throwIfParentNotTopLevel` and `throwIfHasChildren` — and a rephrasing there
  * turns one of these back into the raw server sentence rather than into nothing: an unmatched refusal
- * falls through to `messageOf` below, so the operator is never left without a message. They are
+ * falls through to `messageOf` below, so the admin is never left without a message. They are
  * duplicated rather than imported because those services are Node-only ESM packages this bundle does not
  * depend on, and matched on a distinctive *fragment* rather than on the whole sentence so that the em
  * dashes and the trailing advice can be reworded without breaking the match.

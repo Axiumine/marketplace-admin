@@ -25,7 +25,7 @@ const DATE_TIME_FORMAT = new Intl.DateTimeFormat('en-GB', {
  * this repo that carries a disable. It was checked, not assumed: `{}` and this literal produce the same
  * string for every date the runtime can represent, from year 1 to year 275760 and on both sides of the
  * era boundary. Nothing this app can render distinguishes them, so no test can, and the literal stays
- * because the day the CLDR default moves is the day the operator's dates would silently change shape.
+ * because the day the CLDR default moves is the day the admin's dates would silently change shape.
  */
 // Stryker disable next-line ObjectLiteral: equivalent under en-GB — see the note above.
 const DATE_FORMAT = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -33,7 +33,7 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2
 /*
  * UTC, unlike the two above, and the difference is not an oversight.
  *
- * `openingHours.from` / `.a` are not moments in time — they are clock readings the operator typed, which the
+ * `openingHours.from` / `.a` are not moments in time — they are clock readings the admin typed, which the
  * backend's `Time` scalar stamped onto an arbitrary calendar day at the offset they were sent with. The
  * app sends them as `HH:MM:00Z`, so reading them back in the browser's zone would print a foreign
  * shop's 11:30 opening as 13:30 in summer, and the edit box beside it — which is fed the UTC half —
@@ -42,7 +42,7 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2
 /**
  * An unparseable timestamp renders as NO_VALUE rather than "Invalid Date". The backend types these
  * fields as non-null DateTime, so this branch should be unreachable — but a rendered "Invalid Date" in
- * an operator table is worse than a dash, and the check costs one comparison.
+ * an admin table is worse than a dash, and the check costs one comparison.
  */
 export const formatDateTime = (iso: string): string => {
 	const date = new Date(iso)
@@ -87,7 +87,7 @@ export const handleNullHash = (val: string | null | undefined): string => (val =
 /**
  * Null and false both render "No". The fields this formats are absent-or-true on the backend, so a
  * missing value means the same thing as an explicit `false`; showing the placeholder instead would
- * turn "not set" into something an operator reads as broken data.
+ * turn "not set" into something an admin reads as broken data.
  */
 export const handleNullBoolYN = (val: boolean | null | undefined): string => (val === true ? 'Yes' : 'No')
 
@@ -100,7 +100,7 @@ export const handleNullBoolYN = (val: boolean | null | undefined): string => (va
  * earlier on every save that touched anything else in the same block.
  *
  * An unparseable value answers the empty string rather than the placeholder: this feeds a form control,
- * where `---` is not "nothing" but three characters the operator has to delete.
+ * where `---` is not "nothing" but three characters the admin has to delete.
  */
 export const toDateInput = (iso: string): string => {
 	const date = new Date(iso)

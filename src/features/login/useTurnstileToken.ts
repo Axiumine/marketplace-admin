@@ -7,7 +7,7 @@ import { useCallback, useRef, useState } from 'react'
  *
  * - **`onToken` is stable.** `Turnstile` lists it in an effect dependency, so a fresh function per
  *   render would unmount and re-render the widget on every keystroke in the surrounding form — which
- *   also discards the token the operator already earned.
+ *   also discards the token the admin already earned.
  * - **The token is read through a ref at submit time, not through the state value.** A widget that
  *   solves itself between the click and the `await` would otherwise be missed, and a token that expired
  *   in that window would be sent anyway. State is still kept so a form that wants to react to a token

@@ -29,7 +29,7 @@ import { formatDate } from '@/lib/format'
  * ⚠️ **There is no third `deleted` value here, and its absence is now a gap rather than a tautology.**
  * `userDel` ships on the customer tier since 2026-08-26, so closed accounts exist and this screen cannot
  * reach them: the filter would be one entry in this table, one member in the route's zod enum, and the
- * row's status column already reads the flag. What it is waiting on is a decision, not code — an operator
+ * row's status column already reads the flag. What it is waiting on is a decision, not code — an admin
  * has no lever over a closed account (there is no Admin counterpart to `shopOwnerDel`, E19 §6 question 3),
  * so a Closed view today would list accounts and offer nothing to do with them.
  */
@@ -77,7 +77,7 @@ const ariaSort = (dir: GraphQlSortDirection): 'ascending' | 'descending' => (dir
  * just been suspended. On this screen that is not a stale read but a wrong answer to "did it work".
  *
  * Both typenames, not just the row: a page with no rows carries only `GraphQLUsersActiveTblPage` in its
- * response, so an operator who looked at an empty Suspended list before suspending anybody would still be
+ * response, so an admin who looked at an empty Suspended list before suspending anybody would still be
  * looking at it afterwards.
  */
 const CTX_STATUS: Partial<OperationContext> = Object.freeze({
@@ -96,7 +96,7 @@ interface Row {
 	 *
 	 * ⚠️ **This screen is the only place it can be read at all.** `disabledReason` is randomly encrypted
 	 * (ADR-044), so the shop-owner and customer services hold ciphertext they have no data key for — the
-	 * operator surface decrypts it because it is the surface the reason was written for.
+	 * admin surface decrypts it because it is the surface the reason was written for.
 	 */
 	reason: string | null
 }
@@ -104,10 +104,10 @@ interface Row {
 /**
  * The one thing this row says about the account, out of the three flags that can say it.
  *
- * Ordered by what an operator has to act on first: an erased account is beyond a status switch, a suspended
+ * Ordered by what an admin has to act on first: an erased account is beyond a status switch, a suspended
  * one is the switch's own doing, and an unconfirmed address is the ordinary state of somebody who
  * registered an hour ago and has not opened the email yet. Reading them in any other order would report a
- * suspended account as "Awaiting confirmation" and send the operator to resend a link that changes nothing.
+ * suspended account as "Awaiting confirmation" and send the admin to resend a link that changes nothing.
  *
  * ⚠️ `disabled` and `emailVerified` are absent-or-true on the wire — the collection stores `true` or
  * `$unset`s, never `false` — so both are read on truthiness. `deleted` is a timestamp rather than a flag
@@ -134,7 +134,7 @@ export const statusOf = (row: { disabled: boolean | null; deleted: string | null
  *
  * ⚠️ It states what the click actually reaches, and since R54 that is both halves of every session: the
  * refresh lineage and the access token it minted. Warning about a window in which the device kept working
- * would send an operator looking for a gap that has been closed.
+ * would send an admin looking for a gap that has been closed.
  */
 export const SUSPEND_WARNING =
 	'They are signed out of every device now, and cannot sign in again until the account is re-enabled.\n\n' +
@@ -146,7 +146,7 @@ export const SUSPEND_WARNING =
  *
  * ⚠️ **The collection does not carry this bound and never will.** `disabledReason` is randomly encrypted,
  * so `$jsonSchema` sees `binData` and cannot measure a string it is not allowed to read — the service's
- * own check is the only one there is, and this constant is the only warning an operator gets before it
+ * own check is the only one there is, and this constant is the only warning an admin gets before it
  * answers 400.
  */
 export const MAX_DISABLED_REASON = 1000
@@ -156,7 +156,7 @@ export const MAX_DISABLED_REASON = 1000
  *
  * ⚠️ **Mandatory, and not as a house style.** `dependencies: { disabled: ['disabledReason'] }` on the
  * collection refuses the flag without the reason, so a form that let this through would not suspend
- * somebody with no note on file — it would fail the write and leave the operator looking at an error
+ * somebody with no note on file — it would fail the write and leave the admin looking at an error
  * about a validator.
  *
  * Trimmed before both checks, because whitespace is not a reason and a box holding a newline would
@@ -202,7 +202,7 @@ export const TblCustomers = ({
 }) => {
 	/*
 	 * What the last status write was about, kept because the wire cannot say it: the mutation answers a
-	 * bare boolean and its variables carry an id, while the message an operator needs names the address.
+	 * bare boolean and its variables carry an id, while the message an admin needs names the address.
 	 *
 	 * The toast is gated on the mutation *result* and not on this, which is what makes a second suspension
 	 * show a second toast: urql clears a mutation's data when it is executed again, so the toast unmounts
@@ -221,7 +221,7 @@ export const TblCustomers = ({
 	const [reason, setReason] = useState('')
 
 	/*
-	 * ⚠️ Set on submit and not on every keystroke, so the box does not go red before the operator has
+	 * ⚠️ Set on submit and not on every keystroke, so the box does not go red before the admin has
 	 * finished the first word. Cleared as they type, so a corrected reason stops being an error without
 	 * needing a second submit.
 	 */
@@ -264,7 +264,7 @@ export const TblCustomers = ({
 	 * A suspension needs a reason before it can be written at all — `dependencies: { disabled:
 	 * ['disabledReason'] }` on the collection refuses the flag without one (ADR-044) — so the click opens
 	 * the form rather than sending anything. Lifting one needs nothing: the platform owner's ruling is that
-	 * only an operator removes a suspension, and this screen is an operator, so the second click is the
+	 * only an admin removes a suspension, and this screen is an admin, so the second click is the
 	 * whole gesture.
 	 *
 	 * `disabledReason: null` on the way back, not an omitted field: the service `$unset`s the reason with
@@ -299,7 +299,7 @@ export const TblCustomers = ({
 	const done = statusResult.data?.userUpdateStatus === true ? intent : null
 
 	const columns = [
-		// No link, because there is no customer detail page to link to: the collection has one operator
+		// No link, because there is no customer detail page to link to: the collection has one admin
 		// lever and it is the button in the last column. A link here would have to lead somewhere.
 		column.accessor('email', { header: 'Email' }),
 		column.accessor('registeredAt', { header: 'Registered' }),
@@ -331,7 +331,7 @@ export const TblCustomers = ({
 			 * Driven by the row's own flag rather than by the filter in the URL. They agree today, and the
 			 * row is the one that is still right if a page is rendered from a cache the filter has moved on
 			 * from — a button offering to suspend an account that is already suspended is a wrong answer
-			 * this way round, and an operator's second click on it is a no-op they cannot see.
+			 * this way round, and an admin's second click on it is a no-op they cannot see.
 			 */
 			cell: (info) => {
 				const row = info.row.original
@@ -373,7 +373,7 @@ export const TblCustomers = ({
 					label="Status"
 					value={query.status}
 					onChange={(event) => {
-						// Back to page 1: the two sets are different sizes, and page 7 of the one an operator
+						// Back to page 1: the two sets are different sizes, and page 7 of the one an admin
 						// was standing on is very often past the end of the one they asked for.
 						onQueryChange({ status: event.target.value as CustomerStatus, page: 1 })
 					}}
@@ -391,7 +391,7 @@ export const TblCustomers = ({
 			{/*
 			 * ⚠️ **Above the table and not inside the row.** The mutation invalidates
 			 * `GraphQLUsersActiveTblPage`, so submitting re-fetches the list and the row the form belongs to
-			 * leaves the Active page — a form rendered inside that row would unmount underneath the operator
+			 * leaves the Active page — a form rendered inside that row would unmount underneath the admin
 			 * mid-write. Up here it owns its own state and closes when it decides to.
 			 *
 			 * `role="group"` with the heading as its label rather than `role="dialog"`: nothing here traps
@@ -496,7 +496,7 @@ export const TblCustomers = ({
 
 			{result.fetching ? <Spinner label="Loading customers" /> : null}
 			{/*
-			 * An empty page is an answer here and has to read as one — an operator who filtered to Suspended
+			 * An empty page is an answer here and has to read as one — an admin who filtered to Suspended
 			 * and found nobody has learnt that no customer is suspended, which is the good news. Left as bare
 			 * headers it reads as a screen that failed to load.
 			 */}

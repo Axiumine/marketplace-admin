@@ -8,7 +8,7 @@ import { env } from '@/env'
  * it needs to wrap has run.
  *
  * No DSN means no init: a developer machine reports nothing, and CI never invents traffic against the
- * production project. Data collection stays off — this app handles operator credentials, and the one
+ * production project. Data collection stays off — this app handles admin credentials, and the one
  * thing that must never leave the browser is a request body carrying a password.
  *
  * `dataCollection` replaces `sendDefaultPii`, which the SDK deprecated and drops in v11.

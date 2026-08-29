@@ -25,7 +25,7 @@ export interface Bar extends SeriesPoint {
 
 /*
  * `timeZone: 'UTC'` on both, and it is load-bearing rather than tidy. `new Date('2026-08-01')` is
- * specified to parse the date-only form as UTC midnight, so an operator east of Greenwich formatting it
+ * specified to parse the date-only form as UTC midnight, so an admin east of Greenwich formatting it
  * in the browser's own zone still reads 1 August — but one west of it reads 31 July, and a month bucket
  * would be labelled with the month before its own. The server buckets in UTC; so does the axis.
  */

@@ -57,7 +57,7 @@ export const coordinate = (label: string, limit: number) =>
 /**
  * The rule the address box is checked by, in both forms that have one.
  *
- * The box the operator types into is not what gets stored: the four fields behind it are, together with
+ * The box the admin types into is not what gets stored: the four fields behind it are, together with
  * the coordinates, and all six are written only by picking one of the geocoder's answers. A typed
  * address that was never picked would therefore save the *previous* street under new-looking text,
  * silently, because the six still hold everything they held.

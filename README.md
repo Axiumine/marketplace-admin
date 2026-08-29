@@ -1,8 +1,8 @@
 # marketplace-admin
 
-Marketplace platform-operator panel (`Admin` tier). Vite + React SPA, TypeScript strict.
+Marketplace platform-admin panel (`Admin` tier). Vite + React SPA, TypeScript strict.
 
-**Operator tier only.** It logs in through `loginAdmin` and manages *shopOwners* and *customers* — the
+**Admin tier only.** It logs in through `loginAdmin` and manages *shopOwners* and *customers* — the
 accounts of both, never their own screens. The shop-owner (`ShopOwner`) and customer (`User`) frontends
 are separate apps — this is what they were copied from, not a shell to add their routes into.
 
@@ -124,20 +124,20 @@ they guard against all render as a working screen.
 - **The table is paged, searched and sorted by the server, never by the browser.**
   `shopOwnersActiveTbl` is `(offset, limit, search, sortBy, sortDir) → { items, total }`, backed by
   indexes in `marketplace-db-setup`. Filtering or sorting client-side means fetching the whole
-  `shopOwner` collection first — every operator downloading every record to look at twenty rows, on
+  `shopOwner` collection first — every admin downloading every record to look at twenty rows, on
   a collection with no upper bound. `?pageSize=` is clamped in `router.tsx` for the same reason.
 - **`deleted` is a timestamp, not a flag.** Its presence is the soft delete, so it is tested with
   `!= null`. Compared against `true` — or passed through `handleNullBoolYN` — it is false for every
   value the field can hold, and a deleted account reads "Deleted: No" with no tint.
 - **Every optional field goes through `handleNull`.** A dash means "not given"; a blank space beside a
-  label means "this broke", and an operator cannot tell that apart from a field that failed to load.
+  label means "this broke", and an admin cannot tell that apart from a field that failed to load.
 - **Never render a label for a field the collection does not have.** `shopOwner` has no `account`
   sub-document; a row bound to one shows a permanent blank that looks like missing data.
 - **`adminUpdatePwd` takes no id.** The account is the one the Redis session names. The platform has no
-  role field, so an id supplied by a browser would be a way for any operator to set another operator's
+  role field, so an id supplied by a browser would be a way for any admin to set another admin's
   password.
-- **Operator password recovery is a note, not a form.** No service exposes a recovery mutation for the
-  `admin` collection at all, so a recovery form here would be a dead end that reads to the operator as
+- **Admin password recovery is a note, not a form.** No service exposes a recovery mutation for the
+  `admin` collection at all, so a recovery form here would be a dead end that reads to the admin as
   a problem with their own credentials.
 - **The customers table has no search box, and one sortable column.** Not an omission — `user` is the
   collection encrypted whole (ADR-029). Names, city and the address block are *randomly* encrypted, so a
@@ -180,16 +180,16 @@ they guard against all render as a working screen.
 - **The taxonomy's refusals are rewritten one by one, not funnelled into "Save failed."** The depth cap
   and the duplicate slug are different mistakes about different boxes, and the service words both as a
   GraphQL input path (`itemCategory.idParent: …`) that names nothing on screen. `features/categories/refusals.ts`
-  maps each to a sentence naming the box and the next step; anything unmapped still reaches the operator
+  maps each to a sentence naming the box and the next step; anything unmapped still reaches the admin
   in the service's own words.
 - **The category picker offers top-level categories only.** That is the depth cap read forwards: the one
-  save the service cannot accept is not one the operator can ask for. The card's own category is out too —
+  save the service cannot accept is not one the admin can ask for. The card's own category is out too —
   nothing else on the platform could stop a category being made its own parent.
 - **The position is capped at 999999999 here and nowhere else.** The resolver checks whole and
   non-negative, and a wider number is refused by the collection's `$jsonSchema` as a 500 naming no field.
 - **The company card saves company data and publishes nothing.** Publishing has been a separate
   operation on both tiers since 2026-08-14: `published` is not in `GraphQLInputCompany` on either
-  service, `companyAdd` stamps `false`, and `companyUpdatePublished` is the only writer. The operator app
+  service, `companyAdd` stamps `false`, and `companyUpdatePublished` is the only writer. The admin app
   calls neither that mutation nor `itemUpdatePublished`, so a company added here stays unpublished and no
   screen states it. That is a missing screen, not a missing resolver — 4024 has carried both mutations
   since the split, and the shop's three public fields (`publicName`, `slug`, `description`) have no box
@@ -204,7 +204,7 @@ they guard against all render as a working screen.
 | Spec | Here | Why |
 |---|---|---|
 | TanStack Virtual | not used | The table is server-paged at 20–100 rows. Virtualising a page that small adds a scroll container and buys nothing. |
-| Radix Dialog / Toast | not used | Nothing on the operator surface is modal, and errors belong next to what failed — `Alert` is inline and `role="alert"` only for the error tone. |
+| Radix Dialog / Toast | not used | Nothing on the admin surface is modal, and errors belong next to what failed — `Alert` is inline and `role="alert"` only for the error tone. |
 | File-based routing | route tree in code | A generated `routeTree.gen.ts` cannot be tested, so it would have to be excluded from coverage and mutation — and every exclusion is a hole. Ten routes do not need a generator. |
 | Schema from the server | `schema/*.graphql`, hand-maintained | The platform has no SDL: all nine services build their schema programmatically with graphql-js. These four files are hand-written slices, and they are a copy — verify against the resolvers, never the other way round. |
 
