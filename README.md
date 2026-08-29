@@ -101,11 +101,11 @@ schema slices; it describes nothing that exists.
 | `/settings` | change own password |
 | `/security` | cookie-signing keys — version, fingerprint, key ages, holders table, rotate |
 | `/categories` | the whole `itemCategory` taxonomy — add, edit, retire; no search params, the list is unpaged |
-| `/shopOwners` | counters + section menu |
+| `/shopOwners` | counter + registrations chart + section menu |
 | `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
 | `/p/shopOwners/add-shopOwner` | create form |
 | `/p/shopOwners/id/$_id` | detail — personalData + companies |
-| `/customers` | paginated customers table (`?page`, `?pageSize`, `?status=active\|suspended`, `?sortDir`) — email, registered date, status, and the enable/disable switch. No `?search`, no `?sortBy`: see below |
+| `/customers` | counter + registrations chart + paginated customers table (`?page`, `?pageSize`, `?status=active\|suspended`, `?sortDir`) — email, registered date, status, and the enable/disable switch. No `?search`, no `?sortBy`: see below |
 
 Everything except `/` and `/loading` is behind a pathless guarded route. An empty session redirects to
 `/loading`, not to `/`: only a round-trip can tell "never signed in" from "signed in and reloaded".
@@ -159,9 +159,24 @@ they guard against all render as a working screen.
 - **The customers query names two `__typename`s in `additionalTypenames`, not one.**
   `GraphQLUserActiveTbl` *and* `GraphQLUsersActiveTblPage`: a page with no rows carries only the second, so
   a table listing one row and losing it to a suspension would never re-read itself.
-- **One statistic on the shopOwners page, because one query answers one.** Counters for "email to
-  confirm", "confirmed", "disabled" and "deleted" all read naturally and none has a resolver.
+- **One statistic per section, because one query answers one.** `shopOwnersStats` and `usersStats` are
+  the only two counters the admin-resource service exposes. The companions — "email to confirm",
+  "confirmed", "disabled", "deleted" — all read naturally on either page and none has a resolver.
   Add the backend query first — a placeholder counter is indistinguishable on screen from a broken one.
+- **The customers page carries a counter and a chart even though its table has no search box.** Not an
+  inconsistency: ADR-029 blocks *matching and ordering* encrypted fields, and neither of these does
+  either. `usersStats` reads no field at all, and `usersPerPeriod` buckets `registeredAt`, which was
+  never encrypted — the same field the table already sorts on. So the page can say how many customers
+  there are and when they arrived, and still cannot look one up by name.
+- **The counter and the table's own `total` are different numbers, on both sections.** The counter is
+  unfiltered — every account ever registered, the suspended and the closed included — while `total` is
+  the size of whatever the filter currently selects. Feeding the counter from the page it sits above
+  would make it agree with the table and stop answering the question it was put there for.
+- **The two charts are separate components over separate GraphQL types, not one generic chart.**
+  `ShopOwnersPerPeriod` and `UsersPerPeriod` are structurally identical and deliberately distinct on the
+  service (see the schema slice): one shared `PerPeriod` type would make the two series interchangeable
+  in a query document, so a rename could point the customers chart at shopOwner data and still compile.
+  The arithmetic is shared where it cannot drift — server-side, in one library.
 - **The taxonomy's refusals are rewritten one by one, not funnelled into "Save failed."** The depth cap
   and the duplicate slug are different mistakes about different boxes, and the service words both as a
   GraphQL input path (`itemCategory.idParent: …`) that names nothing on screen. `features/categories/refusals.ts`

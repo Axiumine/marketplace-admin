@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`StatsCustomers > renders 1`] = `
+<section
+  aria-labelledby=":id-0:"
+  class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+>
+  <div
+    class="mb-2 flex items-center justify-between gap-2"
+  >
+    <h3
+      class="font-bold"
+      id=":id-0:"
+    >
+      Customers
+    </h3>
+  </div>
+  <div
+    class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+  >
+    <span
+      class="text-tip"
+    >
+      Total
+    </span>
+    <span
+      class="text-right"
+    >
+      42
+    </span>
+  </div>
+</section>
+`;

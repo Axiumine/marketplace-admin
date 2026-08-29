@@ -31,186 +31,345 @@ exports[`CustomersPage > renders 1`] = `
     </div>
   </header>
   <div
-    class="flex flex-col gap-4"
+    class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
   >
-    <div
-      class="sm:w-56"
+    <section
+      aria-labelledby=":id-0:"
+      class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
     >
       <div
-        class="flex flex-col gap-1"
+        class="mb-2 flex items-center justify-between gap-2"
       >
-        <label
-          class="text-sm font-semibold"
-          for=":id-0:"
+        <h3
+          class="font-bold"
+          id=":id-0:"
         >
-          Status
-        </label>
+          Customers
+        </h3>
+      </div>
+      <div
+        class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+      >
+        <span
+          class="text-tip"
+        >
+          Total
+        </span>
+        <span
+          class="text-right"
+        >
+          7
+        </span>
+      </div>
+    </section>
+  </div>
+  <div
+    class="mt-4"
+  >
+    <section
+      aria-labelledby=":id-1:"
+      class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+    >
+      <div
+        class="mb-2 flex items-center justify-between gap-2"
+      >
+        <h3
+          class="font-bold"
+          id=":id-1:"
+        >
+          Registrations over time
+        </h3>
         <div
-          class="relative"
+          class="flex flex-col gap-1"
         >
-          <select
-            aria-invalid="false"
-            class="w-full appearance-none rounded-box border-tip py-2 pl-3 pr-9 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white"
-            id=":id-0:"
+          <label
+            class="text-sm font-semibold"
+            for=":id-2:"
           >
-            <option
-              value="active"
-            >
-              Active
-            </option>
-            <option
-              value="suspended"
-            >
-              Suspended
-            </option>
-          </select>
-          <span
-            class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-tip"
+            Period
+          </label>
+          <div
+            class="relative"
           >
-            <svg
-              aria-hidden="true"
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.75"
-              viewBox="0 0 24 24"
+            <select
+              aria-invalid="false"
+              class="min-w-52"
+              id=":id-2:"
             >
-              <path
-                d="m6 9 6 6 6-6"
-              />
-            </svg>
-          </span>
+              <option
+                value="ALL"
+              >
+                From the first sign-up to today
+              </option>
+              <option
+                value="THREE_MONTHS"
+              >
+                Last 3 months
+              </option>
+              <option
+                value="ONE_MONTH"
+              >
+                Last month
+              </option>
+            </select>
+            <span
+              class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-tip"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="m6 9 6 6 6-6"
+                />
+              </svg>
+            </span>
+          </div>
         </div>
       </div>
-    </div>
-    <div
-      class="overflow-x-auto"
-    >
-      <table
-        class="w-full text-left text-sm"
+      <svg
+        aria-label="Registrations per period: 7 in 2 intervals"
+        class="h-40 w-full"
+        preserveAspectRatio="none"
+        role="img"
+        viewBox="0 0 600 160"
       >
-        <thead>
-          <tr>
-            <th
-              class="border-b border-palette-bg3/20 p-2"
-              scope="col"
-            >
-              <span
-                class="font-bold"
-              >
-                Email
-              </span>
-            </th>
-            <th
-              aria-sort="descending"
-              class="border-b border-palette-bg3/20 p-2"
-              scope="col"
-            >
-              <button
-                class="font-bold"
-                type="button"
-              >
-                Registered
-              </button>
-            </th>
-            <th
-              class="border-b border-palette-bg3/20 p-2"
-              scope="col"
-            >
-              <span
-                class="font-bold"
-              >
-                Status
-              </span>
-            </th>
-            <th
-              class="border-b border-palette-bg3/20 p-2"
-              scope="col"
-            >
-              <span
-                class="font-bold"
-              >
-                Action
-              </span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            class="border-b border-palette-bg3/10"
-          >
-            <td
-              class="p-2"
-            >
-              ada.stone@example.com
-            </td>
-            <td
-              class="p-2"
-            >
-              01/02/2026
-            </td>
-            <td
-              class="p-2"
-            >
-              Active
-            </td>
-            <td
-              class="p-2"
-            >
-              <button
-                class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
-                type="button"
-              >
-                Suspend
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div
-      class="flex flex-wrap items-center justify-between gap-4 py-3 text-sm"
-    >
-      <p
-        aria-live="polite"
-      >
-        1
-        –
-        1
-         of 
-        1
-      </p>
-      <nav
-        aria-label="Pagination"
-        class="flex gap-1"
-      >
-        <button
-          aria-label="Previous page"
-          class="rounded-box px-2 py-1 disabled:opacity-40"
-          disabled=""
-          type="button"
+        <rect
+          class="fill-third"
+          height="120"
+          width="300"
+          x="0"
+          y="40"
         >
-          ‹
-        </button>
-        <button
-          aria-current="page"
-          aria-label="Page 1"
-          class="rounded-box px-2 py-1 bg-third text-palette-white"
-          type="button"
+          <title>
+            Jul 2026: 3
+          </title>
+        </rect>
+        <rect
+          class="fill-third"
+          height="160"
+          width="300"
+          x="300"
+          y="0"
+        >
+          <title>
+            Aug 2026: 4
+          </title>
+        </rect>
+      </svg>
+      <div
+        class="flex justify-between pt-1 text-xs text-tip"
+      >
+        <span>
+          Jul 2026
+        </span>
+        <span>
+          Aug 2026
+        </span>
+      </div>
+      <p
+        class="pt-2 text-sm"
+      >
+        Total in period: 
+        <span
+          class="font-semibold"
+        >
+          7
+        </span>
+      </p>
+    </section>
+  </div>
+  <div
+    class="mt-4"
+  >
+    <div
+      class="flex flex-col gap-4"
+    >
+      <div
+        class="sm:w-56"
+      >
+        <div
+          class="flex flex-col gap-1"
+        >
+          <label
+            class="text-sm font-semibold"
+            for=":id-3:"
+          >
+            Status
+          </label>
+          <div
+            class="relative"
+          >
+            <select
+              aria-invalid="false"
+              class="w-full appearance-none rounded-box border-tip py-2 pl-3 pr-9 text-sm outline-none focus:border-third disabled:cursor-not-allowed disabled:bg-palette-bg1 border bg-white"
+              id=":id-3:"
+            >
+              <option
+                value="active"
+              >
+                Active
+              </option>
+              <option
+                value="suspended"
+              >
+                Suspended
+              </option>
+            </select>
+            <span
+              class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-tip"
+            >
+              <svg
+                aria-hidden="true"
+                class="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="m6 9 6 6 6-6"
+                />
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+      <div
+        class="overflow-x-auto"
+      >
+        <table
+          class="w-full text-left text-sm"
+        >
+          <thead>
+            <tr>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                <span
+                  class="font-bold"
+                >
+                  Email
+                </span>
+              </th>
+              <th
+                aria-sort="descending"
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                <button
+                  class="font-bold"
+                  type="button"
+                >
+                  Registered
+                </button>
+              </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                <span
+                  class="font-bold"
+                >
+                  Status
+                </span>
+              </th>
+              <th
+                class="border-b border-palette-bg3/20 p-2"
+                scope="col"
+              >
+                <span
+                  class="font-bold"
+                >
+                  Action
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              class="border-b border-palette-bg3/10"
+            >
+              <td
+                class="p-2"
+              >
+                ada.stone@example.com
+              </td>
+              <td
+                class="p-2"
+              >
+                01/02/2026
+              </td>
+              <td
+                class="p-2"
+              >
+                Active
+              </td>
+              <td
+                class="p-2"
+              >
+                <button
+                  class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+                  type="button"
+                >
+                  Suspend
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        class="flex flex-wrap items-center justify-between gap-4 py-3 text-sm"
+      >
+        <p
+          aria-live="polite"
         >
           1
-        </button>
-        <button
-          aria-label="Next page"
-          class="rounded-box px-2 py-1 disabled:opacity-40"
-          disabled=""
-          type="button"
+          –
+          1
+           of 
+          1
+        </p>
+        <nav
+          aria-label="Pagination"
+          class="flex gap-1"
         >
-          ›
-        </button>
-      </nav>
+          <button
+            aria-label="Previous page"
+            class="rounded-box px-2 py-1 disabled:opacity-40"
+            disabled=""
+            type="button"
+          >
+            ‹
+          </button>
+          <button
+            aria-current="page"
+            aria-label="Page 1"
+            class="rounded-box px-2 py-1 bg-third text-palette-white"
+            type="button"
+          >
+            1
+          </button>
+          <button
+            aria-label="Next page"
+            class="rounded-box px-2 py-1 disabled:opacity-40"
+            disabled=""
+            type="button"
+          >
+            ›
+          </button>
+        </nav>
+      </div>
     </div>
   </div>
 </main>

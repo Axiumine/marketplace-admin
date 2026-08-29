@@ -28,6 +28,12 @@
 # queries/usersActiveTbl.mts, mutations/userUpdateStatus.mts and types/GraphQLUserActiveTbl.mts,
 # GraphQLUsersActiveTblPage.mts, GraphQLUsersTblSort.mts, as they stood after E19-S02 and E19-S03.
 #
+# The customers counters — `usersStats`, `usersPerPeriod` and the two types under them — were
+# transcribed on 2026-08-29 against queries/usersStats.mts, queries/usersPerPeriod.mts and
+# types/GraphQLUsersPeriod.mts, GraphQLUsersPerPeriod.mts, as they stood after the platform owner
+# answered E19 §6 question 2. `GraphQLPeriodGranularity` is NOT duplicated for them: the service moved
+# that enum out of the shopOwner file and both series now answer with the same one.
+#
 # This is the only endpoint that serves domain data to the operator app. Everything the app queries
 # that is not login / refresh / logout goes here.
 
@@ -167,6 +173,29 @@ type QueriesApi {
 		sortBy: GraphQLUsersTblSortField! = REGISTERED_AT
 		sortDir: GraphQLSortDirection! = DESC
 	): GraphQLUsersActiveTblPage!
+
+	"""
+	Headline count of customers. Unfiltered — every account ever registered, including the disabled and
+	the soft-deleted — and so NOT `total` from `usersActiveTbl`, which is the size of one filtered page's
+	set and moves with the status filter.
+
+	⚠️ Countable despite ADR-029, and that is not an oversight in either direction: a count reads no
+	field at all, and the series below reads only `registeredAt`, which was never encrypted. The
+	encryption blocks searching and sorting on `user` (see `usersActiveTbl`), not counting it.
+	"""
+	usersStats: Int!
+
+	"""
+	The customers-over-time series behind the customers chart. Unfiltered on the same terms as
+	`usersStats`, so the points sum to that number.
+
+	Same contract as `shopOwnersPerPeriod`, field for field: `granularity` is a RESPONSE field because
+	the bucket width is a consequence of the range, `ALL` answers one point per month and the two
+	bounded ranges one per day, buckets are UTC, and `date` is `YYYY-MM-DD` in both granularities. The
+	service shares one library between the two series, so they cannot drift in arithmetic — only in
+	which collection they count.
+	"""
+	usersPerPeriod(period: GraphQLUsersPeriod! = ALL): GraphQLUsersPerPeriod!
 }
 
 type MutationsApi {
@@ -640,6 +669,43 @@ type GraphQLShopOwnersPerPeriodPoint {
 	"""
 	Registrations in this bucket. Gaps are filled server-side, so an empty bucket is present with `0`
 	rather than absent — the series is contiguous and the client never interpolates.
+	"""
+	total: Int!
+}
+
+"""
+How far back the customers chart looks. `ALL` runs from the month the first customer registered in to
+the current one; the other two are counted back from today, clamped the same way.
+
+⚠️ A second enum with the same three members rather than one shared range, on the service's own terms:
+the descriptions differ (the first shopOwner and the first customer are different dates), and one
+`GraphQLPeriod` would make the two charts' arguments interchangeable in a query document.
+"""
+enum GraphQLUsersPeriod {
+	ALL
+	THREE_MONTHS
+	ONE_MONTH
+}
+
+"""
+Structurally identical to `GraphQLShopOwnersPerPeriod`, and deliberately not the same type — see
+`GraphQLUsersPeriod`. `granularity` is the shared `GraphQLPeriodGranularity`, which names bucket widths
+and belongs to neither collection.
+"""
+type GraphQLUsersPerPeriod {
+	granularity: GraphQLPeriodGranularity!
+	points: [GraphQLUsersPerPeriodPoint!]!
+}
+
+type GraphQLUsersPerPeriodPoint {
+	"""
+	Bucket start, `YYYY-MM-DD`, on the same terms as the shopOwner point: built with `$dateToString` in
+	the aggregation, so a String on the wire in both granularities.
+	"""
+	date: String!
+
+	"""
+	Registrations in this bucket. Gaps are filled server-side — an empty bucket is present with `0`.
 	"""
 	total: Int!
 }

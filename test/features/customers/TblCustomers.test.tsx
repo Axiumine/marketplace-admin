@@ -18,6 +18,13 @@ import { renderRoute } from '../../helpers/render'
 const CUSTOMERS = '/customers'
 
 /**
+ * The counter and the chart that sit above the table on the same page. Every test here has to answer
+ * their two operations or the requests throw unconfigured — left pending, since nothing below reads
+ * either of them and a settled reply would only add noise to the DOM these assertions search.
+ */
+const ABOVE = { UsersStats: { pending: true }, UsersPerPeriod: { pending: true } }
+
+/**
  * ⚠️ The `__typename` is load-bearing, exactly as in the session console's fixture: urql's document cache
  * invalidates by the typenames a *response* carries, and `userUpdateStatus` answers a bare `Boolean` that
  * carries none. A fixture without it would make the table's `additionalTypenames` look like decoration —
@@ -175,7 +182,7 @@ describe('reasonProblem', () => {
 
 describe('TblCustomers', () => {
 	it('waits before claiming the list is empty', async () => {
-		stubGraphQL({ UsersActiveTbl: { pending: true } })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: { pending: true } })
 		await renderRoute(CUSTOMERS)
 
 		expect(screen.getByText('Loading customers')).toBeInTheDocument()
@@ -183,7 +190,7 @@ describe('TblCustomers', () => {
 	})
 
 	it('renders a row per customer', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer(), OTHER]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer(), OTHER]) })
 		await renderRoute(CUSTOMERS)
 
 		const cells = within(await rowOf('ada.stone@example.com'))
@@ -199,7 +206,7 @@ describe('TblCustomers', () => {
 	 * is somebody adding the column they happen to want.
 	 */
 	it('shows the four columns the collection can answer for, and no others', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		await screen.findByText('ada.stone@example.com')
@@ -217,7 +224,7 @@ describe('TblCustomers', () => {
 	 * The status dropdown is the screen's only filter, and it filters on the two clear flags.
 	 */
 	it('offers no free-text search', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		await screen.findByText('ada.stone@example.com')
@@ -232,13 +239,13 @@ describe('TblCustomers', () => {
 	 * says which ordering is on screen.
 	 */
 	it('asks the server for one page of live, enabled accounts, newest first', async () => {
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		await waitFor(() => {
-			expect(stub.calls).toHaveLength(1)
+			expect(callsTo(stub.calls, 'UsersActiveTbl')).toHaveLength(1)
 		})
-		expect(stub.calls[0]?.variables).toEqual({
+		expect(callsTo(stub.calls, 'UsersActiveTbl')[0]?.variables).toEqual({
 			offset: 0,
 			limit: 20,
 			disabled: false,
@@ -255,13 +262,13 @@ describe('TblCustomers', () => {
 	 * validation errors, which is an emptied table in exchange for a parameter that could never have worked.
 	 */
 	it('sends neither a search term nor a sort column a URL invented', async () => {
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(`${CUSTOMERS}?search=stone&sortBy=EMAIL`)
 
 		await waitFor(() => {
-			expect(stub.calls).toHaveLength(1)
+			expect(callsTo(stub.calls, 'UsersActiveTbl')).toHaveLength(1)
 		})
-		expect(stub.calls[0]?.variables).toEqual({
+		expect(callsTo(stub.calls, 'UsersActiveTbl')[0]?.variables).toEqual({
 			offset: 0,
 			limit: 20,
 			disabled: false,
@@ -272,11 +279,11 @@ describe('TblCustomers', () => {
 	})
 
 	it('asks for the suspended accounts when the URL says so', async () => {
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer({ disabled: true })]) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer({ disabled: true })]) })
 		await renderRoute(`${CUSTOMERS}?status=suspended`)
 
 		await waitFor(() => {
-			expect(stub.calls[0]?.variables).toMatchObject({ disabled: true, deleted: false })
+			expect(callsTo(stub.calls, 'UsersActiveTbl')[0]?.variables).toMatchObject({ disabled: true, deleted: false })
 		})
 		expect(screen.getByLabelText('Status')).toHaveValue('suspended')
 	})
@@ -284,7 +291,7 @@ describe('TblCustomers', () => {
 	// Back to the first page: the two sets are different sizes, and page 7 of the one the operator was
 	// standing on is very often past the end of the one they asked for.
 	it('pushes a chosen filter into the URL and returns to the first page', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()], 100) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()], 100) })
 		const { router } = await renderRoute(`${CUSTOMERS}?page=4`)
 
 		await userEvent.selectOptions(screen.getByLabelText('Status'), 'suspended')
@@ -293,16 +300,16 @@ describe('TblCustomers', () => {
 	})
 
 	it('turns the page number into an offset', async () => {
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer()], 100) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()], 100) })
 		await renderRoute(`${CUSTOMERS}?page=3&pageSize=25`)
 
 		await waitFor(() => {
-			expect(stub.calls[0]?.variables).toMatchObject({ offset: 50, limit: 25 })
+			expect(callsTo(stub.calls, 'UsersActiveTbl')[0]?.variables).toMatchObject({ offset: 50, limit: 25 })
 		})
 	})
 
 	it('flips the sort direction from the registered-date header, and returns to the first page', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()], 100) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()], 100) })
 		const { router } = await renderRoute(`${CUSTOMERS}?page=4`)
 
 		await userEvent.click(await screen.findByRole('button', { name: 'Registered' }))
@@ -311,14 +318,14 @@ describe('TblCustomers', () => {
 	})
 
 	it('tells assistive technology which way the one sortable column runs', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		expect(await screen.findByRole('columnheader', { name: 'Registered' })).toHaveAttribute('aria-sort', 'descending')
 	})
 
 	it('reports an ascending sort as ascending', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(`${CUSTOMERS}?sortDir=ASC`)
 
 		expect(await screen.findByRole('columnheader', { name: 'Registered' })).toHaveAttribute('aria-sort', 'ascending')
@@ -330,7 +337,7 @@ describe('TblCustomers', () => {
 	 * validation, and an `aria-sort` would promise a screen-reader user an ordering that does not exist.
 	 */
 	it('offers no sort on the columns the service cannot order by', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		await screen.findByText('ada.stone@example.com')
@@ -346,7 +353,7 @@ describe('TblCustomers', () => {
 	 * Left as bare headers it reads as a screen that failed to load.
 	 */
 	it('says so when the filter matches nobody', async () => {
-		stubGraphQL({ UsersActiveTbl: page([]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([]) })
 		await renderRoute(CUSTOMERS)
 
 		expect(await screen.findByText('No customer found.')).toBeInTheDocument()
@@ -355,7 +362,7 @@ describe('TblCustomers', () => {
 	// A page that never arrived is not a page with no rows, and the mapping has to survive both — the
 	// `?? []` fallback is the only thing between a failed query and a `.map` over `undefined`.
 	it('draws no rows at all when the query brought no page back', async () => {
-		stubGraphQL({ UsersActiveTbl: { errors: [graphQLError('Error', 'List unavailable', 500)], status: 500 } })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: { errors: [graphQLError('Error', 'List unavailable', 500)], status: 500 } })
 		await renderRoute(CUSTOMERS)
 
 		expect(await screen.findByText('No customer found.')).toBeInTheDocument()
@@ -364,14 +371,14 @@ describe('TblCustomers', () => {
 	})
 
 	it('sizes the pager from the server total, not from the rows on screen', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer(), OTHER], 41) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer(), OTHER], 41) })
 		await renderRoute(CUSTOMERS)
 
 		expect(await screen.findByText('1–20 of 41')).toBeInTheDocument()
 	})
 
 	it('pages through the result set', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()], 41) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()], 41) })
 		const { router } = await renderRoute(CUSTOMERS)
 
 		await userEvent.click(await screen.findByRole('button', { name: 'Page 3' }))
@@ -389,7 +396,7 @@ describe('TblCustomers', () => {
 	 */
 	it('opens a reason form instead of writing, and names the account in it', async () => {
 		const confirm = watchConfirm()
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer(), OTHER]) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer(), OTHER]) })
 		await renderRoute(CUSTOMERS)
 
 		const form = await openSuspendForm('ada.stone@example.com')
@@ -408,7 +415,7 @@ describe('TblCustomers', () => {
 	 * error about a `dependencies` clause — true, and no use to the operator reading it.
 	 */
 	it('refuses a suspension with no reason, and sends nothing', async () => {
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		const form = await openSuspendForm('ada.stone@example.com')
@@ -422,7 +429,7 @@ describe('TblCustomers', () => {
 	// A reason past the cap is refused here too: the service answers 400 to it, and the count under the box
 	// is the only warning an operator gets on the way there.
 	it('refuses a reason past the cap', async () => {
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		const form = await openSuspendForm('ada.stone@example.com')
@@ -441,7 +448,7 @@ describe('TblCustomers', () => {
 	 * verdict on what is in the box now, which by then it is not.
 	 */
 	it('clears the error as the operator types', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		const form = await openSuspendForm('ada.stone@example.com')
@@ -454,7 +461,7 @@ describe('TblCustomers', () => {
 	// Counted off the trimmed value, because that is the string the submit sends and the one the service
 	// measures against its own cap.
 	it('counts down to the cap on the trimmed value', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		const form = await openSuspendForm('ada.stone@example.com')
@@ -469,6 +476,7 @@ describe('TblCustomers', () => {
 	 */
 	it('sends the trimmed reason with the flag, and closes the form', async () => {
 		const stub = stubGraphQL({
+			...ABOVE,
 			UsersActiveTbl: [page([customer()]), page([])],
 			UserUpdateStatus: { data: { userUpdateStatus: true } }
 		})
@@ -491,7 +499,7 @@ describe('TblCustomers', () => {
 	})
 
 	it('sends nothing when the form is cancelled', async () => {
-		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		const form = await openSuspendForm('ada.stone@example.com')
@@ -504,7 +512,7 @@ describe('TblCustomers', () => {
 	// A cancelled reason must not turn up in the next one. The state is per-form and cleared on both ways
 	// out, so the box an operator opens is always empty.
 	it('opens the next form with an empty box', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer(), OTHER]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer(), OTHER]) })
 		await renderRoute(CUSTOMERS)
 
 		const first = await openSuspendForm('ada.stone@example.com')
@@ -522,6 +530,7 @@ describe('TblCustomers', () => {
 	 */
 	it('re-reads the table afterwards and says what happened to the sessions', async () => {
 		const stub = stubGraphQL({
+			...ABOVE,
 			UsersActiveTbl: [page([customer(), OTHER]), page([OTHER])],
 			UserUpdateStatus: { data: { userUpdateStatus: true } }
 		})
@@ -554,6 +563,7 @@ describe('TblCustomers', () => {
 	it('re-enables a suspended customer without asking, and clears the reason', async () => {
 		const confirm = watchConfirm()
 		const stub = stubGraphQL({
+			...ABOVE,
 			UsersActiveTbl: page([customer({ disabled: true, disabledReason: 'Chargeback fraud, ticket 4471.' })]),
 			UserUpdateStatus: { data: { userUpdateStatus: true } }
 		})
@@ -579,7 +589,10 @@ describe('TblCustomers', () => {
 	 * for; it is decrypted here because here is who it was written for.
 	 */
 	it('shows the stored reason under the status of a suspended row', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer({ disabled: true, disabledReason: 'Chargeback fraud, ticket 4471.' })]) })
+		stubGraphQL({
+			...ABOVE,
+			UsersActiveTbl: page([customer({ disabled: true, disabledReason: 'Chargeback fraud, ticket 4471.' })])
+		})
 		await renderRoute(`${CUSTOMERS}?status=suspended`)
 
 		const cells = within(await rowOf('ada.stone@example.com'))
@@ -592,7 +605,7 @@ describe('TblCustomers', () => {
 	 * would claim a reason was recorded; saying only "Suspended" is what actually happened.
 	 */
 	it('says only what it knows about a suspension that predates the reason', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer({ disabled: true })]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer({ disabled: true })]) })
 		await renderRoute(`${CUSTOMERS}?status=suspended`)
 
 		const row = await rowOf('ada.stone@example.com')
@@ -607,6 +620,7 @@ describe('TblCustomers', () => {
 	 */
 	it('reports a refused write and claims nothing', async () => {
 		stubGraphQL({
+			...ABOVE,
 			UsersActiveTbl: page([customer()]),
 			UserUpdateStatus: { errors: [graphQLError('Oops', 'user not found', 404)], status: 404 }
 		})
@@ -628,14 +642,14 @@ describe('TblCustomers', () => {
 	 * reads as erased instead of as active.
 	 */
 	it('renders an erased account as erased rather than as active', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer({ deleted: '2026-05-01T00:00:00.000Z' })]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer({ deleted: '2026-05-01T00:00:00.000Z' })]) })
 		await renderRoute(CUSTOMERS)
 
 		expect(within(await rowOf('ada.stone@example.com')).getByText('Deleted')).toBeInTheDocument()
 	})
 
 	it('renders an unconfirmed registration as awaiting confirmation', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer({ emailVerified: null })]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer({ emailVerified: null })]) })
 		await renderRoute(CUSTOMERS)
 
 		expect(within(await rowOf('ada.stone@example.com')).getByText('Awaiting confirmation')).toBeInTheDocument()
@@ -647,7 +661,7 @@ describe('TblCustomers', () => {
 	 * counter's `aria-live`. None of that is visible to a test that only reads text.
 	 */
 	it('renders the suspension form', async () => {
-		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
 		await openSuspendForm('ada.stone@example.com')
@@ -660,6 +674,7 @@ describe('TblCustomers', () => {
 	// only as text.
 	it('renders', async () => {
 		stubGraphQL({
+			...ABOVE,
 			UsersActiveTbl: page(
 				[
 					customer(),
