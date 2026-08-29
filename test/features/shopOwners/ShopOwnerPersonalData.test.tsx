@@ -16,6 +16,12 @@ import { renderRoute } from '../../helpers/render'
 const ID = '65f0000000000000000000f1'
 const DETAIL = `/p/shopOwners/id/${ID}`
 
+/** The operator a standing suspension is stamped with — `disabledBy` holds an `admin` `_id`, not a name. */
+const ADMIN = '65f00000000000000000000a'
+
+/** The refusal ADR-044's `dependencies: { disabled: ['disabledReason'] }` exists to keep off the wire. */
+const REASON_REQUIRED = 'Say why this account is suspended — the reason is stored with the suspension'
+
 /**
  * ⚠️ The `__typename` is not decoration. urql's document cache invalidates by the typenames a *response*
  * mentions, and every write on this page answers a bare `Boolean` that mentions none — so the call sites
@@ -28,6 +34,10 @@ const shopOwner = {
 	registeredAt: '2026-02-01T08:05:45.000Z',
 	deleted: null,
 	disabled: false,
+	// Absent on an account nobody suspended, and a pair rather than a flag since ADR-044: the reason is
+	// what this screen reads back, `disabledBy` is who wrote it, and both are `$unset` when the flag is.
+	disabledBy: null,
+	disabledReason: null,
 	waitApprov: false,
 	login: {
 		email: 'mark@rivers.test',
@@ -218,10 +228,31 @@ describe('ShopOwnerPersonalData', () => {
 
 		await screen.findByText('Mark')
 		expect(rowValue('Account status', 'Disabled')).toBe('No')
+		expect(rowValue('Account status', 'Suspension reason')).toBe('---')
+		expect(rowValue('Account status', 'Suspended by')).toBe('---')
 		expect(rowValue('Account status', 'Deleted on')).toBe('---')
 		expect(rowValue('Account status', 'Registered')).toBe('1 February 2026 at 08:05:45')
 		expect(rowValue('Account status', 'First login')).toBe('2 February 2026 at 09:00:00')
 		expect(rowValue('Account status', 'Last login')).toBe('1 March 2026 at 18:30:00')
+	})
+
+	/*
+	 * The two halves of a standing suspension, since ADR-044: what was written and who wrote it.
+	 *
+	 * ⚠️ `disabledBy` is the operator's `_id` rather than a name, and it is shown as one. The Admin tier
+	 * has no query that turns an operator id into an email, and inventing a lookup here would mean a
+	 * second read on every detail page for a row that is empty on almost all of them — the id is what the
+	 * document holds and what an audit trail is followed by.
+	 */
+	it('shows a standing suspension and the operator who raised it', async () => {
+		stubGraphQL(detail({ disabled: true, disabledBy: ADMIN, disabledReason: 'Chargeback fraud, ticket 4471.' }))
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		expect(screen.getByRole('region', { name: 'Account status' })).toHaveClass('account-disabled')
+		expect(rowValue('Account status', 'Disabled')).toBe('Yes')
+		expect(rowValue('Account status', 'Suspension reason')).toBe('Chargeback fraud, ticket 4471.')
+		expect(rowValue('Account status', 'Suspended by')).toBe(ADMIN)
 	})
 
 	it('tints the box of a deleted account', async () => {
@@ -340,6 +371,20 @@ const write = (label: string, value: string) => {
 }
 
 const save = () => screen.getByRole('button', { name: 'Save' })
+
+/**
+ * Tick "Disabled" and say why, which since ADR-044 is one gesture rather than two.
+ *
+ * ⚠️ The reason is mandatory beside the flag — `dependencies: { disabled: ['disabledReason'] }` on the
+ * collection refuses the pair without it — so a test that ticked the box alone would be testing a save
+ * the form now refuses, not the write it used to send.
+ */
+const suspend = async (reason = 'Chargeback fraud, ticket 4471.') => {
+	await open('Disabled')
+	await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+	await open('Suspension reason')
+	write('Suspension reason', reason)
+}
 
 /**
  * A refusal that is `false` with no error at all.
@@ -509,15 +554,92 @@ describe('ShopOwnerPersonalData — editing', () => {
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mark')
-		await open('Disabled')
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await suspend()
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
 		expect(writes(stub)).toEqual([
 			expect.objectContaining({
 				operationName: 'ShopOwnerUpdateStatus',
-				variables: { _id: ID, disabled: true, waitApprov: false }
+				variables: { _id: ID, disabled: true, waitApprov: false, disabledReason: 'Chargeback fraud, ticket 4471.' }
+			})
+		])
+	})
+
+	/*
+	 * ADR-044's whole point at this end: the flag alone is not a suspension the collection will take.
+	 * `dependencies: { disabled: ['disabledReason'] }` refuses the pair without a reason, so a form that
+	 * let the tick through on its own would turn an operator's click into a write error rather than into
+	 * a sanction — and the operator would read it as the account being unsuspendable.
+	 */
+	it('refuses to suspend without a reason', async () => {
+		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		await open('Disabled')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await open('Suspension reason')
+		await userEvent.click(save())
+
+		expect(await page().findByText(REASON_REQUIRED)).toBeInTheDocument()
+		expect(within(await screen.findByRole('alert')).getByText(REASON_REQUIRED)).toBeInTheDocument()
+		expect(writes(stub)).toEqual([])
+	})
+
+	/*
+	 * The same refusal with the reason row still closed, which is the way an operator actually meets it:
+	 * the box is one row below the tick and there is no reason to open it until something says so.
+	 *
+	 * ⚠️ `page()` scopes to `main` and the toast portals to `body`, so this assertion is the toast and
+	 * only the toast — and the toast is the whole point here. With the row closed the message has no box
+	 * to sit under, so a form that relied on the red border alone would refuse the save and say nothing
+	 * at all.
+	 */
+	it('says why it refused even with the reason row closed', async () => {
+		const stub = stubGraphQL({ ...detail(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		await open('Disabled')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await userEvent.click(save())
+
+		const toast = within(await screen.findByRole('alert'))
+
+		expect(toast.getByText(VALIDATION_HEADER)).toBeInTheDocument()
+		expect(toast.getByText(REASON_REQUIRED)).toBeInTheDocument()
+		expect(page().queryByText(REASON_REQUIRED)).not.toBeInTheDocument()
+		expect(writes(stub)).toEqual([])
+	})
+
+	/*
+	 * Correcting the reason of a suspension that already stands, without touching either flag.
+	 *
+	 * The reason is part of the status group rather than a field of its own, so it is the group's dirty
+	 * check that has to notice it — `FIELDS_STATUS.some(...)` over three names, not two. Left out, this
+	 * save sends nothing at all and the page reports success over a reason nobody stored.
+	 */
+	it('sends the status write when only the reason changed', async () => {
+		const stub = stubGraphQL({
+			...detail({ disabled: true, disabledBy: ADMIN, disabledReason: 'Suspected chargeback ring.' }),
+			ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } }
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		await open('Suspension reason')
+
+		expect(screen.getByLabelText('Suspension reason')).toHaveValue('Suspected chargeback ring.')
+
+		write('Suspension reason', 'Chargeback fraud, ticket 4471.')
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writes(stub)).toEqual([
+			expect.objectContaining({
+				operationName: 'ShopOwnerUpdateStatus',
+				variables: { _id: ID, disabled: true, waitApprov: false, disabledReason: 'Chargeback fraud, ticket 4471.' }
 			})
 		])
 	})
@@ -667,8 +789,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mark')
-		await open('Disabled')
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await suspend()
 		await userEvent.click(save())
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
@@ -795,8 +916,7 @@ describe('ShopOwnerPersonalData — editing', () => {
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mark')
-		await open('Disabled')
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await suspend()
 		await userEvent.click(save())
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Status not updatable')
@@ -1310,6 +1430,8 @@ const pending = {
 	registeredAt: '2026-04-02T09:30:00.000Z',
 	deleted: null,
 	disabled: null,
+	disabledBy: null,
+	disabledReason: null,
 	waitApprov: true,
 	login: {
 		email: 'new.seller@example.com',
@@ -1434,7 +1556,9 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 		expect(writes(stub)).toEqual([
 			expect.objectContaining({
 				operationName: 'ShopOwnerUpdateStatus',
-				variables: { _id: ID, disabled: false, waitApprov: false }
+				// ⚠️ `disabledReason: null` and not an omitted field: the service `$unset`s the reason with the
+				// flag, and a missing variable would read as "leave it as it was".
+				variables: { _id: ID, disabled: false, waitApprov: false, disabledReason: null }
 			})
 		])
 	})
@@ -1451,15 +1575,19 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 		await renderRoute(DETAIL)
 
 		await screen.findByText('new.seller@example.com')
-		await open('Disabled')
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await suspend('Registered with a stolen company number.')
 		await userEvent.click(save())
 
 		await screen.findByText('Changes saved.')
 		expect(writes(stub)).toEqual([
 			expect.objectContaining({
 				operationName: 'ShopOwnerUpdateStatus',
-				variables: { _id: ID, disabled: true, waitApprov: true }
+				variables: {
+					_id: ID,
+					disabled: true,
+					waitApprov: true,
+					disabledReason: 'Registered with a stolen company number.'
+				}
 			})
 		])
 	})

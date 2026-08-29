@@ -2,7 +2,14 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-import { nextDir, outcomeMessage, statusOf, suspendWarning } from '@/features/customers/TblCustomers'
+import {
+	MAX_DISABLED_REASON,
+	nextDir,
+	outcomeMessage,
+	reasonProblem,
+	statusOf,
+	SUSPEND_WARNING
+} from '@/features/customers/TblCustomers'
 
 import type { GraphQLCall } from '../../helpers/graphql'
 import { graphQLError, stubGraphQL } from '../../helpers/graphql'
@@ -25,6 +32,10 @@ const customer = (over: Record<string, unknown> = {}) => ({
 	// invents a `false` tests a document shape the backend cannot produce.
 	disabled: null,
 	deleted: null,
+	// Absent on an account nobody suspended, and a pair rather than a flag since ADR-044: the reason is
+	// what the operator screen reads back, and `disabledBy` is who wrote it.
+	disabledBy: null,
+	disabledReason: null,
 	emailVerified: true,
 	...over
 })
@@ -39,7 +50,23 @@ const page = (items: unknown[], total = items.length) => ({
 	data: { usersActiveTbl: { __typename: 'GraphQLUsersActiveTblPage', total, items } }
 })
 
-const respond = (response: boolean) => vi.spyOn(window, 'confirm').mockReturnValue(response)
+/*
+ * ⚠️ **`window.confirm` is watched rather than stubbed, and that is the point of the helper.** ADR-044
+ * turned the suspension into a form with a mandatory reason, and a native dialog takes no input — so the
+ * screen must not open one. jsdom's own `confirm` throws "not implemented", which would fail loudly, but
+ * only on the path that reached it; a spy asserts the absence on every path.
+ */
+const watchConfirm = () => vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+const openSuspendForm = async (email: string) => {
+	await userEvent.click(within(await rowOf(email)).getByRole('button', { name: 'Suspend' }))
+	return screen.getByRole('group', { name: `Suspend ${email}` })
+}
+
+/** The form's own Suspend, not the row's — both carry the word, and only one of them submits. */
+const submitForm = async (form: HTMLElement) => {
+	await userEvent.click(within(form).getByRole('button', { name: 'Suspend' }))
+}
 
 const callsTo = (calls: readonly GraphQLCall[], operationName: string) =>
 	calls.filter((call) => call.operationName === operationName)
@@ -80,21 +107,21 @@ describe('nextDir', () => {
 	})
 })
 
-describe('the confirmation texts', () => {
-	/*
-	 * ⚠️ The address, because it is what the support ticket carries — and, since ADR-029, the only thing on
-	 * the row that identifies a person at all.
-	 */
-	it('names the account being suspended', () => {
-		expect(suspendWarning('ada.stone@example.com')).toContain('ada.stone@example.com')
-	})
-
+describe('the form texts', () => {
 	/*
 	 * ⚠️ Both halves of every session go since R54, so the device stops working now. A warning about a
 	 * window in which it kept working would send an operator looking for a gap that has been closed.
 	 */
 	it('says the device stops working now rather than when the token expires', () => {
-		expect(suspendWarning('ada.stone@example.com')).toContain('stops working now')
+		expect(SUSPEND_WARNING).toContain('stops working now')
+	})
+
+	/*
+	 * ⚠️ The address is on screen once, in the form's heading — asserted there rather than here. A warning
+	 * that opened by naming it again would print it twice, three lines apart.
+	 */
+	it('leaves the address to the heading', () => {
+		expect(SUSPEND_WARNING).not.toContain('@')
 	})
 
 	it('reports the sessions as part of the outcome, and where the row went', () => {
@@ -106,6 +133,43 @@ describe('the confirmation texts', () => {
 
 	it('reports a re-enabled account as able to sign in again', () => {
 		expect(outcomeMessage('ada.stone@example.com', false)).toBe('ada.stone@example.com can sign in again.')
+	})
+})
+
+/**
+ * ⚠️ **The reason is mandatory at the collection, which is why it is checked here at all.** ADR-044 put
+ * `dependencies: { disabled: ['disabledReason'] }` on `user`, so a suspension without one is not a
+ * suspension with a blank note — it is a write the server refuses, reported to the operator as an error
+ * about a validator. The cap is the service's, not the collection's: the field is randomly encrypted, so
+ * `$jsonSchema` sees `binData` and cannot measure a string it may not read.
+ */
+describe('reasonProblem', () => {
+	it('refuses an empty box, saying what the reason is for', () => {
+		expect(reasonProblem('')).toContain('why this account is being suspended')
+	})
+
+	// Whitespace is not a reason. A box holding a newline would otherwise satisfy a required field while
+	// telling the next operator to read it precisely nothing.
+	it('refuses a box holding nothing but whitespace', () => {
+		expect(reasonProblem('  \n\t ')).toContain('why this account is being suspended')
+	})
+
+	it('accepts a reason', () => {
+		expect(reasonProblem('Chargeback fraud, ticket 4471.')).toBeUndefined()
+	})
+
+	it('accepts a reason of exactly the cap', () => {
+		expect(reasonProblem('x'.repeat(MAX_DISABLED_REASON))).toBeUndefined()
+	})
+
+	it('refuses one character past it', () => {
+		expect(reasonProblem('x'.repeat(MAX_DISABLED_REASON + 1))).toBe(`The reason cannot exceed ${MAX_DISABLED_REASON} characters`)
+	})
+
+	// Measured after the trim, because the trimmed string is what the submit sends — a reason refused for
+	// the trailing newline the operator never typed on purpose would be refused for nothing.
+	it('measures the trimmed length, not the typed one', () => {
+		expect(reasonProblem(`  ${'x'.repeat(MAX_DISABLED_REASON)}  `)).toBeUndefined()
 	})
 })
 
@@ -316,34 +380,139 @@ describe('TblCustomers', () => {
 	})
 
 	/**
-	 * ⚠️ A confirmation first, because the click ends every session the customer holds — it is the session
-	 * console's "end every session" with a flag attached, not a checkbox.
+	 * ⚠️ **The row's Suspend button writes nothing, and that is the whole of ADR-044 on this screen.** The
+	 * reason is mandatory at the collection, so the click can only open the form that collects it — a
+	 * mutation fired here would be one the server refuses.
+	 *
+	 * The heading is what names the address, which is why it is the form's accessible name: an operator
+	 * who opened the form from the wrong row has one thing to read to find out.
 	 */
-	it('asks before suspending, and sends the account it named', async () => {
-		respond(true)
+	it('opens a reason form instead of writing, and names the account in it', async () => {
+		const confirm = watchConfirm()
+		const stub = stubGraphQL({ UsersActiveTbl: page([customer(), OTHER]) })
+		await renderRoute(CUSTOMERS)
+
+		const form = await openSuspendForm('ada.stone@example.com')
+
+		expect(confirm).not.toHaveBeenCalled()
+		expect(callsTo(stub.calls, 'UserUpdateStatus')).toHaveLength(0)
+		// ⚠️ Normalised before comparing: testing-library collapses whitespace in the element's text, and the
+		// warning is written with a blank line between its two paragraphs — `whitespace-pre-line` is what
+		// puts that break back on screen, and it is asserted in the snapshot rather than here.
+		expect(within(form).getByText(SUSPEND_WARNING.replace(/\s+/g, ' '))).toBeInTheDocument()
+		expect(within(form).getByLabelText('Reason')).toHaveValue('')
+	})
+
+	/*
+	 * ⚠️ Refused in the browser rather than at the server, because the server's refusal is a validator
+	 * error about a `dependencies` clause — true, and no use to the operator reading it.
+	 */
+	it('refuses a suspension with no reason, and sends nothing', async () => {
+		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		await renderRoute(CUSTOMERS)
+
+		const form = await openSuspendForm('ada.stone@example.com')
+		await submitForm(form)
+
+		expect(within(form).getByText(/why this account is being suspended/)).toBeInTheDocument()
+		expect(within(form).getByLabelText('Reason')).toHaveAttribute('aria-invalid', 'true')
+		expect(callsTo(stub.calls, 'UserUpdateStatus')).toHaveLength(0)
+	})
+
+	// A reason past the cap is refused here too: the service answers 400 to it, and the count under the box
+	// is the only warning an operator gets on the way there.
+	it('refuses a reason past the cap', async () => {
+		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		await renderRoute(CUSTOMERS)
+
+		const form = await openSuspendForm('ada.stone@example.com')
+		// `fireEvent.change` in spirit — typing a thousand characters one keystroke at a time is minutes of
+		// test time for a value `paste` sets in one event.
+		await userEvent.click(within(form).getByLabelText('Reason'))
+		await userEvent.paste('x'.repeat(MAX_DISABLED_REASON + 1))
+		await submitForm(form)
+
+		expect(within(form).getByText(`The reason cannot exceed ${MAX_DISABLED_REASON} characters`)).toBeInTheDocument()
+		expect(callsTo(stub.calls, 'UserUpdateStatus')).toHaveLength(0)
+	})
+
+	/*
+	 * The error goes as the operator types rather than on the next submit. Left standing it reads as a
+	 * verdict on what is in the box now, which by then it is not.
+	 */
+	it('clears the error as the operator types', async () => {
+		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		await renderRoute(CUSTOMERS)
+
+		const form = await openSuspendForm('ada.stone@example.com')
+		await submitForm(form)
+		await userEvent.type(within(form).getByLabelText('Reason'), 'C')
+
+		expect(within(form).queryByText(/why this account is being suspended/)).not.toBeInTheDocument()
+	})
+
+	// Counted off the trimmed value, because that is the string the submit sends and the one the service
+	// measures against its own cap.
+	it('counts down to the cap on the trimmed value', async () => {
+		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		await renderRoute(CUSTOMERS)
+
+		const form = await openSuspendForm('ada.stone@example.com')
+		await userEvent.type(within(form).getByLabelText('Reason'), '  Fraud  ')
+
+		expect(within(form).getByText(`${MAX_DISABLED_REASON - 5} characters remaining`)).toBeInTheDocument()
+	})
+
+	/**
+	 * ⚠️ The trimmed reason, because the value is stored and read back by the next operator — and, being
+	 * randomly encrypted, is never normalised by anything downstream that could tidy it later.
+	 */
+	it('sends the trimmed reason with the flag, and closes the form', async () => {
 		const stub = stubGraphQL({
 			UsersActiveTbl: [page([customer()]), page([])],
 			UserUpdateStatus: { data: { userUpdateStatus: true } }
 		})
 		await renderRoute(CUSTOMERS)
 
-		await userEvent.click(within(await rowOf('ada.stone@example.com')).getByRole('button', { name: 'Suspend' }))
+		const form = await openSuspendForm('ada.stone@example.com')
+		await userEvent.click(within(form).getByLabelText('Reason'))
+		await userEvent.paste('  Chargeback fraud, ticket 4471.  ')
+		await submitForm(form)
 
-		expect(window.confirm).toHaveBeenCalledWith(suspendWarning('ada.stone@example.com'))
 		await waitFor(() => {
 			expect(callsTo(stub.calls, 'UserUpdateStatus')).toHaveLength(1)
 		})
-		expect(callsTo(stub.calls, 'UserUpdateStatus')[0]?.variables).toEqual({ _id: '65f0000000000000000000c1', disabled: true })
+		expect(callsTo(stub.calls, 'UserUpdateStatus')[0]?.variables).toEqual({
+			_id: '65f0000000000000000000c1',
+			disabled: true,
+			disabledReason: 'Chargeback fraud, ticket 4471.'
+		})
+		expect(screen.queryByRole('group', { name: /^Suspend / })).not.toBeInTheDocument()
 	})
 
-	it('sends nothing when the confirmation is refused', async () => {
-		respond(false)
+	it('sends nothing when the form is cancelled', async () => {
 		const stub = stubGraphQL({ UsersActiveTbl: page([customer()]) })
 		await renderRoute(CUSTOMERS)
 
-		await userEvent.click(within(await rowOf('ada.stone@example.com')).getByRole('button', { name: 'Suspend' }))
+		const form = await openSuspendForm('ada.stone@example.com')
+		await userEvent.click(within(form).getByRole('button', { name: 'Cancel' }))
 
+		expect(screen.queryByRole('group', { name: /^Suspend / })).not.toBeInTheDocument()
 		expect(callsTo(stub.calls, 'UserUpdateStatus')).toHaveLength(0)
+	})
+
+	// A cancelled reason must not turn up in the next one. The state is per-form and cleared on both ways
+	// out, so the box an operator opens is always empty.
+	it('opens the next form with an empty box', async () => {
+		stubGraphQL({ UsersActiveTbl: page([customer(), OTHER]) })
+		await renderRoute(CUSTOMERS)
+
+		const first = await openSuspendForm('ada.stone@example.com')
+		await userEvent.type(within(first).getByLabelText('Reason'), 'Wrong row')
+		await userEvent.click(within(first).getByRole('button', { name: 'Cancel' }))
+		const second = await openSuspendForm('ben.frost@example.com')
+
+		expect(within(second).getByLabelText('Reason')).toHaveValue('')
 	})
 
 	/**
@@ -352,14 +521,15 @@ describe('TblCustomers', () => {
 	 * account that was just suspended — the wrong answer to "did it work".
 	 */
 	it('re-reads the table afterwards and says what happened to the sessions', async () => {
-		respond(true)
 		const stub = stubGraphQL({
 			UsersActiveTbl: [page([customer(), OTHER]), page([OTHER])],
 			UserUpdateStatus: { data: { userUpdateStatus: true } }
 		})
 		await renderRoute(CUSTOMERS)
 
-		await userEvent.click(within(await rowOf('ada.stone@example.com')).getByRole('button', { name: 'Suspend' }))
+		const form = await openSuspendForm('ada.stone@example.com')
+		await userEvent.type(within(form).getByLabelText('Reason'), 'Fraud')
+		await submitForm(form)
 
 		expect(await screen.findByText(outcomeMessage('ada.stone@example.com', true))).toBeInTheDocument()
 		await waitFor(() => {
@@ -369,16 +539,22 @@ describe('TblCustomers', () => {
 	})
 
 	/**
-	 * ⚠️ Re-enabling ends nothing and asks nothing: the customer simply logs in again. A confirmation here
-	 * would train an operator to click through the one on the other button.
+	 * ⚠️ **Asymmetric on purpose: suspending asks for a reason, enabling asks for nothing.** Lifting a
+	 * suspension ends no session and needs no note — and the platform owner's ruling is that an operator is
+	 * the only one who can lift one at all, so the operator's click is the whole gesture. A second form
+	 * here would train them to click through the one that matters.
+	 *
+	 * ⚠️ **`disabledReason: null` travels with it, and an omitted variable would not do.** The service
+	 * `$unset`s the reason with the flag; a missing field reads as "leave it as it was" and would leave a
+	 * spent reason attached to an account that is no longer suspended.
 	 *
 	 * The button is chosen by the row's own flag rather than by the filter in the URL, which is what this
 	 * asserts: the row is the half that is still right if a cached page and the filter disagree.
 	 */
-	it('re-enables a suspended customer without asking', async () => {
-		const confirm = respond(true)
+	it('re-enables a suspended customer without asking, and clears the reason', async () => {
+		const confirm = watchConfirm()
 		const stub = stubGraphQL({
-			UsersActiveTbl: page([customer({ disabled: true })]),
+			UsersActiveTbl: page([customer({ disabled: true, disabledReason: 'Chargeback fraud, ticket 4471.' })]),
 			UserUpdateStatus: { data: { userUpdateStatus: true } }
 		})
 		await renderRoute(`${CUSTOMERS}?status=suspended`)
@@ -386,13 +562,42 @@ describe('TblCustomers', () => {
 		await userEvent.click(within(await rowOf('ada.stone@example.com')).getByRole('button', { name: 'Enable' }))
 
 		expect(confirm).not.toHaveBeenCalled()
+		expect(screen.queryByRole('group', { name: /^Suspend / })).not.toBeInTheDocument()
 		await waitFor(() => {
 			expect(callsTo(stub.calls, 'UserUpdateStatus')[0]?.variables).toEqual({
 				_id: '65f0000000000000000000c1',
-				disabled: false
+				disabled: false,
+				disabledReason: null
 			})
 		})
 		expect(await screen.findByText(outcomeMessage('ada.stone@example.com', false))).toBeInTheDocument()
+	})
+
+	/**
+	 * ⚠️ **The one screen on the platform where the reason is legible.** `disabledReason` is randomly
+	 * encrypted (ADR-044), so the ShopOwner- and User-tier services hold ciphertext they have no data key
+	 * for; it is decrypted here because here is who it was written for.
+	 */
+	it('shows the stored reason under the status of a suspended row', async () => {
+		stubGraphQL({ UsersActiveTbl: page([customer({ disabled: true, disabledReason: 'Chargeback fraud, ticket 4471.' })]) })
+		await renderRoute(`${CUSTOMERS}?status=suspended`)
+
+		const cells = within(await rowOf('ada.stone@example.com'))
+		expect(cells.getByText('Suspended')).toBeInTheDocument()
+		expect(cells.getByText('Chargeback fraud, ticket 4471.')).toBeInTheDocument()
+	})
+
+	/*
+	 * ⚠️ A suspension raised before ADR-044 carries the flag and no reason. Printing an empty line under it
+	 * would claim a reason was recorded; saying only "Suspended" is what actually happened.
+	 */
+	it('says only what it knows about a suspension that predates the reason', async () => {
+		stubGraphQL({ UsersActiveTbl: page([customer({ disabled: true })]) })
+		await renderRoute(`${CUSTOMERS}?status=suspended`)
+
+		const row = await rowOf('ada.stone@example.com')
+		expect(within(row).getByText('Suspended')).toBeInTheDocument()
+		expect(within(row).getByRole('cell', { name: 'Suspended' })).toBeInTheDocument()
 	})
 
 	/**
@@ -401,24 +606,26 @@ describe('TblCustomers', () => {
 	 * account is suspended stops watching it.
 	 */
 	it('reports a refused write and claims nothing', async () => {
-		respond(true)
 		stubGraphQL({
 			UsersActiveTbl: page([customer()]),
 			UserUpdateStatus: { errors: [graphQLError('Oops', 'user not found', 404)], status: 404 }
 		})
 		await renderRoute(CUSTOMERS)
 
-		await userEvent.click(within(await rowOf('ada.stone@example.com')).getByRole('button', { name: 'Suspend' }))
+		const form = await openSuspendForm('ada.stone@example.com')
+		await userEvent.type(within(form).getByLabelText('Reason'), 'Fraud')
+		await submitForm(form)
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('user not found')
 		expect(screen.queryByText(outcomeMessage('ada.stone@example.com', true))).not.toBeInTheDocument()
 	})
 
 	/**
-	 * ⚠️ A fixture the service cannot send today, and deliberately so: nothing on any tier writes
-	 * `user.deleted` (E19 §6, question 3). The row is here because the column reads the flag rather than
-	 * inferring the state from the filter — the day an erasure path lands, an erased account must not read
-	 * as "Active" on the operator's screen.
+	 * ⚠️ **No longer a hypothetical fixture.** `userDel` ships on the customer tier since 2026-08-26, so a
+	 * closed account is a document this service really can send. The screen still has no filter that asks
+	 * for one — that is E19 §6 question 3, an operator has no lever over a closed account — but the column
+	 * reads the flag rather than inferring the state from the filter, so one arriving on a cached page
+	 * reads as erased instead of as active.
 	 */
 	it('renders an erased account as erased rather than as active', async () => {
 		stubGraphQL({ UsersActiveTbl: page([customer({ deleted: '2026-05-01T00:00:00.000Z' })]) })
@@ -434,12 +641,35 @@ describe('TblCustomers', () => {
 		expect(within(await rowOf('ada.stone@example.com')).getByText('Awaiting confirmation')).toBeInTheDocument()
 	})
 
+	/**
+	 * The form as markup, which is where its accessibility lives: the heading that labels the group, the
+	 * `whitespace-pre-line` that keeps the warning's paragraph break, the label bound to the box, and the
+	 * counter's `aria-live`. None of that is visible to a test that only reads text.
+	 */
+	it('renders the suspension form', async () => {
+		stubGraphQL({ UsersActiveTbl: page([customer()]) })
+		await renderRoute(CUSTOMERS)
+
+		await openSuspendForm('ada.stone@example.com')
+
+		expect(screen.getByRole('group', { name: 'Suspend ada.stone@example.com' })).toMatchSnapshot()
+	})
+
 	// Both row shapes in one snapshot: the enabled account with its Suspend button, and the suspended one
-	// with its Enable button, so the two controls are pinned as markup rather than only as text.
+	// with its Enable button and the reason under its status, so all three are pinned as markup rather than
+	// only as text.
 	it('renders', async () => {
 		stubGraphQL({
 			UsersActiveTbl: page(
-				[customer(), customer({ _id: '65f0000000000000000000c3', email: 'cara.lane@example.com', disabled: true })],
+				[
+					customer(),
+					customer({
+						_id: '65f0000000000000000000c3',
+						email: 'cara.lane@example.com',
+						disabled: true,
+						disabledReason: 'Chargeback fraud, ticket 4471.'
+					})
+				],
 				41
 			)
 		})

@@ -106,6 +106,8 @@ export const ShopOwnerByIdDocument = graphql(`
 			registeredAt
 			deleted
 			disabled
+			disabledBy
+			disabledReason
 			waitApprov
 			notes
 			login {
@@ -315,6 +317,8 @@ export const UsersActiveTblDocument = graphql(`
 				registeredAt
 				email
 				disabled
+				disabledBy
+				disabledReason
 				deleted
 				emailVerified
 			}

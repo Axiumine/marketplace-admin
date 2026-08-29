@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/Button'
 import { Pagination } from '@/components/ui/Pagination'
 import { SelectField } from '@/components/ui/SelectField'
 import { Spinner } from '@/components/ui/Spinner'
+import { TextareaField } from '@/components/ui/TextareaField'
 import { Toast } from '@/components/ui/Toast'
 import { formatDate } from '@/lib/format'
 
@@ -25,11 +26,12 @@ import { formatDate } from '@/lib/format'
  * on a collection that only grows. So suspending a customer does not grey their row: it moves them to the
  * other page, and the confirmation below says where they went.
  *
- * ⚠️ **There is no third `deleted` value here, and its absence is not an oversight.** Nothing on any tier
- * writes `user.deleted` — there is no `userDel` and a customer cannot close their own account either
- * (E19 §6, question 3) — so a "Deleted" option would be a view that is empty by construction. The day an
- * erasure path lands it is one entry in this table, one member in the route's zod enum, and the row's
- * status column already reads the flag.
+ * ⚠️ **There is no third `deleted` value here, and its absence is now a gap rather than a tautology.**
+ * `userDel` ships on the customer tier since 2026-08-26, so closed accounts exist and this screen cannot
+ * reach them: the filter would be one entry in this table, one member in the route's zod enum, and the
+ * row's status column already reads the flag. What it is waiting on is a decision, not code — an operator
+ * has no lever over a closed account (there is no Admin counterpart to `shopOwnerDel`, E19 §6 question 3),
+ * so a Closed view today would list accounts and offer nothing to do with them.
  */
 export type CustomerStatus = 'active' | 'suspended'
 
@@ -89,6 +91,14 @@ interface Row {
 	registeredAt: string
 	status: string
 	disabled: boolean
+	/**
+	 * Why this account was suspended, and `null` on every account that is not.
+	 *
+	 * ⚠️ **This screen is the only place it can be read at all.** `disabledReason` is randomly encrypted
+	 * (ADR-044), so the shop-owner and customer services hold ciphertext they have no data key for — the
+	 * operator surface decrypts it because it is the surface the reason was written for.
+	 */
+	reason: string | null
 }
 
 /**
@@ -110,20 +120,55 @@ export const statusOf = (row: { disabled: boolean | null; deleted: string | null
 }
 
 /**
- * The confirmation for suspending a customer, in the browser's own dialog.
+ * The warning above the reason box, and the same prose the browser dialog used to carry.
  *
- * ⚠️ It names the address rather than the id, because the address is what the support ticket carries — it
- * is also the only thing on the row that identifies a person at all, which is the point of ADR-029.
+ * ⚠️ **No longer `window.confirm`, and that dialog could not have survived ADR-044.** A suspension now
+ * carries a mandatory reason, and a native confirm takes no input — `window.prompt` would, and would then
+ * be a required field with no label, no error line and no count against a cap the service enforces at
+ * 1000. So the prose moved into a panel and kept its wording; `whitespace-pre-line` is what still renders
+ * the paragraph break it was written with.
+ *
+ * ⚠️ **It no longer opens by naming the address, because the form's heading does.** The address is what
+ * the support ticket carries and the only thing on the row that identifies a person at all — the point of
+ * ADR-029 — so it is still on screen, once rather than twice.
  *
  * ⚠️ It states what the click actually reaches, and since R54 that is both halves of every session: the
  * refresh lineage and the access token it minted. Warning about a window in which the device kept working
  * would send an operator looking for a gap that has been closed.
  */
-export const suspendWarning = (email: string) =>
-	`Suspend ${email}?\n\n` +
+export const SUSPEND_WARNING =
 	'They are signed out of every device now, and cannot sign in again until the account is re-enabled.\n\n' +
 	'Their access token ends with the sessions, so the device they are on stops working now rather than ' +
 	'when the token would have expired.'
+
+/**
+ * The cap the service enforces, restated here so the box can count down to it (ADR-044).
+ *
+ * ⚠️ **The collection does not carry this bound and never will.** `disabledReason` is randomly encrypted,
+ * so `$jsonSchema` sees `binData` and cannot measure a string it is not allowed to read — the service's
+ * own check is the only one there is, and this constant is the only warning an operator gets before it
+ * answers 400.
+ */
+export const MAX_DISABLED_REASON = 1000
+
+/**
+ * Why the suspension is being applied, refused empty (ADR-044).
+ *
+ * ⚠️ **Mandatory, and not as a house style.** `dependencies: { disabled: ['disabledReason'] }` on the
+ * collection refuses the flag without the reason, so a form that let this through would not suspend
+ * somebody with no note on file — it would fail the write and leave the operator looking at an error
+ * about a validator.
+ *
+ * Trimmed before both checks, because whitespace is not a reason and a box holding a newline would
+ * otherwise satisfy the requirement while telling nobody anything.
+ */
+export const reasonProblem = (reason: string): string | undefined => {
+	const trimmed = reason.trim()
+
+	if (trimmed === '') return 'Say why this account is being suspended — the reason is stored with the suspension.'
+
+	return trimmed.length > MAX_DISABLED_REASON ? `The reason cannot exceed ${MAX_DISABLED_REASON} characters` : undefined
+}
 
 /** What the confirmation toast says once the write has landed. The sessions are half of the news. */
 export const outcomeMessage = (email: string, disabled: boolean) =>
@@ -165,6 +210,23 @@ export const TblCustomers = ({
 	 */
 	const [intent, setIntent] = useState<{ email: string; disabled: boolean } | null>(null)
 
+	/*
+	 * The row the suspension form is open for, and `null` when it is closed. The whole row rather than an
+	 * id, because the form's warning names the address and its submit needs the id, and re-finding the row
+	 * in `rows` would go wrong on the one page where it matters: the mutation invalidates the two typenames
+	 * above, so the list re-fetches and the suspended row leaves the page while the form that suspended it
+	 * is still mounted.
+	 */
+	const [pending, setPending] = useState<{ _id: string; email: string } | null>(null)
+	const [reason, setReason] = useState('')
+
+	/*
+	 * ⚠️ Set on submit and not on every keystroke, so the box does not go red before the operator has
+	 * finished the first word. Cleared as they type, so a corrected reason stops being an error without
+	 * needing a second submit.
+	 */
+	const [reasonError, setReasonError] = useState<string | undefined>(undefined)
+
 	const [result] = useQuery({
 		query: UsersActiveTblDocument,
 		variables: {
@@ -186,14 +248,50 @@ export const TblCustomers = ({
 		email: item.email,
 		registeredAt: formatDate(item.registeredAt),
 		status: statusOf(item),
-		disabled: item.disabled === true
+		disabled: item.disabled === true,
+		reason: item.disabledReason ?? null
 	}))
 
-	const change = (row: Row, disabled: boolean) => {
-		if (disabled && !window.confirm(suspendWarning(row.email))) return
+	const closeForm = () => {
+		setPending(null)
+		setReason('')
+		setReasonError(undefined)
+	}
 
-		setIntent({ email: row.email, disabled })
-		void executeStatus({ _id: row._id, disabled }, CTX_STATUS)
+	/*
+	 * ⚠️ **Asymmetric on purpose: suspending asks, enabling does not.**
+	 *
+	 * A suspension needs a reason before it can be written at all — `dependencies: { disabled:
+	 * ['disabledReason'] }` on the collection refuses the flag without one (ADR-044) — so the click opens
+	 * the form rather than sending anything. Lifting one needs nothing: the platform owner's ruling is that
+	 * only an operator removes a suspension, and this screen is an operator, so the second click is the
+	 * whole gesture.
+	 *
+	 * `disabledReason: null` on the way back, not an omitted field: the service `$unset`s the reason with
+	 * the flag, and a variable left out would read as "leave it as it was" and keep a spent reason attached
+	 * to an account that is no longer suspended.
+	 */
+	const enable = (row: Row) => {
+		setIntent({ email: row.email, disabled: false })
+		void executeStatus({ _id: row._id, disabled: false, disabledReason: null }, CTX_STATUS)
+	}
+
+	/*
+	 * Takes the row rather than reading `pending` off the closure, so there is no `pending === null` guard
+	 * to write: the only caller is inside the branch that renders the form, where the type is already
+	 * narrowed. A guard for a state the button cannot be clicked in is a line no test can reach.
+	 */
+	const submitSuspension = (target: { _id: string; email: string }) => {
+		const problem = reasonProblem(reason)
+
+		if (problem !== undefined) {
+			setReasonError(problem)
+			return
+		}
+
+		setIntent({ email: target.email, disabled: true })
+		void executeStatus({ _id: target._id, disabled: true, disabledReason: reason.trim() }, CTX_STATUS)
+		closeForm()
 	}
 
 	// The message belongs to a write that landed. `intent` outlives its own mutation — it is still set
@@ -205,7 +303,27 @@ export const TblCustomers = ({
 		// lever and it is the button in the last column. A link here would have to lead somewhere.
 		column.accessor('email', { header: 'Email' }),
 		column.accessor('registeredAt', { header: 'Registered' }),
-		column.accessor('status', { header: 'Status' }),
+		/*
+		 * The reason rides under the status rather than in a column of its own: it is set on exactly the
+		 * rows the Suspended filter shows and empty on every row the Active one does, so a fifth column
+		 * would be blank down the whole default page.
+		 *
+		 * ⚠️ Guarded on the value and not on `row.disabled`. A legacy suspension predating ADR-044 carries
+		 * the flag and no reason, and `?? null` above turns that into a row that says "Suspended" and
+		 * stops — which is honest — rather than an empty line pretending a reason was recorded.
+		 */
+		column.accessor('status', {
+			header: 'Status',
+			cell: (info) => {
+				const { reason } = info.row.original
+				return (
+					<>
+						{info.getValue()}
+						{reason === null ? null : <span className="block text-xs text-tip">{reason}</span>}
+					</>
+				)
+			}
+		}),
 		column.display({
 			id: 'action',
 			header: 'Action',
@@ -221,7 +339,7 @@ export const TblCustomers = ({
 					<Button
 						loading={statusResult.fetching}
 						onClick={() => {
-							change(row, false)
+							enable(row)
 						}}
 					>
 						Enable
@@ -231,7 +349,9 @@ export const TblCustomers = ({
 						variant="danger"
 						loading={statusResult.fetching}
 						onClick={() => {
-							change(row, true)
+							setPending({ _id: row._id, email: row.email })
+							setReason('')
+							setReasonError(undefined)
 						}}
 					>
 						Suspend
@@ -267,6 +387,58 @@ export const TblCustomers = ({
 			</div>
 
 			{result.error === undefined ? null : <Alert tone="error">{messageOf(result.error)}</Alert>}
+
+			{/*
+			 * ⚠️ **Above the table and not inside the row.** The mutation invalidates
+			 * `GraphQLUsersActiveTblPage`, so submitting re-fetches the list and the row the form belongs to
+			 * leaves the Active page — a form rendered inside that row would unmount underneath the operator
+			 * mid-write. Up here it owns its own state and closes when it decides to.
+			 *
+			 * `role="group"` with the heading as its label rather than `role="dialog"`: nothing here traps
+			 * focus or covers the page, and announcing a dialog that the Escape key does not close is worse
+			 * than announcing a region.
+			 */}
+			{pending === null ? null : (
+				<div
+					role="group"
+					aria-labelledby="suspend-heading"
+					className="flex flex-col gap-3 rounded-box border border-app-error p-4"
+				>
+					<h2 id="suspend-heading" className="font-bold">
+						Suspend {pending.email}
+					</h2>
+					<p className="whitespace-pre-line text-sm text-tip">{SUSPEND_WARNING}</p>
+
+					<TextareaField
+						label="Reason"
+						value={reason}
+						error={reasonError}
+						/* Counted off the trimmed length, because that is the string the submit sends and the
+						   one the service measures — a counter following the raw value would read 3 characters
+						   short on a reason that ends in a newline. */
+						remaining={MAX_DISABLED_REASON - reason.trim().length}
+						onChange={(event) => {
+							setReason(event.target.value)
+							setReasonError(undefined)
+						}}
+					/>
+
+					<div className="flex gap-2">
+						<Button
+							variant="danger"
+							loading={statusResult.fetching}
+							onClick={() => {
+								submitSuspension(pending)
+							}}
+						>
+							Suspend
+						</Button>
+						<Button variant="ghost" onClick={closeForm}>
+							Cancel
+						</Button>
+					</div>
+				</div>
+			)}
 
 			<div className="overflow-x-auto">
 				<table className="w-full text-left text-sm">

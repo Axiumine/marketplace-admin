@@ -551,6 +551,62 @@ exports[`ShopOwnerPersonalData > renders 1`] = `
             </span>
           </div>
           <div
+            class="flex items-center justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+          >
+            <span
+              class="text-tip"
+            >
+              Suspension reason
+            </span>
+            <span
+              class="flex items-center gap-1 text-right"
+            >
+              <span
+                class="whitespace-pre-line"
+              >
+                ---
+              </span>
+              <button
+                aria-label="Change Suspension reason"
+                class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
+                title="Change Suspension reason"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12 20h9"
+                  />
+                  <path
+                    d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"
+                  />
+                </svg>
+              </button>
+            </span>
+          </div>
+          <div
+            class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+          >
+            <span
+              class="text-tip"
+            >
+              Suspended by
+            </span>
+            <span
+              class="text-right"
+            >
+              ---
+            </span>
+          </div>
+          <div
             class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
           >
             <span
@@ -1135,6 +1191,62 @@ exports[`ShopOwnerPersonalData — an account that registered itself > renders 1
                   />
                 </svg>
               </button>
+            </span>
+          </div>
+          <div
+            class="flex items-center justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+          >
+            <span
+              class="text-tip"
+            >
+              Suspension reason
+            </span>
+            <span
+              class="flex items-center gap-1 text-right"
+            >
+              <span
+                class="whitespace-pre-line"
+              >
+                ---
+              </span>
+              <button
+                aria-label="Change Suspension reason"
+                class="rounded-box p-1 text-tip transition-colors hover:text-third focus-visible:text-third disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-tip"
+                title="Change Suspension reason"
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.75"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12 20h9"
+                  />
+                  <path
+                    d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"
+                  />
+                </svg>
+              </button>
+            </span>
+          </div>
+          <div
+            class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
+          >
+            <span
+              class="text-tip"
+            >
+              Suspended by
+            </span>
+            <span
+              class="text-right"
+            >
+              ---
             </span>
           </div>
           <div
