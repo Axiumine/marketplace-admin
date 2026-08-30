@@ -195,3 +195,16 @@ describe('formatAddress', () => {
 		)
 	})
 })
+
+describe('the two placeholders', () => {
+	/*
+	 * ⚠️ Two different characters, and the pair is the assertion. `EMPTY_CELL` is one em dash in a dense
+	 * grid; `NO_VALUE` is three hyphens in a form field. Collapsing them into one constant would make
+	 * every table cell three characters wide or every detail field one, and both tables assert on the
+	 * dash by its literal text.
+	 */
+	it('keeps the table cell and the detail field distinct', () => {
+		expect(format.EMPTY_CELL).toBe('—')
+		expect(format.NO_VALUE).toBe('---')
+	})
+})

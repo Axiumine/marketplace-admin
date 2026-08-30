@@ -15,45 +15,26 @@ import { SelectField } from '@/components/ui/SelectField'
 import { Spinner } from '@/components/ui/Spinner'
 import { TextareaField } from '@/components/ui/TextareaField'
 import { Toast } from '@/components/ui/Toast'
-import { formatDate } from '@/lib/format'
+import type { AccountStatus } from '@/lib/accountStatus'
+import { ACCOUNT_FILTER, ACCOUNT_STATUSES, closedOrSuspendedLabel } from '@/lib/accountStatus'
+import { EMPTY_CELL, formatDate } from '@/lib/format'
 
 /**
- * Which accounts the table is looking at.
+ * Which accounts the table is looking at — the four states of `@/lib/accountStatus`, the same four the
+ * shopOwners table offers, because an admin acts on the two tiers in the same way.
  *
- * ⚠️ **A filter and not a checkbox, because the backend has no "either" state to offer.** `disabled` and
- * `deleted` are `Boolean!` on `usersActiveTbl`, which is what keeps every page on the
- * `tbl_active_registeredAt` index — an unbound leading field turns the sort into a blocking in-memory one
- * on a collection that only grows. So suspending a customer does not grey their row: it moves them to the
- * other page, and the confirmation below says where they went.
- *
- * ⚠️ **There is no third `deleted` value here, and its absence is now a gap rather than a tautology.**
- * `userDel` ships on the customer tier since 2026-08-26, so closed accounts exist and this screen cannot
- * reach them: the filter would be one entry in this table, one member in the route's zod enum, and the
- * row's status column already reads the flag. What it is waiting on is a decision, not code — an admin
- * has no lever over a closed account (there is no Admin counterpart to `shopOwnerDel`, E19 §6 question 3),
- * so a Closed view today would list accounts and offer nothing to do with them.
+ * ⚠️ **Including the two closed states, and the fourth is why there are four.** `userDel` stamps
+ * `deleted` and leaves the suspension trio alone (ADR-048), so a customer suspended and then closed
+ * carries both flags and was listed by neither of the two filters this screen used to offer. A Closed
+ * view lists accounts an admin has no lever over — there is no screen for `userDel` here, deliberately
+ * (see `mutations.ts`) — and that is the point: the alternative was an account that no page could show.
  */
-export type CustomerStatus = 'active' | 'suspended'
-
 export interface CustomersQuery {
-	status: CustomerStatus
+	status: AccountStatus
 	page: number
 	pageSize: number
 	sortDir: GraphQlSortDirection
 }
-
-/**
- * What each filter asks the service for, and the labels beside them.
- *
- * `deleted: false` in both rows rather than in neither: the argument is required, and pinning it here
- * keeps the two states the screen offers spelled out in one place instead of half in the query variables.
- */
-const FILTER = {
-	active: { label: 'Active', disabled: false, deleted: false },
-	suspended: { label: 'Suspended', disabled: true, deleted: false }
-} as const satisfies Record<CustomerStatus, { label: string; disabled: boolean; deleted: boolean }>
-
-const STATUSES = Object.keys(FILTER) as readonly CustomerStatus[]
 
 /**
  * ⚠️ **The only sortable column, and it stays the only one** (E19-S05). `GraphQLUsersTblSortField` has a
@@ -92,6 +73,14 @@ interface Row {
 	status: string
 	disabled: boolean
 	/**
+	 * Whether the account is closed, and the one thing that takes the action button off the row.
+	 *
+	 * Read off `deleted` rather than off the filter in the URL, for the reason the button below is driven
+	 * by `disabled` rather than by the filter: the row is what is still right when a page is rendered from
+	 * a cache the filter has moved on from.
+	 */
+	closed: boolean
+	/**
 	 * Why this account was suspended, and `null` on every account that is not.
 	 *
 	 * ⚠️ **This screen is the only place it can be read at all.** `disabledReason` is randomly encrypted
@@ -113,11 +102,9 @@ interface Row {
  * `$unset`s, never `false` — so both are read on truthiness. `deleted` is a timestamp rather than a flag
  * (ADR-011), so presence is what marks it.
  */
-export const statusOf = (row: { disabled: boolean | null; deleted: string | null; emailVerified: boolean | null }): string => {
-	if (row.deleted !== null) return 'Deleted'
-	if (row.disabled === true) return 'Suspended'
-	return row.emailVerified === true ? 'Active' : 'Awaiting confirmation'
-}
+export const statusOf = (row: { disabled: boolean | null; deleted: string | null; emailVerified: boolean | null }): string =>
+	closedOrSuspendedLabel({ disabled: row.disabled === true, deleted: row.deleted !== null }) ??
+	(row.emailVerified === true ? ACCOUNT_FILTER.active.label : 'Awaiting confirmation')
 
 /**
  * The warning above the reason box, and the same prose the browser dialog used to carry.
@@ -232,8 +219,8 @@ export const TblCustomers = ({
 		variables: {
 			offset: (query.page - 1) * query.pageSize,
 			limit: query.pageSize,
-			disabled: FILTER[query.status].disabled,
-			deleted: FILTER[query.status].deleted,
+			disabled: ACCOUNT_FILTER[query.status].disabled,
+			deleted: ACCOUNT_FILTER[query.status].deleted,
 			sortBy: SORT_BY,
 			sortDir: query.sortDir
 		},
@@ -249,6 +236,7 @@ export const TblCustomers = ({
 		registeredAt: formatDate(item.registeredAt),
 		status: statusOf(item),
 		disabled: item.disabled === true,
+		closed: item.deleted !== null,
 		reason: item.disabledReason ?? null
 	}))
 
@@ -305,7 +293,7 @@ export const TblCustomers = ({
 		column.accessor('registeredAt', { header: 'Registered' }),
 		/*
 		 * The reason rides under the status rather than in a column of its own: it is set on exactly the
-		 * rows the Suspended filter shows and empty on every row the Active one does, so a fifth column
+		 * rows the two suspended filters show and empty on every row the other two do, so a fifth column
 		 * would be blank down the whole default page.
 		 *
 		 * ⚠️ Guarded on the value and not on `row.disabled`. A legacy suspension predating ADR-044 carries
@@ -328,13 +316,21 @@ export const TblCustomers = ({
 			id: 'action',
 			header: 'Action',
 			/*
-			 * Driven by the row's own flag rather than by the filter in the URL. They agree today, and the
+			 * Driven by the row's own flags rather than by the filter in the URL. They agree today, and the
 			 * row is the one that is still right if a page is rendered from a cache the filter has moved on
 			 * from — a button offering to suspend an account that is already suspended is a wrong answer
 			 * this way round, and an admin's second click on it is a no-op they cannot see.
+			 *
+			 * ⚠️ **A closed account gets no button at all.** Suspending one would write a flag onto an
+			 * account nobody can sign into, and lifting a suspension on one would promise a return that
+			 * `deleted` refuses — the personal data is thirty days from being overwritten in place
+			 * (ADR-046), and only registering again with the same address takes the account back.
 			 */
 			cell: (info) => {
 				const row = info.row.original
+
+				if (row.closed) return EMPTY_CELL
+
 				return row.disabled ? (
 					<Button
 						loading={statusResult.fetching}
@@ -373,14 +369,14 @@ export const TblCustomers = ({
 					label="Status"
 					value={query.status}
 					onChange={(event) => {
-						// Back to page 1: the two sets are different sizes, and page 7 of the one an admin
+						// Back to page 1: the four sets are different sizes, and page 7 of the one an admin
 						// was standing on is very often past the end of the one they asked for.
-						onQueryChange({ status: event.target.value as CustomerStatus, page: 1 })
+						onQueryChange({ status: event.target.value as AccountStatus, page: 1 })
 					}}
 				>
-					{STATUSES.map((value) => (
+					{ACCOUNT_STATUSES.map((value) => (
 						<option key={value} value={value}>
-							{FILTER[value].label}
+							{ACCOUNT_FILTER[value].label}
 						</option>
 					))}
 				</SelectField>

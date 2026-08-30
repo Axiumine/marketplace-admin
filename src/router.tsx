@@ -6,6 +6,7 @@ import { getSession } from '@/auth/session'
 import { AppShell } from '@/components/layout/AppShell'
 import type { CustomersQuery } from '@/features/customers/TblCustomers'
 import type { ShopOwnersQuery } from '@/features/shopOwners/TblShopOwners'
+import { ACCOUNT_STATUSES } from '@/lib/accountStatus'
 import { AddShopOwnerPage } from '@/pages/AddShopOwnerPage'
 import { CategoriesPage } from '@/pages/CategoriesPage'
 import { CustomersPage } from '@/pages/CustomersPage'
@@ -45,12 +46,17 @@ const createAppRouteTree = () => {
 	 *
 	 * Every field `.catch()`es to a default, which is what makes a hand-edited or truncated URL land on
 	 * a usable page instead of a validation crash — `?page=abc` is a typo, not an error worth a screen.
-	 * The two enums are the backend's own sort vocabulary, so an unknown column never reaches the query.
+	 * The two sort enums are the backend's own vocabulary, so an unknown column never reaches the query.
+	 *
+	 * `status` is the same four-state filter the customers route carries, from the same tuple, and it
+	 * defaults to `active` because that is the state `shopOwnersActiveTbl`'s own argument defaults answer
+	 * with (ADR-049).
 	 */
 	const shopOwnersSearchSchema = z.object({
 		page: z.coerce.number().int().min(1).catch(1),
 		pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
 		search: z.string().catch(''),
+		status: z.enum(ACCOUNT_STATUSES).catch('active'),
 		sortBy: z.enum(['LAST_NAME', 'FIRST_NAME', 'REGISTERED_AT', 'CITY']).catch('LAST_NAME'),
 		sortDir: z.enum(['ASC', 'DESC']).catch('ASC')
 	})
@@ -64,13 +70,16 @@ const createAppRouteTree = () => {
 	 *
 	 * `status` is the screen's own vocabulary rather than the backend's, because the backend has no
 	 * "either" state — `disabled` and `deleted` are two required booleans there, and this is the one name
-	 * for the pair the admin picks between. `active` is what an arriving admin sees, which is the
-	 * answer `usersActiveTbl`'s own defaults give.
+	 * for each of the four pairs the admin picks between. `active` is what an arriving admin sees, which
+	 * is the answer `usersActiveTbl`'s own defaults give.
+	 *
+	 * ⚠️ Read off `ACCOUNT_STATUSES` rather than written out, so the URL can never accept a name no
+	 * dropdown offers and can never refuse one it does — a fifth state is one entry in `accountStatus.ts`.
 	 */
 	const customersSearchSchema = z.object({
 		page: z.coerce.number().int().min(1).catch(1),
 		pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
-		status: z.enum(['active', 'suspended']).catch('active'),
+		status: z.enum(ACCOUNT_STATUSES).catch('active'),
 		sortDir: z.enum(['ASC', 'DESC']).catch('DESC')
 	})
 
