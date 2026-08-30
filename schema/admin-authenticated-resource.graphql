@@ -579,8 +579,8 @@ enum GraphQLSortDirection {
 
 """
 One page of the admin's customers table. `total` is the size of the FILTERED set, not of the
-collection — it moves with the three filter arguments. There is no unfiltered headline count on this
-tier: `usersStats` does not exist (`phase5/epics/E19.md` §6, question 2).
+collection — it moves with the three filter arguments. The unfiltered headline count is `usersStats`,
+which counts every account ever registered and deliberately disagrees with `total` under every filter.
 """
 type GraphQLUsersActiveTblPage {
 	items: [GraphQLUserActiveTbl!]!
