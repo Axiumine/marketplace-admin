@@ -1,11 +1,11 @@
 import { graphql } from '@gql/adminResource'
 
 /**
- * Changes the signed-in operator's own password.
+ * Changes the signed-in admin's own password.
  *
  * There is deliberately no `_id` argument: the account comes from the Redis session server-side. An
  * `_id` from a browser is a variable the sender can edit, and the platform has no role field to check
- * it against — accepting one would be a way for any operator to rewrite any other operator's password.
+ * it against — accepting one would be a way for any admin to rewrite any other admin's password.
  */
 export const AdminUpdatePwdDocument = graphql(`
 	mutation AdminUpdatePwd($passwordOld: String!, $passwordNew: String!) {
@@ -33,9 +33,9 @@ export const ShopOwnerAddDocument = graphql(`
  * They are six and not one because the backend splits them that way, and the split is not arbitrary:
  * `login.email` carries the collection's only unique index and is the one field a valid save can still
  * be refused on; the two account flags are stored by *absence*, so they need a mutation that can unset;
- * the operator's note is not part of the personalData `shopOwnerUpdate` replaces wholesale; and a
+ * the admin's note is not part of the personalData `shopOwnerUpdate` replaces wholesale; and a
  * company is a different collection entirely. The page fires only the ones whose fields the
- * operator actually touched — `shopOwnerUpdate` in particular answers 500 for a write that changed
+ * admin actually touched — `shopOwnerUpdate` in particular answers 500 for a write that changed
  * nothing, so sending it unconditionally would turn every save into a coin toss.
  *
  * All six answer a bare `Boolean`, so every call site has to name `additionalTypenames` itself: the
@@ -61,7 +61,7 @@ export const ShopOwnerUpdateEmailDocument = graphql(`
  * suspension without one — 400 — and the collection refuses it a second time through
  * `dependencies: { disabled: ['disabledReason'] }`, so a form that omits it does not suspend somebody
  * without a note on file: it fails. Send it only with `disabled: true`; releasing clears the reason and
- * the operator who set it, and a reason sent beside `disabled: false` is refused.
+ * the admin who set it, and a reason sent beside `disabled: false` is refused.
  */
 export const ShopOwnerUpdateStatusDocument = graphql(`
 	mutation ShopOwnerUpdateStatus($_id: ID!, $disabled: Boolean!, $waitApprov: Boolean!, $disabledReason: String) {
@@ -81,7 +81,7 @@ export const ShopOwnerUpdatePreferencesDocument = graphql(`
 `)
 
 /**
- * The operator's note about the account.
+ * The admin's note about the account.
  *
  * `notes` is `String!`, and the empty string is what clears it — the resolver reads `''` as an `$unset`.
  * Sending `null` is not an option the schema offers, deliberately: "leave the note alone" is expressed
@@ -162,7 +162,7 @@ export const ItemCategoryDelDocument = graphql(`
  * No variables, deliberately: the new key and the version it lands under are decided by the service.
  * An argument for either would let its sender install a key of their choosing, which is the ability to
  * mint a session cookie for any account on the platform — see the note on the mutation in the schema
- * slice. The operator asks for a rotation; they do not get to say what it produces.
+ * slice. The admin asks for a rotation; they do not get to say what it produces.
  *
  * `Boolean!`, so the call site names `additionalTypenames` itself — `GraphQLKeygripStatus`, which is
  * what the panel beside the button is rendering and what a rotation changes every field of.
@@ -177,7 +177,7 @@ export const KeygripRotateDocument = graphql(`
  * Drops one cookie-signing key from the whole platform (E16-S04).
  *
  * ⚠️ **This is the one operation the app can send that logs customers out on purpose.** Every cookie the
- * retired key signed stops verifying as each process picks the new record up. That is what an operator
+ * retired key signed stops verifying as each process picks the new record up. That is what an admin
  * responding to a leaked key is asking for, and it is why this is a separate button from rotation rather
  * than something rotation does quietly.
  *
@@ -186,7 +186,7 @@ export const KeygripRotateDocument = graphql(`
  *
  * ⚠️ **A 404 here means nothing was retired.** The service refuses an id nothing matches rather than
  * answering the array unchanged, precisely so a suspected compromise cannot be closed on a success the
- * operator misread; the panel has to show it as a failure. Retiring the key the platform is signing with is
+ * admin misread; the panel has to show it as a failure. Retiring the key the platform is signing with is
  * a 409 the panel never provokes — that row carries no button at all.
  *
  * `Boolean!`, so the call site names `additionalTypenames` itself.
@@ -205,7 +205,7 @@ export const KeygripRetireDocument = graphql(`
  * none of the `access:` / `refresh:` prefixes a raw-token key does, so it names no live key.
  *
  * ⚠️ `false` is an *answer*, not a failure: the session was already gone. It must not be reported as an
- * error, or an operator is trained to retry a call that has already done everything it can.
+ * error, or an admin is trained to retry a call that has already done everything it can.
  *
  * ⚠️ The access token that session minted ends with it (R54): the session hash records the key of its own
  * access half, so the service deletes both and the device stops working on the click rather than up to 91
@@ -226,7 +226,7 @@ export const RevokeSessionDocument = graphql(`
  * button that logged out an entire tier is a platform-wide outage one click away, and no incident this
  * console is for needs one.
  *
- * The count is what the operator reads back as the blast radius that actually landed, so it is worth
+ * The count is what the admin reads back as the blast radius that actually landed, so it is worth
  * announcing rather than collapsing into "done". `Int!`, which names no typename either — same rule.
  */
 export const RevokeAllSessionsDocument = graphql(`

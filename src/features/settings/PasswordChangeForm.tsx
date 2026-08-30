@@ -43,10 +43,10 @@ type PasswordValues = z.infer<typeof passwordSchema>
 const EMPTY: PasswordValues = { passwordOld: '', passwordNew: '', passwordNewRepeat: '' }
 
 /**
- * Changes the signed-in operator's own password.
+ * Changes the signed-in admin's own password.
  *
  * `adminUpdatePwd` was added to the admin-resource service for this form and takes no `_id`: the
- * account comes from the Redis session, so one operator cannot rewrite another's password by editing
+ * account comes from the Redis session, so one admin cannot rewrite another's password by editing
  * a variable. Keep it that way if the form ever grows a "change someone else's password" sibling —
  * that is a different mutation with its own authorization, not an extra argument on this one.
  */

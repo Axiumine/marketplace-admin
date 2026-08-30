@@ -12,7 +12,7 @@ import { renderRoute } from '../../helpers/render'
  *
  * Through the router rather than by mounting the component, because the account being looked at *is* the
  * URL: a row has to be linkable from a ticket, and props assembled by hand here would test the console
- * against an input no operator can produce.
+ * against an input no admin can produce.
  */
 
 const ACCOUNT = '68b0f2c1a2b3c4d5e6f70819'
@@ -207,7 +207,7 @@ describe('the account lookup', () => {
 		})
 	})
 
-	// A URL nobody can produce by clicking is still a URL an operator can paste. Both fields fall back rather
+	// A URL nobody can produce by clicking is still a URL an admin can paste. Both fields fall back rather
 	// than crashing the screen they were meant to open.
 	it('falls back to shopOwner and no account when the URL says something else', async () => {
 		stubGraphQL({ KeygripStatus: KEYGRIP })
@@ -223,7 +223,7 @@ describe('the account lookup', () => {
 	 * `root`, so it falls back whatever the list holds; `tier=` falls back only while the empty string is
 	 * *absent* from the list. A tier accidentally spelled `''` would make this URL parse successfully, hand the
 	 * console an empty tier, and send `sessionIndexKey('', id)` — a key that has never existed — so the screen
-	 * would answer "no live session" for an account holding several. Silence in the one direction an operator
+	 * would answer "no live session" for an account holding several. Silence in the one direction an admin
 	 * cannot detect.
 	 */
 	it('falls back to shopOwner when the URL carries an empty tier', async () => {
@@ -247,7 +247,7 @@ describe('the account lookup', () => {
 	})
 
 	// The other half of the same condition: the spinner has to *stop*. A wait that outlives the answer reads
-	// as a read still in flight, and the operator waits for a table that is already under it.
+	// as a read still in flight, and the admin waits for a table that is already under it.
 	it('stops waiting once the table is on screen', async () => {
 		stubGraphQL({ KeygripStatus: KEYGRIP, Sessions: SESSIONS, ReuseEvents: EVENTS })
 		await renderRoute(AT_ACCOUNT)
@@ -316,7 +316,7 @@ describe('the session table', () => {
 	})
 
 	/**
-	 * ⚠️ An empty table is an answer here, and a load-bearing one: it is what an operator reads after ending
+	 * ⚠️ An empty table is an answer here, and a load-bearing one: it is what an admin reads after ending
 	 * everything, and what tells them a suspected account is signed in nowhere. Left as bare headers it reads
 	 * as a screen that failed to load.
 	 */
@@ -345,7 +345,7 @@ describe('the revocation trail', () => {
 	})
 
 	/**
-	 * ⚠️ Empty is the normal, healthy state, and has to say so in as many words. An operator who read a blank
+	 * ⚠️ Empty is the normal, healthy state, and has to say so in as many words. An admin who read a blank
 	 * trail as "the trail is broken" would go looking for a logging fault instead of reading it as the good
 	 * news it is.
 	 */
@@ -361,7 +361,7 @@ describe('the revocation trail', () => {
 	 * ⚠️ The trail is the one list here with no id of its own: an event is a lineage *and* an instant, and
 	 * either alone repeats — a family that replayed twice, or two families capped in the same millisecond.
 	 * A row key that collapses is not a rendering nit on this screen: React would reconcile two entries of
-	 * the same trail onto one node, and the row an operator reads as "this lineage, at this time" would be
+	 * the same trail onto one node, and the row an admin reads as "this lineage, at this time" would be
 	 * carrying another event's cells. The duplicate-key warning is the only place a collapsed key surfaces,
 	 * so it is asserted rather than left to be noticed in a console nobody is watching.
 	 */
@@ -388,11 +388,11 @@ describe('ending one session', () => {
 
 	/**
 	 * The confirmation names the blast radius: one session, and whose. The id beside the button is a
-	 * 64-character digest no operator reads across, so the account is the thing they can check against the
-	 * ticket — and what the click reaches is spelled out, both halves of it since R54: an operator who still
+	 * 64-character digest no admin reads across, so the account is the thing they can check against the
+	 * ticket — and what the click reaches is spelled out, both halves of it since R54: an admin who still
 	 * believed the device kept working for another 91 minutes would chase a window that is closed.
 	 */
-	it('asks first, stating what ends and what does not, and sends nothing when the operator says no', async () => {
+	it('asks first, stating what ends and what does not, and sends nothing when the admin says no', async () => {
 		const confirm = respond(false)
 		const stub = stubGraphQL({ KeygripStatus: KEYGRIP, Sessions: SESSIONS, ReuseEvents: EVENTS })
 		await renderRoute(AT_ACCOUNT)
@@ -461,7 +461,7 @@ describe('ending one session', () => {
 
 	/**
 	 * ⚠️ `false` is an answer, not a failure: the session had already ended. Reported as an error it trains an
-	 * operator to retry a call that has already done everything it can; reported as a success it tells them
+	 * admin to retry a call that has already done everything it can; reported as a success it tells them
 	 * they ended something they did not.
 	 */
 	it('passes an already-ended session through as its own answer rather than as a failure', async () => {
@@ -482,8 +482,8 @@ describe('ending one session', () => {
 		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 	})
 
-	// The rate limit is per operator and per account (E17-S03). Its refusal has to be readable, or the
-	// operator retries into it and reads the silence as a broken screen.
+	// The rate limit is per admin and per account (E17-S03). Its refusal has to be readable, or the
+	// admin retries into it and reads the silence as a broken screen.
 	it('reports a refusal, and confirms nothing', async () => {
 		respond(true)
 		stubGraphQL({
@@ -505,7 +505,7 @@ describe('ending one session', () => {
 	})
 
 	// Data and errors in one answer is legal GraphQL. "The session was ended" under a red toast would leave
-	// the operator to guess which half is true.
+	// the admin to guess which half is true.
 	it('does not confirm when the answer carries an error alongside the data', async () => {
 		respond(true)
 		stubGraphQL({
@@ -535,11 +535,11 @@ describe('ending every session an account holds', () => {
 	}
 
 	/**
-	 * ⚠️ The count in the confirmation is the one on screen, so the operator agrees to a number they can see.
+	 * ⚠️ The count in the confirmation is the one on screen, so the admin agrees to a number they can see.
 	 * It is per account and there is deliberately no "every account" form of it anywhere: a button that
 	 * logged out a whole tier would be a platform-wide outage one click away.
 	 */
-	it('asks first, naming how many sessions and whose, and sends nothing when the operator says no', async () => {
+	it('asks first, naming how many sessions and whose, and sends nothing when the admin says no', async () => {
 		const confirm = respond(false)
 		const stub = stubGraphQL({ KeygripStatus: KEYGRIP, Sessions: SESSIONS, ReuseEvents: EVENTS })
 		await renderRoute(AT_ACCOUNT)
@@ -556,7 +556,7 @@ describe('ending every session an account holds', () => {
 	})
 
 	// One session is still a plural in the wrong hands: "all 1 sessions" is the sort of sentence that makes an
-	// operator stop and re-read a dialog they should be able to act on.
+	// admin stop and re-read a dialog they should be able to act on.
 	it('counts one session in the singular', async () => {
 		const confirm = respond(false)
 		stubGraphQL({ KeygripStatus: KEYGRIP, Sessions: ONE_SESSION, ReuseEvents: EVENTS })
@@ -594,7 +594,7 @@ describe('ending every session an account holds', () => {
 	})
 
 	// Zero is an answer worth showing rather than hiding: the sessions ended between the read and the click,
-	// and an operator told nothing would press the button again.
+	// and an admin told nothing would press the button again.
 	it('reports a count of none as a count', async () => {
 		respond(true)
 		stubGraphQL({
@@ -649,7 +649,7 @@ describe('ending every session an account holds', () => {
 
 	/*
 	 * ⚠️ Data and errors in one answer is legal GraphQL, and this is the count where believing the data half
-	 * is worst: "4 sessions ended" under a red toast tells an operator the account is clear when the service
+	 * is worst: "4 sessions ended" under a red toast tells an admin the account is clear when the service
 	 * has just said the revocation did not complete. The count is tied to the *absence of an error* and not
 	 * merely to a number having arrived, exactly as the single revocation is.
 	 */
@@ -675,7 +675,7 @@ describe('ending every session an account holds', () => {
 	})
 
 	// The window in which a second click would send a second mass revocation. The table stays on screen: it is
-	// what the operator is comparing against, and a spinner in its place loses the rows they were reading.
+	// what the admin is comparing against, and a spinner in its place loses the rows they were reading.
 	it('holds the button while the revocation is in flight', async () => {
 		respond(true)
 		stubGraphQL({

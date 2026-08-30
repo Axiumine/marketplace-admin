@@ -15,7 +15,7 @@ import { bars, bounds, seriesTotal } from '@/lib/chart'
  * Customer registrations over time, as a bar per bucket — the twin of `ChartShopOwners`, over the other
  * collection.
  *
- * The range is the operator's choice; the **bucket width is not**, and comes back in the response: the
+ * The range is the admin's choice; the **bucket width is not**, and comes back in the response: the
  * server answers `ALL` by month and the two bounded ranges by day, and the chart labels from
  * `granularity` rather than guessing from the number of points.
  *

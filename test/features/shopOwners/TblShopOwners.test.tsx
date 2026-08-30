@@ -109,7 +109,7 @@ describe('TblShopOwners', () => {
 	/**
 	 * ⚠️ The link is on the **email**, and the row that proves why is the self-registered one: it has no
 	 * surname to click. Moving the link back onto `lastName` leaves every pending registration reachable
-	 * only by guessing its URL — the accounts an operator opened this page to act on.
+	 * only by guessing its URL — the accounts an admin opened this page to act on.
 	 */
 	it('opens the detail page from a row', async () => {
 		stubGraphQL({
@@ -138,7 +138,7 @@ describe('TblShopOwners', () => {
 		expect(cells[3]).toHaveTextContent('02/04/2026')
 	})
 
-	it('marks the account waiting for an operator, and only that one', async () => {
+	it('marks the account waiting for an admin, and only that one', async () => {
 		stubGraphQL({ ShopOwnersActiveTbl: page([selfRegistered, rivers]) })
 		await renderRoute(MANAGE)
 
@@ -203,7 +203,7 @@ describe('TblShopOwners', () => {
 	/**
 	 * ⚠️ Search, sort and paging are all the server's job, and these variables are what assert it. Doing
 	 * any of the three in the browser means fetching the whole `shopOwner` collection first — every
-	 * operator downloading every record to look at twenty rows, on a collection that grows without
+	 * admin downloading every record to look at twenty rows, on a collection that grows without
 	 * bound. The table component must never gain a client-side filter or comparator.
 	 */
 	it('asks the server for one page, sorted and unfiltered', async () => {
@@ -243,7 +243,7 @@ describe('TblShopOwners', () => {
 		expect(screen.getByLabelText('Search shopOwner')).toHaveValue('rivers')
 	})
 
-	// The search box is debounced, so the URL — and the round-trip — happens once the operator stops
+	// The search box is debounced, so the URL — and the round-trip — happens once the admin stops
 	// typing rather than once per keystroke.
 	it('pushes a typed search into the URL and returns to the first page', async () => {
 		stubGraphQL({ ShopOwnersActiveTbl: page([rivers], 100) })
@@ -275,7 +275,7 @@ describe('TblShopOwners', () => {
 	})
 
 	// Sorting reorders the whole result set, so page 4 of the old order has nothing to do with page 4 of
-	// the new one. Staying put would land the operator on a page of unrelated rows.
+	// the new one. Staying put would land the admin on a page of unrelated rows.
 	it('returns to the first page when the sort changes', async () => {
 		stubGraphQL({ ShopOwnersActiveTbl: page([rivers], 100) })
 		const { router } = await renderRoute(`${MANAGE}?page=4`)

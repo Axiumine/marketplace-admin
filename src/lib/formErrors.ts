@@ -34,14 +34,14 @@ const collect = (node: unknown, messages: string[]): void => {
 }
 
 /**
- * What the operator has to fix, one line per box they can see.
+ * What the admin has to fix, one line per box they can see.
  *
  * Driven by `formState.errors` rather than by a snapshot taken when Save was pressed: the list has to
  * shrink as the fields are corrected, and a copy made at submit time would still be naming a box that is
  * already green.
  *
  * The address is collapsed to a single line by `addressError`, for the reason written there — six of
- * its seven fields have no input of their own, so a list naming them would send the operator looking for
+ * its seven fields have no input of their own, so a list naming them would send the admin looking for
  * boxes that are not on screen. Which is also why the seven are skipped by the walk: the composite rule
  * fires together with whichever field broke it, and both messages describe the same one box.
  *

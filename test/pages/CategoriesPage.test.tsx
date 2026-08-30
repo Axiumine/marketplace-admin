@@ -25,7 +25,7 @@ const OK = { ItemCategoryUpdate: { data: { itemCategoryUpdate: true } } }
 
 /**
  * jsdom has no `window.confirm` worth calling — the real one is `Not implemented` — so every test that
- * reaches the guard has to say what the operator answered. The spy is also what proves the question was
+ * reaches the guard has to say what the admin answered. The spy is also what proves the question was
  * asked at all, which is the half a `location.pathname` assertion cannot tell apart from a broken route.
  */
 const respond = (response: boolean) => vi.spyOn(window, 'confirm').mockReturnValue(response)
@@ -53,7 +53,7 @@ describe('CategoriesPage', () => {
 	})
 
 	// The page's own title, above the section's. The route is reachable from the sidebar, so this is the
-	// heading that says which of the five sections the operator landed in.
+	// heading that says which of the five sections the admin landed in.
 	it('titles the page', async () => {
 		stubGraphQL(taxonomy)
 		await renderRoute(CATEGORIES)
@@ -119,7 +119,7 @@ describe('CategoriesPage — unsaved changes', () => {
 		expect(router.state.location.pathname).toBe(CATEGORIES)
 	})
 
-	// The question is the cost of the guard, and a page nobody touched must not pay it: an operator who
+	// The question is the cost of the guard, and a page nobody touched must not pay it: an admin who
 	// only came to read the taxonomy has done nothing that leaving would lose.
 	it('says nothing when the page is untouched', async () => {
 		stubGraphQL(taxonomy)
@@ -136,7 +136,7 @@ describe('CategoriesPage — unsaved changes', () => {
 })
 
 /*
- * A save leaves the page looking the way it loaded: every row the operator opened is a value and a pen
+ * A save leaves the page looking the way it loaded: every row the admin opened is a value and a pen
  * again. Done by remounting the section on a counter the successful save bumps, because `EditableRow` has
  * no close of its own — a row that closed while react-hook-form still held its edited value would show the
  * server's value and save a different one.
@@ -162,7 +162,7 @@ describe('CategoriesPage — after saving', () => {
 	})
 
 	// Only a save that went all the way through. A page left half-written still holds edits, and closing
-	// those rows would hide values the operator would have to type again.
+	// those rows would hide values the admin would have to type again.
 	it('leaves the open rows alone when the save was refused', async () => {
 		stubGraphQL({ ...taxonomy, ItemCategoryUpdate: { data: { itemCategoryUpdate: false } } })
 		await renderRoute(CATEGORIES)

@@ -8,7 +8,7 @@ export type GraphQlInputAddress = {
   city: string;
   /**
    * ⚠️ **Coordinates only and nullable.** No `type` field, like `GraphQLInputCompanyPosition` — the
-   * resolver adds `type: 'Point'`. Nullable because the operator can save personal data whose
+   * resolver adds `type: 'Point'`. Nullable because the admin can save personal data whose
    * address was never re-picked. ⚠️ Omitting it does **not** preserve the stored point:
    * `shopOwnerUpdate` `$set`s the whole `personalData`, so a save without `position` erases it. Send
    * back the point the query returned whenever the address is left alone.
@@ -28,7 +28,7 @@ export type GraphQlInputBirth = {
 };
 
 /**
- * Everything the operator types about a company, in one object — one form and one Save, which is also what
+ * Everything the admin types about a company, in one object — one form and one Save, which is also what
  * lets `companyUpdate` `$set` the document in a single atomic write.
  *
  * `_id` and `idShopOwner` are deliberately absent: the first is minted by the service, the second is a
@@ -43,7 +43,7 @@ export type GraphQlInputBirth = {
  * operation on both tiers — `companyUpdatePublished` — and not a side effect of saving the card.
  *
  * ⚠️ The service's own input carries three more optional fields this slice does not: `publicName`, `slug`
- * and `description`, the shop's public listing. They are omitted rather than forgotten — the operator's
+ * and `description`, the shop's public listing. They are omitted rather than forgotten — the admin's
  * form has no box for any of them, and the service drops an optional field it was not sent instead of
  * clearing it, so a save from this app leaves whatever is stored alone. Transcribing them would only put
  * three fields in a generated type that no form can fill.
@@ -72,7 +72,7 @@ export type GraphQlInputCompanyAddress = {
  * ⚠️ **Coordinates only.** This input has no `type` field: the value has exactly one legal spelling
  * (`Point`), the collection caps it at 5 characters and the model declares it as an enum of one, so
  * accepting it from a client would only be a way to receive `point` or `POINT` and fail the write
- * naming a field the operator never saw. The service writes the literal.
+ * naming a field the admin never saw. The service writes the literal.
  */
 export type GraphQlInputCompanyPosition = {
   coordinates: Array<number>;
@@ -85,7 +85,7 @@ export type GraphQlInputContacts = {
 };
 
 /**
- * Everything an operator types about a category, in one object — one form and one Save, which is also
+ * Everything an admin types about a category, in one object — one form and one Save, which is also
  * what lets `itemCategoryUpdate` `$set` the document in a single atomic write.
  *
  * `_id` is deliberately absent: it is minted by the service on the add path and is a separate argument on
@@ -128,9 +128,9 @@ export type GraphQlPeriodGranularity =
  * ⚠️ **The one enum in this slice with a test on the other side proving the two lists are equal** (E17-S01):
  * the service builds `GraphQLReuseEventAction` from `REUSE_EVENT_ACTIONS` and asserts the value sets match,
  * so a third case added to that constant fails the service's suite until it is transcribed here. Without
- * that, drift would surface as an operator reading a blank cell rather than as a failing build.
+ * that, drift would surface as an admin reading a blank cell rather than as a failing build.
  *
- * ⚠️ **An operator's own revocation is not a value here.** E17's open question 4 answered "not
+ * ⚠️ **An admin's own revocation is not a value here.** E17's open question 4 answered "not
  * attributable"; a case for it would answer that question by accident and would need its own retention
  * decision.
  */

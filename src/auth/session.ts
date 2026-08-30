@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react'
  * then gives components the same value without a second source of truth.
  *
  * Nothing is persisted, deliberately. Backing this with localStorage would leave a signed-out browser
- * still advertising the last operator's `_id` and email to anything that can read storage. A reload
+ * still advertising the last admin's `_id` and email to anything that can read storage. A reload
  * starts empty and `/loading` re-derives the identity from the session cookie — the same round-trip
  * the access token already needs.
  */

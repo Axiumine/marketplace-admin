@@ -101,7 +101,7 @@ const MAX_DISABLED_REASON = 1000
  *
  * Shared by the two schemas below, which need the same sentence for the same rule: `dependencies:
  * { disabled: ['disabledReason'] }` on the collection refuses the flag without one, so this is not a
- * house style but the write the operator is about to attempt.
+ * house style but the write the admin is about to attempt.
  */
 const REASON_REQUIRED = 'Say why this account is suspended — the reason is stored with the suspension'
 
@@ -120,12 +120,12 @@ const disabledReasonField = () =>
  *
  * ⚠️ **Not a mirror of a server rule, but of a collection rule.** ADR-044 put
  * `dependencies: { disabled: ['disabledReason'] }` on `shopOwner`, so a suspension without a reason is
- * not a suspension with a blank note: it is a write MongoDB refuses, surfacing to the operator as an
+ * not a suspension with a blank note: it is a write MongoDB refuses, surfacing to the admin as an
  * error about a validator. The service checks the same thing first and answers 400.
  *
  * ⚠️ Safe to apply to the whole form even though `handleSubmit` validates every field: the migration
  * that added the path refuses to run while any suspended document lacks a reason, so a legacy record
- * that would fail this rule while the operator edits a phone number cannot reach the page.
+ * that would fail this rule while the admin edits a phone number cannot reach the page.
  */
 const requireReasonWhenDisabled = <T extends { disabled: boolean; disabledReason: string }>(values: T) =>
 	!values.disabled || values.disabledReason !== ''
@@ -139,7 +139,7 @@ const required = (label: string, max: number) =>
  *
  * That is the whole difference from the shop's `coordinate`, whose field is required on its
  * collection and therefore never blank. Here the migration added `position` as optional and nothing
- * backfilled it, so a legacy address seeds both boxes empty and has to stay saveable — the operator may
+ * backfilled it, so a legacy address seeds both boxes empty and has to stay saveable — the admin may
  * be editing a phone number on a record whose coordinates nobody ever picked.
  *
  * The two rules stay separate for the same reason they are separate there: "12,5" and "1200" are
@@ -179,7 +179,7 @@ export const shopOwnerDetailSchema = z
 			.refine((data) => isAdult(data, new Date()), `The shop owner must be of age (at least ${MIN_AGE})`),
 		/**
 		 * The whole address on one line — the only part of it with a box of its own, exactly as on a
-		 * shop. Unvalidated by itself, because it is text the operator may be halfway through typing, and
+		 * shop. Unvalidated by itself, because it is text the admin may be halfway through typing, and
 		 * checked instead by the composite rule at the bottom.
 		 */
 		addressComplete: z.string(),
@@ -215,7 +215,7 @@ export const shopOwnerDetailSchema = z
 		notes: z.string().trim().max(MAX_NOTE, `The notes cannot exceed ${MAX_NOTE} characters`)
 	})
 	/*
-	 * The box the operator types into is not what gets stored: the four fields above it are, together with
+	 * The box the admin types into is not what gets stored: the four fields above it are, together with
 	 * the coordinates, and all six are written only by picking one of the geocoder's answers. A typed
 	 * address that was never picked would otherwise save the *previous* street under new-looking text.
 	 *
@@ -234,7 +234,7 @@ type DetailValues = z.infer<typeof shopOwnerDetailSchema>
 /**
  * Which fields belong to which mutation.
  *
- * The page sends only the groups the operator actually touched. That is not an optimisation:
+ * The page sends only the groups the admin actually touched. That is not an optimisation:
  * `shopOwnerUpdate` answers **500** when its `$set` matched the document and modified nothing, so
  * re-sending an untouched personalData alongside a changed email would fail the save and roll nothing
  * back — the email would already be written.
@@ -303,7 +303,7 @@ type ShopOwnerOnboarded = ShopOwner & { personalData: NonNullable<ShopOwner['per
  *
  * Every optional field becomes `''` and every nullable boolean becomes `false`, because that is what an
  * empty text box and an unticked box read back as — seeded with `null` they would come back dirty on
- * the first render and be written on a save the operator meant for another field.
+ * the first render and be written on a save the admin meant for another field.
  */
 const valuesInitial = (shopOwner: ShopOwnerOnboarded): DetailValues => ({
 	emailLogin: shopOwner.login.email,
@@ -501,7 +501,7 @@ const FormPersonalData = ({
 		// An untouched block is not merely nothing to send — it must not be *validated* either. These forms
 		// are seeded from whatever the collection already holds, and a legacy document the current rules would
 		// reject (a three-letter province, a landline of thirteen digits) would otherwise fail the page's
-		// save while the operator was editing a different block entirely.
+		// save while the admin was editing a different block entirely.
 		if (!isDirty) return true
 
 		return await saveValidated(handleSubmit, write)
@@ -518,7 +518,7 @@ const FormPersonalData = ({
 
 			<section>
 				<h2 className="mb-2 text-lg font-bold">PersonalData</h2>
-				{/* Three cards, one line: the shopOwner, where they are, and what the operator wrote about
+				{/* Three cards, one line: the shopOwner, where they are, and what the admin wrote about
 				    them. The note lived under Account until it turned out to be read beside the address rather
 				    than beside the login flags. */}
 				<div className="grid gap-4 md:grid-cols-3">
@@ -653,7 +653,7 @@ const FormPersonalData = ({
 					</Infobox>
 
 					{/*
-					 * The operator's own note about the shopOwner — not something the shopOwner wrote or can
+					 * The admin's own note about the shopOwner — not something the shopOwner wrote or can
 					 * read. Third card of the first line, beside the address rather than down in Account: it is read
 					 * together with who the person is and where they are, not with the login flags.
 					 */}
@@ -683,7 +683,7 @@ const FormPersonalData = ({
 						{/* ⚠️ **The one screen on the platform where the reason is legible.** `disabledReason` is
 						    randomly encrypted (ADR-044), so the ShopOwner-tier services hold ciphertext they have
 						    no data key for — this tier decrypts it because it is the tier it was written for.
-						    `whitespace-pre-line` for the same reason as the note: an operator's paragraphs would
+						    `whitespace-pre-line` for the same reason as the note: an admin's paragraphs would
 						    otherwise run together into one. */}
 						<EditableRow
 							label="Suspension reason"
@@ -698,11 +698,11 @@ const FormPersonalData = ({
 							/>
 						</EditableRow>
 						{/* Who raised it, and no pen: an attribution the platform writes from the session, never
-						    an operator. It is the admin's `_id` and not a name — nothing joins it to a document,
+						    an admin. It is the admin's `_id` and not a name — nothing joins it to a document,
 						    which is what ADR-002 leaves it as. */}
 						<InfoRow label="Suspended by" value={handleNull(shopOwner.disabledBy)} />
 						{/* The four timestamps below are the account's audit trail — written by the platform,
-						    never by an operator — so they have no pen. */}
+						    never by an admin — so they have no pen. */}
 						<InfoRow label="Deleted on" value={handleNullDate(shopOwner.deleted)} />
 						<EditableRow label="Awaiting approval" value={handleNullBoolYN(shopOwner.waitApprov)}>
 							<CheckboxField label="Awaiting approval" {...register('waitApprov')} />
@@ -744,7 +744,7 @@ const FormPersonalData = ({
  *
  * The identity half of `shopOwnerDetailSchema` is not merely omitted from the form below, it is omitted
  * from the rules: `handleSubmit` validates the *whole* schema, so an empty `firstName` under the
- * required rule would refuse the save — and the save an operator presses on this page is the approval.
+ * required rule would refuse the save — and the save an admin presses on this page is the approval.
  * Sharing one schema would make the one action this screen exists for the one action it cannot perform.
  */
 export const shopOwnerPendingSchema = z
@@ -774,13 +774,13 @@ const FIELDS_PENDING_PREFERENCES = ['rememberMe', 'onboardingDone', 'onboardingS
 /**
  * The detail page for a seller who registered themselves and has not onboarded yet.
  *
- * What is on screen is what exists: a login address, the dates, the flags and the operator's note. There
+ * What is on screen is what exists: a login address, the dates, the flags and the admin's note. There
  * is no name, no date of birth, no address and no contacts — not because they are hidden, but because
  * `shopOwnerRegister` collects an email and a password and nothing else. Drawing the empty rows anyway
- * would read as data that failed to load, and making them editable would ask an operator to type a
+ * would read as data that failed to load, and making them editable would ask an admin to type a
  * stranger's home address on their behalf, which is what onboarding is for.
  *
- * The one thing an operator does come here to do — untick "Awaiting approval" — works exactly as it does
+ * The one thing an admin does come here to do — untick "Awaiting approval" — works exactly as it does
  * on a complete account: same mutation, same context, same invalidation.
  */
 export const FormAccountPending = ({
@@ -907,7 +907,7 @@ export const FormAccountPending = ({
 						</EditableRow>
 						{/* Said in a sentence rather than as a column of empty rows: the fields are missing from
 						    the document, not from the response, and a row reading "First name: —" would send an
-						    operator looking for a bug in the query. */}
+						    admin looking for a bug in the query. */}
 						<p className="pt-2 text-sm text-tip">
 							This shop owner registered on the public site. Their name, date of birth, address and contacts arrive when they
 							complete onboarding.
@@ -938,7 +938,7 @@ export const FormAccountPending = ({
 						{/* ⚠️ **The one screen on the platform where the reason is legible.** `disabledReason` is
 						    randomly encrypted (ADR-044), so the ShopOwner-tier services hold ciphertext they have
 						    no data key for — this tier decrypts it because it is the tier it was written for.
-						    `whitespace-pre-line` for the same reason as the note: an operator's paragraphs would
+						    `whitespace-pre-line` for the same reason as the note: an admin's paragraphs would
 						    otherwise run together into one. */}
 						<EditableRow
 							label="Suspension reason"
@@ -953,7 +953,7 @@ export const FormAccountPending = ({
 							/>
 						</EditableRow>
 						{/* Who raised it, and no pen: an attribution the platform writes from the session, never
-						    an operator. It is the admin's `_id` and not a name — nothing joins it to a document,
+						    an admin. It is the admin's `_id` and not a name — nothing joins it to a document,
 						    which is what ADR-002 leaves it as. */}
 						<InfoRow label="Suspended by" value={handleNull(shopOwner.disabledBy)} />
 						<InfoRow label="Deleted on" value={handleNullDate(shopOwner.deleted)} />

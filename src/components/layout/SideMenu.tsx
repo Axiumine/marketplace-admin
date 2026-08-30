@@ -5,7 +5,7 @@ import { useLogout } from '@/auth/useLogout'
 import { Button } from '@/components/ui/Button'
 
 /**
- * The six sections of the operator app.
+ * The six sections of the admin app.
  *
  * `/shopOwners` uses `activeOptions.exact: false` on purpose: the manage, add and detail
  * pages all live under `/p/shopOwners/…`, a different path prefix entirely, so the highlight is

@@ -90,7 +90,7 @@ export const companySchema = z
 		registryExtract: required('Registry extract', MAX_REGISTRY_EXTRACT),
 		/**
 		 * The whole address on one line, and the only part of it with a box of its own. Unvalidated by
-		 * itself — it is text the operator may be halfway through typing — and checked instead by the rule
+		 * itself — it is text the admin may be halfway through typing — and checked instead by the rule
 		 * at the bottom, which is the only place the six fields below and this one have to agree.
 		 */
 		addressComplete: z.string(),
@@ -219,7 +219,7 @@ const MapCompany = ({ company }: { company: Company }) => {
  * the page's one Save button, and a trash icon that wrote immediately would be the only control here
  * that did not wait for it.
  *
- * There is no ban icon. A company is not something the operator opens and closes, and there is nothing
+ * There is no ban icon. A company is not something the admin opens and closes, and there is nothing
  * on the collection to flip — `deleted` is stamped by `companyDel` and is not a state the card offers.
  *
  * Any refusal the backend does return arrives through the card's own error toast, which is why the toast
@@ -269,7 +269,7 @@ const FormCompany = ({
 	/** A pick writes all seven boxes and revalidates them — see `writeAddress`, shared with both cards. */
 	const applyAddress = (found: FoundAddress) => writeAddress(found, setValue, trigger)
 
-	// A new card counts as a pending change from the moment it appears: it is a company the operator asked
+	// A new card counts as a pending change from the moment it appears: it is a company the admin asked
 	// for and the page has not written yet, so Save has to be live and leaving has to warn.
 	const changed = isNew || isDirty || deleted
 
@@ -466,7 +466,7 @@ const FormCompany = ({
 							 * The box was driven twice over — once by React through `value`, once by the form
 							 * behind React's back — and the `value` prop could have been dropped entirely with
 							 * nothing on screen changing. `Controller` keeps the ref out of it, so what the
-							 * operator sees comes from one place.
+							 * admin sees comes from one place.
 							 */}
 							<Controller
 								control={control}
@@ -507,7 +507,7 @@ const FormCompany = ({
 }
 
 /**
- * The stored companies, plus whatever new cards the operator has open.
+ * The stored companies, plus whatever new cards the admin has open.
  *
  * Each company is its own form and its own section of the page's save: one failing on a duplicate VAT
  * number leaves the others' edits in the boxes, still dirty and still savable.
@@ -561,7 +561,7 @@ const ListCompanies = ({
  * The companies of one shopOwner: a heading, the plus that adds one, and the list.
  *
  * It sits between the personalData and the shops because that is the order the data requires — a shop
- * points at a company and cannot be created before one exists, so an operator setting up a new
+ * points at a company and cannot be created before one exists, so an admin setting up a new
  * shopOwner fills this section first. The shops section below reads the same query and disables its
  * own plus while this list is empty.
  *

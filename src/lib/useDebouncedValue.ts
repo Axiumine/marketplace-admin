@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
  * Holds a value back until it has stopped changing for `delay` milliseconds.
  *
  * Used by the shopOwners search box. Search is a server round-trip, so sending one request per
- * keystroke would put a Mongo query behind every character an operator types. Debouncing is what makes
+ * keystroke would put a Mongo query behind every character an admin types. Debouncing is what makes
  * server-side search affordable; the alternative — filtering a fully downloaded collection in the
  * browser — costs the whole table on every page load instead.
  *

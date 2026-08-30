@@ -108,7 +108,7 @@ describe('SecurityPage', () => {
 	/**
 	 * ⚠️ E17-S08's third criterion, and it is on the card with the buttons rather than in a footnote. Neither
 	 * action takes effect everywhere at once: adoption rides a Redis publish, measured at 37 ms across the
-	 * five signing services, with the 5-minute fallback poll as the ceiling for a lost message. An operator
+	 * five signing services, with the 5-minute fallback poll as the ceiling for a lost message. An admin
 	 * who read the toast as "done everywhere" would tell an incident channel a compromised key was out of use
 	 * while a service that missed the nudge was still verifying with it.
 	 */
@@ -158,7 +158,7 @@ describe('SecurityPage', () => {
 	})
 
 	// A refused read leaves nothing to render, and the panel must say so rather than spin: the record is
-	// unwrapped under this service's own `KEYGRIP_KEK`, so a 500 here is the one failure an operator has
+	// unwrapped under this service's own `KEYGRIP_KEK`, so a 500 here is the one failure an admin has
 	// to act on immediately.
 	it('reports a refused read instead of spinning', async () => {
 		stubGraphQL({
@@ -208,7 +208,7 @@ describe('SecurityPage', () => {
 	 * The reason the screen exists (E01-S14): "the mutation returned true" and "the fleet agrees" are two
 	 * different claims, and the second one is only visible here. The state is spelled as a word and not
 	 * only as a colour — a red cell reading the same as the green one beside it is invisible to a
-	 * colour-blind operator and in any black-and-white printout of a ticket.
+	 * colour-blind admin and in any black-and-white printout of a ticket.
 	 */
 	it('marks the service whose fingerprint is behind the record', async () => {
 		stubGraphQL({ KeygripStatus: READ })
@@ -243,7 +243,7 @@ describe('SecurityPage', () => {
  * looks right" and "the button does the right thing" have to be told apart by the call count.
  */
 describe('rotating the key', () => {
-	it('asks first, and sends nothing when the operator says no', async () => {
+	it('asks first, and sends nothing when the admin says no', async () => {
 		const confirm = respond(false)
 		const stub = stubGraphQL({ KeygripStatus: READ })
 		await renderRoute('/security')
@@ -264,7 +264,7 @@ describe('rotating the key', () => {
 	 * argument would let its sender install a key of their choosing, which is the ability to mint a
 	 * session cookie for any account on the platform.
 	 */
-	it('sends the rotation with no arguments once the operator agrees', async () => {
+	it('sends the rotation with no arguments once the admin agrees', async () => {
 		respond(true)
 		const stub = stubGraphQL({ KeygripStatus: [READ, READ_AFTER], KeygripRotate: ROTATED })
 		await renderRoute('/security')
@@ -283,7 +283,7 @@ describe('rotating the key', () => {
 	 * The `additionalTypenames` on the call site, proven rather than assumed. `keygripRotate` answers a
 	 * bare boolean, which names no typename to invalidate, so without it the panel would go on showing
 	 * the record the rotation replaced — on the one screen where a stale read is the entire failure: the
-	 * operator rotated in order to watch the fleet converge, and would be watching the old fingerprint
+	 * admin rotated in order to watch the fleet converge, and would be watching the old fingerprint
 	 * converge on itself.
 	 */
 	it('re-reads the record after a rotation and shows the new one', async () => {
@@ -312,7 +312,7 @@ describe('rotating the key', () => {
 	})
 
 	/**
-	 * 409 is the compare-and-set losing: another operator, or another tab, swapped the record first. The
+	 * 409 is the compare-and-set losing: another admin, or another tab, swapped the record first. The
 	 * refusal has to be visible, because the record on screen after it is somebody else's rotation and
 	 * not this one's — and a silent failure here reads as "nothing happened", which is the one reading
 	 * that is wrong.
@@ -336,7 +336,7 @@ describe('rotating the key', () => {
 	})
 
 	// GraphQL allows a response to carry data *and* errors. "The key set was rotated" under a red toast
-	// would leave the operator to guess which half is true.
+	// would leave the admin to guess which half is true.
 	it('does not confirm when the answer carries an error alongside the data', async () => {
 		respond(true)
 		stubGraphQL({
@@ -357,7 +357,7 @@ describe('rotating the key', () => {
 	})
 
 	// `false` with no error is the service refusing without saying why. Announcing a rotation would tell
-	// the operator the fleet is about to converge on a key that was never minted.
+	// the admin the fleet is about to converge on a key that was never minted.
 	it('does not confirm when the mutation answers false', async () => {
 		respond(true)
 		const stub = stubGraphQL({ KeygripStatus: READ, KeygripRotate: { data: { keygripRotate: false } } })
@@ -375,7 +375,7 @@ describe('rotating the key', () => {
 
 	// A rotation in flight is the window in which a second click would mint a second key. The button
 	// carries its own spinner rather than the panel doing so: the table beside it is still valid, and
-	// replacing it with a spinner would hide the fingerprint the operator is about to compare against.
+	// replacing it with a spinner would hide the fingerprint the admin is about to compare against.
 	it('holds the button while the rotation is in flight', async () => {
 		respond(true)
 		stubGraphQL({ KeygripStatus: READ, KeygripRotate: { pending: true } })
@@ -414,7 +414,7 @@ describe('retiring a key', () => {
 	/**
 	 * ⚠️ E17-S08's second criterion: the key the platform signs with is **not offered at all**, not offered
 	 * and disabled. `retireKeygripKey` refuses it server-side with a 409, because removing it would leave the
-	 * platform signing with a key an operator has just declared untrustworthy — rotation is what moves a
+	 * platform signing with a key an admin has just declared untrustworthy — rotation is what moves a
 	 * suspect key down the array, from where this action can take it. A disabled button would teach that rule
 	 * as a dead end; the word "Signing" says which key it is and why.
 	 */
@@ -429,7 +429,7 @@ describe('retiring a key', () => {
 		expect(retireButtonFor('k1')).toBeInTheDocument()
 	})
 
-	it('asks first, naming the key and who is signed out, and sends nothing when the operator says no', async () => {
+	it('asks first, naming the key and who is signed out, and sends nothing when the admin says no', async () => {
 		const confirm = respond(false)
 		const stub = stubGraphQL({ KeygripStatus: READ })
 		await renderRoute('/security')
@@ -448,7 +448,7 @@ describe('retiring a key', () => {
 
 	// The id of the row that was clicked, and nothing else. Never key material, never a version: the id is
 	// public by construction — the panel renders it and the fingerprint is computed over the ids.
-	it('sends the id of the clicked row once the operator agrees', async () => {
+	it('sends the id of the clicked row once the admin agrees', async () => {
 		respond(true)
 		const stub = stubGraphQL({ KeygripStatus: READ, KeygripRetire: { data: { keygripRetire: true } } })
 		await renderRoute('/security')
@@ -482,7 +482,7 @@ describe('retiring a key', () => {
 	/**
 	 * ⚠️ The criterion this whole story turns on. E16-S04 answers **404** for an id nothing matches rather
 	 * than returning the array unchanged, precisely so a retire cannot be closed on a success that never
-	 * happened — and the panel has to show that as a failure. An operator who read a silent success here
+	 * happened — and the panel has to show that as a failure. An admin who read a silent success here
 	 * would stop responding to a compromise that is still live.
 	 */
 	it('shows a refused retire as a failure rather than as a silent success', async () => {
@@ -504,7 +504,7 @@ describe('retiring a key', () => {
 	})
 
 	// Data and errors in one answer is legal GraphQL. "The key was retired" under a red toast would leave
-	// the operator to guess which half is true, on the one action that cannot be undone.
+	// the admin to guess which half is true, on the one action that cannot be undone.
 	it('does not confirm when the answer carries an error alongside the data', async () => {
 		respond(true)
 		stubGraphQL({
@@ -527,7 +527,7 @@ describe('retiring a key', () => {
 	/*
 	 * ⚠️ `false` with no error is the one refusal that carries nothing to render — no message, no status, no
 	 * red anything. The confirmation has to be tied to the answer's *value* and not merely to the absence of
-	 * an error, or this exact reply reads as a success: the operator is told a suspect key is out of the set
+	 * an error, or this exact reply reads as a success: the admin is told a suspect key is out of the set
 	 * while every process on the fleet still verifies cookies with it. The 404 of E16-S04 covers the unknown
 	 * id; this covers the service saying no without saying so.
 	 */

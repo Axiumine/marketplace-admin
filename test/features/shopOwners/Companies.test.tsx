@@ -332,7 +332,7 @@ describe('Companies — editing', () => {
 		expect(save()).toBeDisabled()
 	})
 
-	// A `null` seeds an empty box, never the word "null" for the operator to delete first, and seeding is
+	// A `null` seeds an empty box, never the word "null" for the admin to delete first, and seeding is
 	// not an edit: Save stays dead until something is typed.
 	it('seeds an empty box for a field the company has not got', async () => {
 		stubGraphQL(companies([company]))
@@ -404,7 +404,7 @@ describe('Companies — editing', () => {
 
 	/*
 	 * A company nobody touched is not merely nothing to send — it must not be *validated* either, or a
-	 * stored company the current rules would reject blocks a save the operator made on a different card.
+	 * stored company the current rules would reject blocks a save the admin made on a different card.
 	 *
 	 * The blank registryExtract is what such a company looks like: the field was unbounded and unchecked before
 	 * the extraction, so companies lifted out of a shop can carry one this form would refuse.
@@ -528,7 +528,7 @@ describe('Companies — editing', () => {
 	 * spaces is empty — and the parsed value is what reaches the wire, so it cannot be padded either.
 	 *
 	 * The messages are spelled out one by one because each names its own box: a single shared sentence
-	 * would leave the operator hunting for which of the four is empty.
+	 * would leave the admin hunting for which of the four is empty.
 	 */
 	it.each([
 		['Legal name', 'Legal name is required'],
@@ -669,7 +669,7 @@ describe('Companies — registered office', () => {
 	 * The seventh name in the `trigger` list at the end of a pick, and the one the six behind the box cannot
 	 * stand in for: it is the only field of the seven with an input, and the only error a *stored* company
 	 * can be left holding on its own — the rule it fails is the composite one, and picking is what satisfies
-	 * it. Left out of that list, the box would go on refusing an address the operator has just chosen.
+	 * it. Left out of that list, the box would go on refusing an address the admin has just chosen.
 	 */
 	it('clears the composite refusal once an address is picked', async () => {
 		stubNetwork({ ...companies([company]), ...OK }, withAddress)
@@ -716,8 +716,8 @@ describe('Companies — registered office', () => {
 	})
 
 	// Typed and not picked: the line no longer spells out the fields behind it, and the save is refused on
-	// the one control the operator can do something about.
-	it('refuses a line the operator typed over', async () => {
+	// the one control the admin can do something about.
+	it('refuses a line the admin typed over', async () => {
 		const stub = stubNetwork({ ...companies([company]), ...OK })
 		await renderRoute(DETAIL)
 
@@ -736,7 +736,7 @@ describe('Companies — registered office', () => {
  * nothing reaches the server until Save.
  *
  * ⚠️ Unlike a shop's, the backend delete is a **hard** one and is refused with a 409 while a live shop
- * still points at the company. That message has to reach the operator, which is why the card's
+ * still points at the company. That message has to reach the admin, which is why the card's
  * toast sits outside the mask that covers everything else.
  */
 describe('Companies — deletion', () => {
@@ -757,7 +757,7 @@ describe('Companies — deletion', () => {
 		expect(save()).toBeEnabled()
 	})
 
-	// The one way back out, and the reason the title row stays sharp: the trash the operator has to press
+	// The one way back out, and the reason the title row stays sharp: the trash the admin has to press
 	// again is the only control the mask must not cover.
 	it('takes the deletion back', async () => {
 		stubGraphQL(companies([company]))
@@ -841,7 +841,7 @@ describe('Companies — deletion', () => {
 
 	/*
 	 * The 409 the shops make possible, and the whole reason the toast is outside the mask: a company still
-	 * pointed at cannot be removed, and the operator has to read why while the card is still masked.
+	 * pointed at cannot be removed, and the admin has to read why while the card is still masked.
 	 */
 	it('surfaces the server message and leaves the card queued', async () => {
 		stubGraphQL({
@@ -863,7 +863,7 @@ describe('Companies — deletion', () => {
 })
 
 /**
- * A company the operator is adding: the same fields as the card above it, driven by the same schema and
+ * A company the admin is adding: the same fields as the card above it, driven by the same schema and
  * the same Save button, and sent to `companyAdd` with the owner's id where the update sends the company's
  * own.
  *
@@ -885,7 +885,7 @@ describe('Companies — new company', () => {
 	}
 
 	/**
-	 * A card filled the way an operator would: eight boxes typed and the address **picked** out of the
+	 * A card filled the way an admin would: eight boxes typed and the address **picked** out of the
 	 * geocoder's list, which is the only way the four address fields and the coordinate pair are written.
 	 *
 	 * The two optional boxes are left empty on purpose — what they send is the subject of its own test.
@@ -926,7 +926,7 @@ describe('Companies — new company', () => {
 	 * on screen together would be the page contradicting itself.
 	 *
 	 * The card counts as a pending change from the moment it appears, before a character is typed: it is a
-	 * company the operator asked for and the page has not written.
+	 * company the admin asked for and the page has not written.
 	 */
 	it('replaces the empty-list message with a card, already worth saving', async () => {
 		stubNetwork(companies([]))
@@ -1009,7 +1009,7 @@ describe('Companies — new company', () => {
 	/*
 	 * ⚠️ Each card is keyed by a uuid of its own, and this is what says so. Keyed by position instead,
 	 * discarding the first of two would hand its React state — an empty form — to the second, and the
-	 * typing would vanish from a card the operator never touched.
+	 * typing would vanish from a card the admin never touched.
 	 */
 	it("keeps a second card's contents when the first is discarded", async () => {
 		stubNetwork(companies([]))
@@ -1032,7 +1032,7 @@ describe('Companies — new company', () => {
 	 * ⚠️ The card is seeded with an empty string per field rather than with nothing at all. react-hook-form
 	 * hands the schema whatever it was given: `''` fails the rule the form wrote under the box
 	 * it belongs to — `undefined` fails zod's type check instead, with "expected string, received
-	 * undefined" shown to an operator.
+	 * undefined" shown to an admin.
 	 */
 	it("refuses an untouched card in this form's own words", async () => {
 		const stub = stubNetwork({ ...companies([]), ...OK_ADD })
@@ -1051,13 +1051,13 @@ describe('Companies — new company', () => {
 	})
 
 	/*
-	 * The same refusal as the operator sees it: the boxes turn red, and the toast in the corner lists the
+	 * The same refusal as the admin sees it: the boxes turn red, and the toast in the corner lists the
 	 * same sentences they carry — the Save button is below three cards, and the box that refused may well be
 	 * scrolled off the top of the page.
 	 *
 	 * The address is **one** line however many of its seven fields are wrong, which is the reason the toast
 	 * goes through `addressError` rather than walking the error tree flat: six of the seven have no box
-	 * of their own, so naming them would send the operator looking for fields that are not on screen.
+	 * of their own, so naming them would send the admin looking for fields that are not on screen.
 	 *
 	 * ⚠️ Read through `within(warningBox)` and not `page()`: each sentence is now on screen twice, and the
 	 * toast stack is portalled to `document.body`, outside `main`.
@@ -1098,7 +1098,7 @@ describe('Companies — new company', () => {
 	 *
 	 * Six of the seven fields behind the box have no input of their own, so nothing clears their errors by
 	 * being typed into — only the `trigger` at the end of the pick does. A name missing from that list
-	 * leaves its field refused for good, and the box goes on showing a message about a value the operator
+	 * leaves its field refused for good, and the box goes on showing a message about a value the admin
 	 * has just chosen and has no way to reach.
 	 */
 	it('clears every field that was refused before the address was picked', async () => {
@@ -1179,7 +1179,7 @@ describe('Companies — new company', () => {
 	})
 
 	// The duplicate `vatNumber` and the duplicate `certifiedEmail` are the two refusals this mutation really answers with,
-	// and both arrive as a message the operator can act on — so the message is what is shown.
+	// and both arrive as a message the admin can act on — so the message is what is shown.
 	it('surfaces the server message when the add fails', async () => {
 		stubNetwork(
 			{

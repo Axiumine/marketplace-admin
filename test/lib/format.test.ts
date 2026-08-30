@@ -21,7 +21,7 @@ beforeEach(async () => {
 })
 
 /**
- * The zone is pinned to UTC in vitest.config.ts, so these are the exact strings an operator sees.
+ * The zone is pinned to UTC in vitest.config.ts, so these are the exact strings an admin sees.
  * Asserting the literal output rather than re-deriving it through `Intl` is the point: a test that
  * formats its own expectation passes whatever the formatter does.
  */
@@ -65,7 +65,7 @@ describe('formatEpochMillis', () => {
 
 	/**
 	 * ⚠️ `Number('')` is `0`, which is 1 January 1970 — a plausible-looking date for a field the service
-	 * failed to write. An operator reading it on a session row would take a write fault for a session minted
+	 * failed to write. An admin reading it on a session row would take a write fault for a session minted
 	 * before the platform existed, so the empty string is refused with the rest.
 	 */
 	it('renders NO_VALUE for an empty or blank value rather than 1 January 1970', () => {
@@ -152,7 +152,7 @@ describe('toDateInput', () => {
 	})
 
 	// The empty string, not NO_VALUE: this feeds a form control, where `---` is three characters the
-	// operator has to delete rather than an empty field.
+	// admin has to delete rather than an empty field.
 	it('is empty for an unparseable value', () => {
 		expect(format.toDateInput('not a date')).toBe('')
 	})

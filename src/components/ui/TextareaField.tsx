@@ -23,7 +23,7 @@ interface TextareaFieldProps extends TextareaHTMLAttributes<HTMLTextAreaElement>
 /*
  * The same box as `TextField`'s, minus the trailing-icon padding split — a textarea has no room for an
  * icon pinned inside it, so the right padding is not something a caller can change and `px-3` is safe
- * here. `resize-y`: the height is a guess about how long a note is, and the operator is the one who
+ * here. `resize-y`: the height is a guess about how long a note is, and the admin is the one who
  * knows; horizontal resizing would only break the grid it sits in.
  *
  * The border width and the background are both out, as on `TextField`, and for the same reason: each pair
@@ -87,7 +87,7 @@ export const TextareaField = ({ label, error, remaining, id, rows = ROWS, ref, .
 					</span>
 				)}
 				{remaining === undefined ? null : (
-					/* `aria-live`, because the number changes while the operator types and nothing else on
+					/* `aria-live`, because the number changes while the admin types and nothing else on
 					   screen would tell a screen-reader user they are running out of room. `ml-auto` keeps it
 					   right-aligned when it is the only child of the row. */
 					<span id={counterId} aria-live="polite" className="ml-auto text-xs text-tip">

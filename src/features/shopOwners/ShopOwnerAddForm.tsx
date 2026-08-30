@@ -44,7 +44,7 @@ export const shopOwnerSchema = z
 		firstName: required('First name'),
 		lastName: required('Last name'),
 		// Checked against the clock at validation time, not against a constant captured when this module
-		// loaded: a panel left open overnight would otherwise keep yesterday's boundary, and the operator
+		// loaded: a panel left open overnight would otherwise keep yesterday's boundary, and the admin
 		// on the other side of midnight gets a rejection the calendar in front of them contradicts.
 		birthDate: z.iso
 			.date('Enter a valid date of birth')
@@ -60,7 +60,7 @@ export const shopOwnerSchema = z
 		landline: z.string().trim(),
 		contactEmail: z.email('Enter a valid contact email address')
 	})
-	// On the repeat, not on the password: the error belongs under the box the operator can fix by
+	// On the repeat, not on the password: the error belongs under the box the admin can fix by
 	// retyping it. Reported on the first field it would accuse the value that is probably right.
 	.refine((values) => values.password === values.confirmPassword, {
 		message: 'The two passwords do not match',

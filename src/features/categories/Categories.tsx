@@ -59,7 +59,7 @@ const MAX_POSITION = 999999999
  * lowercase letters and digits in groups, joined by single hyphens, with no hyphen at either end.
  *
  * Checked here as well as there because the database's refusal arrives as a validation error naming a
- * field the operator cannot see, while this one arrives under the box they typed into.
+ * field the admin cannot see, while this one arrives under the box they typed into.
  */
 const SHAPE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -67,7 +67,7 @@ const SHAPE_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
  * What a whole number looks like *as typed*, which is not what `Number()` accepts.
  *
  * `Number('0x10')` is 16 and `Number('1e3')` is 1000 — both whole, both integers, and neither is what an
- * operator meant by an ordinal. The shape is checked on the characters and the arithmetic only afterwards,
+ * admin meant by an ordinal. The shape is checked on the characters and the arithmetic only afterwards,
  * so the box holds a decimal number and the sign is the one thing left for the next rule to judge.
  */
 const SHAPE_POSITION = /^-?\d+$/
@@ -91,7 +91,7 @@ const TOP_LEVEL = 'Top-level category'
  * chain reports every rule that failed, and `abc` fails all three at once.
  *
  * ⚠️ The blank box is inside the first of them. `Number('')` is `0`, so an empty position would otherwise
- * validate as the first place in the menu — a place the operator never chose.
+ * validate as the first place in the menu — a place the admin never chose.
  */
 export const categorySchema = z.object({
 	name: required('Name', MAX_NAME),
@@ -143,7 +143,7 @@ interface CategoryRow {
  * platform's own writes cannot produce that state — `itemCategoryDel` refuses a category while a live
  * subcategory points at it — but the collection has been reachable by hand since before this screen
  * existed, and this is the one screen that can repair such a document. A card that is not drawn is a
- * category the operator cannot fix.
+ * category the admin cannot fix.
  */
 const orderedCategories = (categories: readonly Category[]): readonly CategoryRow[] => {
 	const tops = categories.filter((category) => category.idParent === null)
@@ -201,7 +201,7 @@ const CTX_SAVE_CATEGORY: Partial<OperationContext> = Object.freeze({
  *
  * Every field is `''` and not absent, for the reason the company form's own `NEW_VALUES` gives: an
  * `undefined` reaching the schema answers with zod's "expected string, received undefined" instead of
- * this form's messages. `position` included — a new category has no place in the menu until the operator
+ * this form's messages. `position` included — a new category has no place in the menu until the admin
  * says which, and a default of `0` would put every new one first without anybody choosing it.
  */
 // Stryker disable next-line ObjectLiteral: react-hook-form reads a registered uncontrolled input back
@@ -238,7 +238,7 @@ const valuesInitial = (category: Category | null): CategoryValues => (category =
  * this screen. The taxonomy is the only thing in this app whose writes are turned down for reasons that
  * are neither "that box is wrong" nor "no such document" — the depth cap, the slug's global uniqueness,
  * and the two things a delete refuses to cascade over — and each of them needs its own sentence naming
- * its own box. One "Save failed." for all seven would leave the operator guessing which of the two
+ * its own box. One "Save failed." for all seven would leave the admin guessing which of the two
  * levels they had broken.
  */
 const FormCategory = ({
@@ -280,7 +280,7 @@ const FormCategory = ({
 
 	const parents = parentOptions(categories, category?._id ?? null)
 
-	// A new card counts as a pending change from the moment it appears: it is a category the operator
+	// A new card counts as a pending change from the moment it appears: it is a category the admin
 	// asked for and the page has not written yet, so Save has to be live and leaving has to warn.
 	const changed = isNew || isDirty || deleted
 
@@ -367,7 +367,7 @@ const FormCategory = ({
 			<div className="mb-1 flex items-center justify-between gap-2">
 				{/* The heading is the stored tree position, not what is in the boxes: it is what tells two
 				    cards apart, and a heading that followed the keystrokes would rename the card the
-				    operator is still deciding about. */}
+				    admin is still deciding about. */}
 				<h3 className={`text-lg font-bold ${deleted ? 'text-tip line-through' : ''}`}>
 					{category === null ? 'New category' : heading}
 				</h3>
@@ -420,7 +420,7 @@ const FormCategory = ({
 						</SelectField>
 						{/* Said before the save rather than after it. The service refuses this move — it would
 						    push every child to a third level — and the refusal is still what arrives if the
-						    list on screen is behind, but an operator should not have to press Save to find out
+						    list on screen is behind, but an admin should not have to press Save to find out
 						    that the picker above them cannot be used. */}
 						{category !== null && hasChildren(categories, category._id) ? (
 							<p className="mt-1 text-xs text-tip">
@@ -452,7 +452,7 @@ const FormCategory = ({
 	)
 }
 
-/** The stored taxonomy in tree order, plus whatever new cards the operator has open. */
+/** The stored taxonomy in tree order, plus whatever new cards the admin has open. */
 const ListCategories = ({
 	categories,
 	registerSection,

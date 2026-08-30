@@ -19,7 +19,7 @@ describe('safeRedirect', () => {
 		expect(safeRedirect(undefined)).toBe(DEFAULT_REDIRECT)
 	})
 
-	// The open-redirect cases. The target arrives in a query string, so anyone can hand an operator a
+	// The open-redirect cases. The target arrives in a query string, so anyone can hand an admin a
 	// link to `/loading?redirect=…` and have this app forward them somewhere else wearing a trusted
 	// domain — after a successful login, which is exactly when a phishing page is most convincing.
 	it('refuses an absolute URL', () => {

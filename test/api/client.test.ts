@@ -8,7 +8,7 @@ import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/tokenSto
 
 import { graphQLError, stubGraphQL } from '../helpers/graphql'
 
-const ADMIN = { infoAdminAfterLogin: { _id: '65f0000000000000000000a1', email: 'operator@marketplace.it' } }
+const ADMIN = { infoAdminAfterLogin: { _id: '65f0000000000000000000a1', email: 'admin@marketplace.it' } }
 
 const refreshed = (accessToken: string) => ({ data: { refresh: { status: true, accessToken } } })
 
@@ -78,7 +78,7 @@ describe('createGraphQLClient', () => {
 		await client
 			.mutation(
 				LoginAdminDocument,
-				{ email: 'operator@marketplace.it', password: 'password123', rememberMe: false },
+				{ email: 'admin@marketplace.it', password: 'password123', rememberMe: false },
 				CTX_PUBLIC_AUTHORIZATION
 			)
 			.toPromise()
@@ -90,7 +90,7 @@ describe('createGraphQLClient', () => {
 
 	// The page-reload story: the access token lives in memory, a reload wipes it, and the first
 	// authenticated operation after the reload re-mints it from the cookie instead of bouncing the
-	// operator to the login page.
+	// admin to the login page.
 	it('refreshes before sending when there is no token yet', async () => {
 		const stub = stubGraphQL({ Refresh: refreshed('tok-2'), InfoAdminAfterLogin: { data: ADMIN } })
 		clearAccessToken()
@@ -250,7 +250,7 @@ describe('createGraphQLClient', () => {
 	})
 
 	// Two retries, not one: a tab can lose twice in a row when three are open, and the second retry is the
-	// difference between an unlucky operator staying signed in and being sent back to the login page.
+	// difference between an unlucky admin staying signed in and being sent back to the login page.
 	it('retries a second time and still keeps the session', async () => {
 		const stub = stubGraphQL({
 			InfoAdminAfterLogin: [{ errors: [graphQLError('Invalid token', undefined, 498)], status: 498 }, { data: ADMIN }],
@@ -310,7 +310,7 @@ describe('createGraphQLClient', () => {
 		expect(getAccessToken()).toBe('tok-1')
 	})
 
-	// A dropped connection is not a dead session: the operator is almost certainly still signed in and
+	// A dropped connection is not a dead session: the admin is almost certainly still signed in and
 	// the wifi is not. Logging them out here would lose whatever they were typing.
 	it('keeps the session on a transport failure', async () => {
 		stubGraphQL({ InfoAdminAfterLogin: { networkError: 'offline' } })

@@ -11,7 +11,7 @@ import { clearSession } from '@/auth/session'
  *
  * The local state is cleared unconditionally, without looking at the mutation result. `logout` returns
  * `true` whatever it managed to delete server-side, and a logout that failed on the server still has
- * to log the operator out of this browser — leaving a token in memory because a request went wrong is
+ * to log the admin out of this browser — leaving a token in memory because a request went wrong is
  * the opposite of what the button promises.
  *
  * urql resolves mutation errors into the result instead of rejecting, so there is no rejection path to

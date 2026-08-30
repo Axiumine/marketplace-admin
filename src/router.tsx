@@ -64,7 +64,7 @@ const createAppRouteTree = () => {
 	 *
 	 * `status` is the screen's own vocabulary rather than the backend's, because the backend has no
 	 * "either" state — `disabled` and `deleted` are two required booleans there, and this is the one name
-	 * for the pair the operator picks between. `active` is what an arriving operator sees, which is the
+	 * for the pair the admin picks between. `active` is what an arriving admin sees, which is the
 	 * answer `usersActiveTbl`'s own defaults give.
 	 */
 	const customersSearchSchema = z.object({
@@ -83,7 +83,7 @@ const createAppRouteTree = () => {
 	 * nobody at all is the one wrong thing this screen could do.
 	 *
 	 * The tier is the backend's own vocabulary, `.catch()`ing to `shopOwner` because that is the tier an
-	 * operator is looking at when they have a ticket. A fifth tier is a fifth collection and a fifth service
+	 * admin is looking at when they have a ticket. A fifth tier is a fifth collection and a fifth service
 	 * pair (ADR-002); it is added here as well as to `GraphQLTier` on the service.
 	 */
 	const securitySearchSchema = z.object({

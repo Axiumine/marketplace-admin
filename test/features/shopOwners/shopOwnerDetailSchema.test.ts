@@ -118,7 +118,7 @@ describe('shopOwnerDetailSchema — required fields', () => {
 })
 
 describe('shopOwnerDetailSchema — email', () => {
-	// Two addresses, two messages: the operator has to know which of the two boxes to go back to, and
+	// Two addresses, two messages: the admin has to know which of the two boxes to go back to, and
 	// they usually hold the same string.
 	it('tells the login address apart from the contact one', () => {
 		expect(messages({ emailLogin: 'mark@rivers' })).toEqual(['Enter a valid login email address'])
@@ -218,7 +218,7 @@ describe('shopOwnerDetailSchema — composed address', () => {
 		expect(messages({ province: 'NY' })).toEqual(['Select the address from the list'])
 	})
 
-	// It is reported on the box, because the box is where the operator can do something about it: the
+	// It is reported on the box, because the box is where the admin can do something about it: the
 	// four fields it is really about have no input on the page at all.
 	it('reports it on the box and not on a field with no input', () => {
 		const result = outcome({ addressComplete: '2 Main Street, 02109 Boston (MA)' })
@@ -229,7 +229,7 @@ describe('shopOwnerDetailSchema — composed address', () => {
 
 	// The province code is upper-cased by the schema, so the comparison sees `MA` however the box was filled —
 	// which is what lets the geocoder's own `IT-mi` reach the form without the rule refusing the address
-	// the operator picked out of the list a moment earlier.
+	// the admin picked out of the list a moment earlier.
 	it('compares against the upper-cased province code, not the one that was typed', () => {
 		expect(messages({ province: '  ma  ' })).toEqual([])
 	})
@@ -289,7 +289,7 @@ describe('shopOwnerDetailSchema — note', () => {
  * ⚠️ **The reason is mandatory beside the flag, and this is a collection rule rather than a house style**
  * (ADR-044). `dependencies: { disabled: ['disabledReason'] }` on `shopOwner` refuses a `disabled: true`
  * that carries no reason, so a form letting one through would not suspend somebody with a blank note —
- * it would fail the write and hand the operator an error about a validator.
+ * it would fail the write and hand the admin an error about a validator.
  *
  * The cap is the service's alone: the field is randomly encrypted, so `$jsonSchema` sees `binData` and
  * cannot measure a string it may not read.

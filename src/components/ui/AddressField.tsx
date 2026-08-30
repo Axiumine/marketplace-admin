@@ -44,7 +44,7 @@ type Outcome =
 /**
  * What the geocoder said, and which query it said it about.
  *
- * Tagged, because an answer outlives its question: the operator deletes half the address and the matches
+ * Tagged, because an answer outlives its question: the admin deletes half the address and the matches
  * for what used to be there are still in state, correct about a query nobody is asking any more.
  */
 interface Response {
@@ -147,7 +147,7 @@ export const AddressField = ({
 	 * What the keyboard has put in the box since the last pick, and the only thing ever geocoded.
 	 *
 	 * ⚠️ Not `value`. The box is controlled by the form, and the form writes to it twice: once as the
-	 * operator types, and again when a pick is accepted — and that second write came *from* the geocoder.
+	 * admin types, and again when a pick is accepted — and that second write came *from* the geocoder.
 	 * Searching for it reopens the list under an address that was already chosen, asking OSM to confirm
 	 * what it just said. Which of the two a given `value` is cannot be read off the value itself: it
 	 * depends on what the form chose to write, and the two forms using this field write different things
@@ -180,7 +180,7 @@ export const AddressField = ({
 				setResponse({ query, outcome: { type: 'found', results: found } })
 			})
 			.catch(() => {
-				// An aborted request is this effect's own cleanup, not a failure: the operator typed another
+				// An aborted request is this effect's own cleanup, not a failure: the admin typed another
 				// character. Reporting it would flash "search unavailable" between two keystrokes.
 				if (controller.signal.aborted) return
 

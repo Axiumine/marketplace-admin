@@ -58,7 +58,7 @@ export const statusOf = (error: CombinedError | undefined): number | undefined =
 	return typeof extensionHttp === 'number' ? extensionHttp : undefined
 }
 
-/** `extensions.description` — the long form the backend writes for the operator, when it wrote one. */
+/** `extensions.description` — the long form the backend writes for the admin, when it wrote one. */
 export const descriptionOf = (error: CombinedError | undefined): string | undefined => {
 	const description = prop(error?.graphQLErrors[0]?.extensions, 'description')
 	return typeof description === 'string' && description !== '' ? description : undefined
@@ -87,7 +87,7 @@ export const isRefreshRaceRetry = (error: CombinedError | undefined): boolean =>
 	prop(error?.graphQLErrors[0]?.extensions, 'code') === REFRESH_RACE_RETRY_CODE
 
 /**
- * What to put in front of the operator.
+ * What to put in front of the admin.
  *
  * Preference order: the backend's `description`, then the GraphQL error's own message (the `title`
  * argument of `throwGraphQLError`), then a generic line. A `CombinedError` with no GraphQL errors at

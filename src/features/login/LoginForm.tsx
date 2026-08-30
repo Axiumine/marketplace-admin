@@ -20,7 +20,7 @@ import { useTurnstileToken } from './useTurnstileToken'
  * Client-side validation is a courtesy, not a gate.
  *
  * No minimum length on the password: the rules that matter live in the backend, and telling an
- * operator their existing password is "too short" to even try would lock out anyone whose account
+ * admin their existing password is "too short" to even try would lock out anyone whose account
  * predates the current policy. The email check is a well-formedness check so an obvious typo does not
  * cost a round-trip.
  */
@@ -42,7 +42,7 @@ type LoginValues = z.infer<typeof loginSchema>
  * `rememberMe` is a real checkbox: it picks the server-side session cap the login stamps into the refresh
  * session — one day unchecked, thirty checked (E14-S05, E14-S07) — which every later refresh is measured
  * against. The cookie's own lifetime does not change with it, so pinning the box here would silently decide
- * how long an operator stays signed in without changing a single thing the browser can see.
+ * how long an admin stays signed in without changing a single thing the browser can see.
  *
  * The Turnstile widget below the checkbox is the client half of the platform's login gate; the other
  * half is `guardPublicLogin` on the service, which also meters this page at ten attempts an hour per

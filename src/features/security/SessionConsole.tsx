@@ -48,9 +48,9 @@ export const TIERS: readonly GraphQlTier[] = ['admin', 'shopOwner', 'user']
  * ⚠️ Both mutations answer a bare `Boolean` / `Int`, and the document cache invalidates by the
  * `__typename`s a mutation's *response* mentions — neither mentions one. Without this the table would go on
  * listing the session that was just ended, which on this screen is not a stale read but a wrong answer to
- * "did it work": the operator is here because they believe a session is in the wrong hands.
+ * "did it work": the admin is here because they believe a session is in the wrong hands.
  *
- * `GraphQLSession` only. The reuse trail is not written by a revocation an operator asked for — E17's open
+ * `GraphQLSession` only. The reuse trail is not written by a revocation an admin asked for — E17's open
  * question 4 answered "not attributable" — so invalidating it would re-read a list that cannot have changed.
  */
 const CTX_REVOKE: Partial<OperationContext> = Object.freeze({
@@ -71,11 +71,11 @@ const sessionWord = (count: number) => (count === 1 ? 'session' : 'sessions')
  * gives.
  *
  * ⚠️ It names the blast radius — one session, and whose — because the id beside the button is a 64-character
- * digest that no operator reads across. The account is what they can check against the ticket.
+ * digest that no admin reads across. The account is what they can check against the ticket.
  *
  * ⚠️ It states what the click actually reaches, and since R54 that is both halves: the refresh lineage and
  * the access token the session minted, which the session itself names. The text used to warn that the
- * device kept working for up to 91 minutes; saying so now would send an operator looking for a window that
+ * device kept working for up to 91 minutes; saying so now would send an admin looking for a window that
  * has been closed, which is the same mistake in the other direction.
  */
 export const revokeOneWarning = (query: SessionQuery) =>
@@ -87,7 +87,7 @@ export const revokeOneWarning = (query: SessionQuery) =>
 /**
  * The confirmation for ending every session one account holds.
  *
- * ⚠️ The count is the one this screen is showing, so the operator agrees to a number they can see. It is
+ * ⚠️ The count is the one this screen is showing, so the admin agrees to a number they can see. It is
  * also the number the service may disagree with — a session minted between the read and the click is ended
  * too, and the answer says how many actually went.
  *
@@ -113,7 +113,7 @@ export const revokeAllWarning = (query: SessionQuery, count: number) =>
  * reason written out on the document.
  *
  * ⚠️ **Nothing network- or device-derived either.** There is no address column because there is no address
- * field, by the standing decision. An operator cannot answer "where was this used from" here; the answer to
+ * field, by the standing decision. An admin cannot answer "where was this used from" here; the answer to
  * a compromise report is to end the sessions.
  */
 export const SessionConsole = ({
@@ -146,7 +146,7 @@ export const SessionConsole = ({
 
 	/*
 	 * ⚠️ `false` is an answer, not a failure: the session had already ended. Reporting it as an error would
-	 * train an operator to retry a call that has already done everything it can, and reporting it as a
+	 * train an admin to retry a call that has already done everything it can, and reporting it as a
 	 * success would tell them they ended something they did not.
 	 */
 	const ended = revocation.error === undefined ? revocation.data?.revokeSession : undefined
@@ -188,7 +188,7 @@ export const SessionConsole = ({
 			{eventsResult.error === undefined ? null : <Alert tone="error">{messageOf(eventsResult.error)}</Alert>}
 
 			{/* The spinner covers the first read only. A refetch after a revocation keeps the table on screen:
-			    it is the list the operator is comparing against, and replacing it with a spinner loses the
+			    it is the list the admin is comparing against, and replacing it with a spinner loses the
 			    row they were looking at. */}
 			{pause || sessions !== undefined || sessionsResult.error !== undefined ? null : <Spinner label="Loading the sessions" />}
 
@@ -260,7 +260,7 @@ export const SessionConsole = ({
 					</div>
 
 					{/*
-					 * ⚠️ An empty table is an answer here, and a load-bearing one: it is what an operator reads
+					 * ⚠️ An empty table is an answer here, and a load-bearing one: it is what an admin reads
 					 * after ending everything, and what tells them a suspected account is not signed in
 					 * anywhere. Left as bare headers it reads as a screen that failed to load.
 					 */}
@@ -303,7 +303,7 @@ export const SessionConsole = ({
 					</div>
 
 					{/*
-					 * ⚠️ Empty is the normal, healthy state, and has to say so. An operator who read a blank
+					 * ⚠️ Empty is the normal, healthy state, and has to say so. An admin who read a blank
 					 * trail as "the trail is broken" would go looking for a logging fault instead of reading
 					 * it as the good news it is.
 					 */}

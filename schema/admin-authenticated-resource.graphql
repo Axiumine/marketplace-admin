@@ -15,13 +15,13 @@
 # ⚠️ On 2026-08-14 `published` left `GraphQLInputCompany` on the service and publishing became its own
 # operation on both tiers — `companyUpdatePublished(_id, published)` here and on 4026, plus
 # `itemUpdatePublished(_id, published)` here. `companyUpdate` `$set`s the whole document, so a flag
-# inside its input made every save a write of the flag, and an operator who reopened a stale card
+# inside its input made every save a write of the flag, and an admin who reopened a stale card
 # republished a shop somebody had just taken down. `companyAdd` stamps `false`.
 #
 # Neither of the two publish mutations is transcribed below, and neither is the trio of optional public
 # fields (`publicName`, `slug`, `description`) the service added to `GraphQLInputCompany` and to
 # `GraphQLCompany`: this app has no screen that reads or writes any of them, so transcribing them would
-# only be drift with a codegen type attached. The operator tier moderates publication on the service and
+# only be drift with a codegen type attached. The admin tier moderates publication on the service and
 # nowhere else for now — see README, "Decisions that look wrong until you know why".
 #
 # The customers half — one query, one mutation and three types — was transcribed on 2026-08-25 against
@@ -34,7 +34,7 @@
 # answered E19 §6 question 2. `GraphQLPeriodGranularity` is NOT duplicated for them: the service moved
 # that enum out of the shopOwner file and both series now answer with the same one.
 #
-# This is the only endpoint that serves domain data to the operator app. Everything the app queries
+# This is the only endpoint that serves domain data to the admin app. Everything the app queries
 # that is not login / refresh / logout goes here.
 
 schema {
@@ -56,13 +56,13 @@ scalar Date
 
 type QueriesApi {
 	"""
-	The authenticated operator's own identity, read straight out of the Redis session — no database
+	The authenticated admin's own identity, read straight out of the Redis session — no database
 	round-trip. This is the query that proves a session is live, which is what the app uses it for.
 	"""
 	infoAdminAfterLogin: GraphQLAdminInfoAfterLogin!
 
 	"""
-	One page of the operator table, filtered to the shopOwners that are neither disabled nor
+	One page of the admin table, filtered to the shopOwners that are neither disabled nor
 	soft-deleted. Every argument has a server-side default, so `shopOwnersActiveTbl { … }` with no
 	arguments is a legal first page.
 	"""
@@ -76,7 +76,7 @@ type QueriesApi {
 
 	"""
 	Headline count of shopOwners. Unfiltered — this is NOT `total` from the table page, which is the
-	size of the searched set and changes as the operator types.
+	size of the searched set and changes as the admin types.
 	"""
 	shopOwnersStats: Int!
 
@@ -136,7 +136,7 @@ type QueriesApi {
 	"""
 	The whole live taxonomy, flat, sorted by `position` then `_id`.
 
-	No arguments and no paging: an operator is the only writer, so the list is bounded by hand, and the
+	No arguments and no paging: an admin is the only writer, so the list is bounded by hand, and the
 	screen needs every category at once to draw each parent with its own children under it. The `_id`
 	tiebreak is not decoration — `position` is not unique, so without it two categories sharing one swap
 	places between reads and the screen reorders itself for no reason.
@@ -150,7 +150,7 @@ type QueriesApi {
 	itemCategories: [GraphQLItemCategory!]!
 
 	"""
-	One page of the operator's customers table (E19-S02). Every argument has a server-side default, so
+	One page of the admin's customers table (E19-S02). Every argument has a server-side default, so
 	`usersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
 
 	⚠️ **There is no `search` argument, and adding one is the anti-story E19-S05 refuses.** Every field a
@@ -200,8 +200,8 @@ type QueriesApi {
 
 type MutationsApi {
 	"""
-	Changes the authenticated operator's OWN password. There is deliberately no `_id` argument: the
-	account is taken from the Redis session, because every operator authenticates against the same
+	Changes the authenticated admin's OWN password. There is deliberately no `_id` argument: the
+	account is taken from the Redis session, because every admin authenticates against the same
 	collection and the platform has no role field that could tell one from another. Answers 401 for a
 	wrong old password, a disabled/deleted account, or a session naming an account that no longer
 	exists — all four indistinguishable on purpose. 400 if the new password is outside 10..72
@@ -231,7 +231,7 @@ type MutationsApi {
 	type cannot state — so the service validates it (400, at most 1000 characters) and the collection
 	backs the requirement up with `dependencies: { disabled: ['disabledReason'] }`. Suspending without
 	one does not half-work: the write is refused. Releasing `$unset`s the reason with the flag and the
-	operator who set it.
+	admin who set it.
 	"""
 	shopOwnerUpdateStatus(_id: ID!, disabled: Boolean!, waitApprov: Boolean!, disabledReason: String): Boolean!
 
@@ -243,7 +243,7 @@ type MutationsApi {
 	shopOwnerUpdatePreferences(_id: ID!, rememberMe: Boolean!, onboardingDone: Boolean!, onboardingStep: String): Boolean!
 
 	"""
-	The operator's note about the account, at most 2000 characters. Its own mutation because it is not
+	The admin's note about the account, at most 2000 characters. Its own mutation because it is not
 	part of the personalData — `shopOwnerUpdate` replaces that whole sub-document, and the note sits at
 	the top level of the shopOwner. `notes` is `String!` and not nullable on purpose: the empty string
 	is how the note is cleared (the resolver turns it into an `$unset`), so a nullable argument would
@@ -295,7 +295,7 @@ type MutationsApi {
 	caller install a key of their choosing, which is the ability to mint a session cookie for any
 	account on the platform.
 
-	`Boolean!` for the same reason — the answer is "it happened", never the keys. What an operator
+	`Boolean!` for the same reason — the answer is "it happened", never the keys. What an admin
 	needs afterwards is `keygripStatus`, which reads the ids and never the material. 409 when another
 	rotation swapped the record first (the Lua compare-and-set lost), 500 when this service cannot
 	unwrap the record under its own `KEYGRIP_KEK`.
@@ -309,7 +309,7 @@ type MutationsApi {
 	`keygripStatus` renders it and the fingerprint is computed over the ids.
 
 	⚠️ **The service refuses to retire the key that is currently signing**, and the panel does not offer it
-	at all — an operator who could reach that button would be one click from invalidating every cookie on
+	at all — an admin who could reach that button would be one click from invalidating every cookie on
 	the platform, including their own. 404 when no key in the record has this id, which is a real failure
 	and must be shown as one: a stale screen naming a key a rotation has already replaced would otherwise
 	read as a successful retire that did nothing.
@@ -322,7 +322,7 @@ type MutationsApi {
 	`id` is the row's own id from `sessions` — the digest of the session key, never a token. Answers
 	whether a *live* session was ended: a row whose session had already expired answers `false` and still
 	prunes the index, and the screen says "already ended" rather than reporting an error, because an
-	operator told "error" retries a call that has already done everything it can.
+	admin told "error" retries a call that has already done everything it can.
 
 	⚠️ Ends the refresh lineage. An access token already minted from it keeps working until its own short
 	expiry — the residual is real, is the same one the `disabled` flag carries, and the confirmation text
@@ -351,7 +351,7 @@ type MutationsApi {
 
 	409 on the slug, which is the collection's only unique index and is unique **across both levels** —
 	`/category/:slug` and `/category/:slug/:subSlug` share one namespace of first segments. 400 naming the
-	offending path for a name, a slug or a position outside its bounds, and two more the operator can
+	offending path for a name, a slug or a position outside its bounds, and two more the admin can
 	reach by hand: an `idParent` that is itself a subcategory (the depth cap), and a position that is
 	not a whole number. 404 when `idParent` names no live category.
 
@@ -380,7 +380,7 @@ type MutationsApi {
 	⚠️ **Refused, not cascaded, while anything live still points at it**: 400 for a live subcategory, 400
 	for a live item. `item.idCategory` is required, so a cascade would silently withdraw an unbounded
 	number of other shop owners' items, and retiring a stocked category would leave every one of them
-	filed under something no read path returns. Re-filing them first is the operator's call to make
+	filed under something no read path returns. Re-filing them first is the admin's call to make
 	explicitly. 404 when `_id` matches no category.
 	"""
 	itemCategoryDel(_id: ID!): Boolean!
@@ -420,7 +420,7 @@ test, so a field added there fails a test rather than changing a snapshot; trans
 only make this slice lie about it.
 
 `version` is what a rotation bumps and `fingerprint` is the record's own — a sha256 over the ordered key
-ids, which is what makes publishing it harmless. Together they are how an operator tells two records
+ids, which is what makes publishing it harmless. Together they are how an admin tells two records
 apart without seeing either.
 """
 type GraphQLKeygripStatus {
@@ -481,9 +481,9 @@ Why a lineage was revoked (E17-S05).
 ⚠️ **The one enum in this slice with a test on the other side proving the two lists are equal** (E17-S01):
 the service builds `GraphQLReuseEventAction` from `REUSE_EVENT_ACTIONS` and asserts the value sets match,
 so a third case added to that constant fails the service's suite until it is transcribed here. Without
-that, drift would surface as an operator reading a blank cell rather than as a failing build.
+that, drift would surface as an admin reading a blank cell rather than as a failing build.
 
-⚠️ **An operator's own revocation is not a value here.** E17's open question 4 answered "not
+⚠️ **An admin's own revocation is not a value here.** E17's open question 4 answered "not
 attributable"; a case for it would answer that question by accident and would need its own retention
 decision.
 """
@@ -509,13 +509,13 @@ enumerates these four field names against an exact expected set, so a fifth fail
 quietly reaching this screen.
 
 ⚠️ **Nothing network- or device-derived either** — no address, not truncated, not hashed, not salted. That
-is the standing decision, and it is why an operator cannot answer "where was this session used from" here.
+is the standing decision, and it is why an admin cannot answer "where was this session used from" here.
 The answer to a compromise report is to end the sessions.
 
 `mintedAt` is epoch millis as a string, and it is the *login* this session descends from rather than its
 last rotation — a session refreshing every fifteen minutes must not read as freshly created. Two rows
 sharing a `familyId` are one login seen either side of a rotation race, which is the only thing that
-explains a duplicate an operator would otherwise read as a second device.
+explains a duplicate an admin would otherwise read as a second device.
 """
 type GraphQLSession {
 	id: String!
@@ -529,7 +529,7 @@ One line of an account's reuse trail (E17-S05).
 
 ⚠️ **Five fields, and the omissions are the contract** — no token, no digest of one, no prefix of one,
 nothing network-derived. `familyId` is the handle the revocation was issued against, which is what ties a
-line here to the rows `sessions` no longer returns: a mass logout an operator can explain instead of a
+line here to the rows `sessions` no longer returns: a mass logout an admin can explain instead of a
 mystery ticket. `at` is epoch millis as a string, as it is stored.
 """
 type GraphQLReuseEvent {
@@ -541,7 +541,7 @@ type GraphQLReuseEvent {
 }
 
 """
-One page of the operator table. `total` is the size of the FILTERED set, not of the collection.
+One page of the admin table. `total` is the size of the FILTERED set, not of the collection.
 """
 type GraphQLShopOwnersActiveTblPage {
 	items: [GraphQLShopOwnerActiveTbl!]!
@@ -567,7 +567,7 @@ enum GraphQLSortDirection {
 }
 
 """
-One page of the operator's customers table. `total` is the size of the FILTERED set, not of the
+One page of the admin's customers table. `total` is the size of the FILTERED set, not of the
 collection — it moves with the three filter arguments. There is no unfiltered headline count on this
 tier: `usersStats` does not exist (`phase5/epics/E19.md` §6, question 2).
 """
@@ -722,12 +722,12 @@ type GraphQLShopOwnerActiveTbl {
 	"""
 	⚠️ **Nullable, and the resolver agrees — do not "tidy" it back to `GraphQLPersonalData!`.** A seller
 	who signed themselves up through `shopOwnerRegister` has an address and a password and nothing else,
-	so this whole block is missing on exactly the rows an operator opened the table to approve. `items`
+	so this whole block is missing on exactly the rows an admin opened the table to approve. `items`
 	is a non-null list of non-null rows, so one such row under a `NonNull` here errors the entire page.
 	"""
 	personalData: GraphQLPersonalData
 	"""
-	Present and true while the account waits for an operator. `$unset` on approval, so it is never
+	Present and true while the account waits for an admin. `$unset` on approval, so it is never
 	`false` — render "pending" on truthiness, not on equality.
 	"""
 	waitApprov: Boolean
@@ -750,7 +750,7 @@ type GraphQLShopOwnerById {
 	_id: ID!
 	login: GraphQLShopOwnerLogin!
 	"""
-	⚠️ **Nullable, for the reason the table's is.** This is the page an operator opens to decide whether
+	⚠️ **Nullable, for the reason the table's is.** This is the page an admin opens to decide whether
 	to approve a self-registration, and a self-registration has no `personalData` at all — under a
 	`NonNull` the one account that needs looking at is the one that cannot be looked at.
 	"""
@@ -765,13 +765,13 @@ type GraphQLShopOwnerById {
 	⚠️ **This is the only surface where the reason is legible.** `disabledReason` is randomly encrypted
 	(ADR-029): a shell reading the collection sees `binData`, and the admin resource service decrypts it
 	because it holds the data key. `disabledBy` is an attribution and not a foreign key — nothing joins
-	on it, and it may name an operator who no longer exists.
+	on it, and it may name an admin who no longer exists.
 	"""
 	disabledBy: ID
 	disabledReason: String
 	waitApprov: Boolean
 	"""
-	The operator's free-text note about this account, at most 2000 characters. Absent until one is
+	The admin's free-text note about this account, at most 2000 characters. Absent until one is
 	written; `shopOwnerUpdateNote` removes the field again when the note is cleared.
 	"""
 	notes: String
@@ -842,7 +842,7 @@ type GraphQLResetPwd {
 """
 A company, as its own entity — the `company` collection since migration 20260803000000.
 
-`idShopOwner` is exposed rather than kept internal: the operator app reaches a company through its
+`idShopOwner` is exposed rather than kept internal: the admin app reaches a company through its
 owner's detail page, and the field is what a client re-reading one company can check it against.
 
 `taxCode` and `uniqueCode` are the two nullable fields, matching the collection's `required` array. `taxCode` is new
@@ -910,7 +910,7 @@ type GraphQLItemCategory {
 	"""
 	slug: String!
 	"""
-	A sort ordinal the operator reorders the menu with — ⚠️ **not** the GeoJSON `position` of
+	A sort ordinal the admin reorders the menu with — ⚠️ **not** the GeoJSON `position` of
 	`GraphQLCompanyPosition`. The two share a name and nothing else; this collection stores no
 	coordinates at all.
 	"""
@@ -941,7 +941,7 @@ input GraphQLInputAddress {
 	province: String!
 	"""
 	⚠️ **Coordinates only and nullable.** No `type` field, like `GraphQLInputCompanyPosition` — the
-	resolver adds `type: 'Point'`. Nullable because the operator can save personal data whose
+	resolver adds `type: 'Point'`. Nullable because the admin can save personal data whose
 	address was never re-picked. ⚠️ Omitting it does **not** preserve the stored point:
 	`shopOwnerUpdate` `$set`s the whole `personalData`, so a save without `position` erases it. Send
 	back the point the query returned whenever the address is left alone.
@@ -960,7 +960,7 @@ input GraphQLInputContacts {
 }
 
 """
-Everything the operator types about a company, in one object — one form and one Save, which is also what
+Everything the admin types about a company, in one object — one form and one Save, which is also what
 lets `companyUpdate` `$set` the document in a single atomic write.
 
 `_id` and `idShopOwner` are deliberately absent: the first is minted by the service, the second is a
@@ -975,7 +975,7 @@ them is legal on the wire and the service reads it as "not set".
 operation on both tiers — `companyUpdatePublished` — and not a side effect of saving the card.
 
 ⚠️ The service's own input carries three more optional fields this slice does not: `publicName`, `slug`
-and `description`, the shop's public listing. They are omitted rather than forgotten — the operator's
+and `description`, the shop's public listing. They are omitted rather than forgotten — the admin's
 form has no box for any of them, and the service drops an optional field it was not sent instead of
 clearing it, so a save from this app leaves whatever is stored alone. Transcribing them would only put
 three fields in a generated type that no form can fill.
@@ -1004,14 +1004,14 @@ input GraphQLInputCompanyAddress {
 ⚠️ **Coordinates only.** This input has no `type` field: the value has exactly one legal spelling
 (`Point`), the collection caps it at 5 characters and the model declares it as an enum of one, so
 accepting it from a client would only be a way to receive `point` or `POINT` and fail the write
-naming a field the operator never saw. The service writes the literal.
+naming a field the admin never saw. The service writes the literal.
 """
 input GraphQLInputCompanyPosition {
 	coordinates: [Float!]!
 }
 
 """
-Everything an operator types about a category, in one object — one form and one Save, which is also
+Everything an admin types about a category, in one object — one form and one Save, which is also
 what lets `itemCategoryUpdate` `$set` the document in a single atomic write.
 
 `_id` is deliberately absent: it is minted by the service on the add path and is a separate argument on

@@ -92,7 +92,7 @@ describe('categorySchema — slug', () => {
 
 	/*
 	 * A blank slug fails the length rule *and* the grammar — a chain of `.min`/`.regex` reports both, unlike
-	 * the `superRefine` behind `position`. Only the first reaches the operator: react-hook-form keeps one
+	 * the `superRefine` behind `position`. Only the first reaches the admin: react-hook-form keeps one
 	 * error per field, and the box shows the one that is about the box being empty rather than the one about
 	 * hyphens.
 	 */
@@ -135,7 +135,7 @@ describe('categorySchema — position', () => {
 	})
 
 	// `Number('')` is 0, so a blank box would otherwise validate as the first place in the menu — which is
-	// a position the operator never chose, on a category nobody has placed yet.
+	// a position the admin never chose, on a category nobody has placed yet.
 	it.each([[''], ['   ']])('refuses a blank position «%s»', (position) => {
 		expect(messages({ position })).toEqual(['The position is a whole number'])
 	})
@@ -143,7 +143,7 @@ describe('categorySchema — position', () => {
 	/*
 	 * ⚠️ The last two are what the arithmetic alone would let through: `Number('0x10')` is 16 and
 	 * `Number('1e3')` is 1000, both whole and both integers, so an ordinal is checked on its characters
-	 * before it is read as a number. An operator who typed either did not mean sixteenth or thousandth.
+	 * before it is read as a number. An admin who typed either did not mean sixteenth or thousandth.
 	 */
 	it.each([['1.5'], ['abc'], ['0x10'], ['1e3']])('refuses «%s»', (position) => {
 		expect(messages({ position })).toEqual(['The position is a whole number'])
@@ -161,7 +161,7 @@ describe('categorySchema — position', () => {
 		expect(messages({ position: '1000000000' })).toEqual(['The position cannot exceed 999999999'])
 	})
 
-	// Trimmed before it is read, like every other box: ` 10 ` is the number the operator typed.
+	// Trimmed before it is read, like every other box: ` 10 ` is the number the admin typed.
 	it('trims what it stores', () => {
 		expect(value({ position: ' 10 ' }).position).toBe('10')
 	})

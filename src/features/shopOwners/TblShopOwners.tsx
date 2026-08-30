@@ -49,7 +49,7 @@ export const EMPTY_CELL = '—'
  * First name and lastName are two columns, not one composed "First name" cell. A concatenation is not a sortable
  * thing — the backend indexes `personalData.firstName` and `personalData.lastName` separately and nothing
  * indexes the pair joined by a space — so splitting them is what makes either sort reachable at all.
- * Surname-first is the ordering an operator scanning a list of people expects.
+ * Surname-first is the ordering an admin scanning a list of people expects.
  *
  * `Address` sorts by CITY: the full address string is composed client-side and, again, is not an
  * index. Sorting by town is the part that is actually useful.
@@ -120,7 +120,7 @@ export const TblShopOwners = ({
 
 	// Pushing the debounced value up rather than querying on it directly keeps a single source of truth:
 	// the URL. Resetting to page 1 matters — a narrower search almost always has fewer pages than the
-	// one the operator is standing on, and page 7 of 2 renders empty.
+	// one the admin is standing on, and page 7 of 2 renders empty.
 	useEffect(() => {
 		if (debouncedSearch !== query.search) onQueryChange({ search: debouncedSearch, page: 1 })
 	}, [debouncedSearch, query.search, onQueryChange])
@@ -140,7 +140,7 @@ export const TblShopOwners = ({
 	const page = result.data?.shopOwnersActiveTbl
 	// ⚠️ Every `personalData` read below is optional-chained, and has to be: a shop owner who registered
 	// themselves on the public site has none until onboarding fills it in, and those are precisely the
-	// rows an operator came here to approve. Reading `item.personalData.firstName` unguarded throws
+	// rows an admin came here to approve. Reading `item.personalData.firstName` unguarded throws
 	// while mapping and takes the whole table down with it, pending rows and trading rows alike.
 	const rows: Row[] = (page?.items ?? []).map((item) => ({
 		_id: item._id,
@@ -159,7 +159,7 @@ export const TblShopOwners = ({
 	const columns = [
 		// The row's link, and it lives on the email cell rather than on the surname: the address is the
 		// one column that is filled in on every row, so a pending registration is still reachable. On the
-		// surname it would be an em dash for exactly the accounts an operator needs to open.
+		// surname it would be an em dash for exactly the accounts an admin needs to open.
 		column.accessor('email', {
 			header: 'Email',
 			cell: (info) => (
@@ -175,7 +175,7 @@ export const TblShopOwners = ({
 		column.accessor('waitApprov', {
 			header: 'Status',
 			// The same `account-wait-approv` swatch the detail page paints the header with, so the state
-			// an operator sees in the list is the state they see after clicking through.
+			// an admin sees in the list is the state they see after clicking through.
 			cell: (info) =>
 				info.getValue() ? <span className="account-wait-approv rounded-box px-2 py-1">Pending approval</span> : 'Active'
 		})

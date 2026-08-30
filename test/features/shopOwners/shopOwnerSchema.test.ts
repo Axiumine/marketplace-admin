@@ -58,7 +58,7 @@ describe('shopOwnerSchema — data di birth', () => {
 	/*
 	 * The boundary is read from the clock at validation time, not captured when the module loaded.
 	 *
-	 * An operator's panel stays open for days. With a constant, the one working past midnight would be
+	 * An admin's panel stays open for days. With a constant, the one working past midnight would be
 	 * refused a date the calendar in front of them still offers — the same value, accepted an hour
 	 * earlier and rejected now, with an error naming an age that does not match the birthday.
 	 */

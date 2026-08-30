@@ -5,7 +5,7 @@ import { Link } from '@tanstack/react-router'
  *
  * ⚠️ "Add" goes to `/p/shopOwners/add-shopOwner` — **singular**. Its siblings are
  * plural, which makes the wrong spelling the natural one to type, and TanStack's typed `to` is the
- * only thing standing between that and a 404 nobody sees until an operator clicks it.
+ * only thing standing between that and a 404 nobody sees until an admin clicks it.
  *
  * `Link` handles the active state itself: `activeProps` fires on exact match, which is what these want
  * (unlike the sidebar, where `/shopOwners` must stay lit while a detail page is open).

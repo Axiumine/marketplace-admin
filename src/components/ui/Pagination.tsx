@@ -1,7 +1,7 @@
 /**
  * Page numbers plus totals, not "load more".
  *
- * The operator table is something people scan and come back to, so the position has to be nameable —
+ * The admin table is something people scan and come back to, so the position has to be nameable —
  * a page number that lives in the URL is shareable and survives a reload, an infinite scroll offset is
  * neither.
  */

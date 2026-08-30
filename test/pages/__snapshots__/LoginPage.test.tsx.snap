@@ -11,7 +11,7 @@ exports[`LoginPage > renders the login card 1`] = `
       <h1
         class="mb-4 text-2xl font-bold"
       >
-        Marketplace — operator panel
+        Marketplace — admin panel
       </h1>
       <form
         class="flex w-full max-w-sm flex-col gap-4"
@@ -123,7 +123,7 @@ exports[`LoginPage > renders the login card 1`] = `
       <p
         class="mt-6 text-xs text-tip"
       >
-        Password forgotten? Standalone recovery is not available for operator accounts: contact the administrator of the platform.
+        Password forgotten? Standalone recovery is not available for admin accounts: contact the administrator of the platform.
       </p>
     </div>
   </div>

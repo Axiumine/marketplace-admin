@@ -3,7 +3,7 @@ import { GraphQLError } from 'graphql'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
- * The taxonomy's refusals, turned into the sentences the operator reads.
+ * The taxonomy's refusals, turned into the sentences the admin reads.
  *
  * Asserted here rather than through the screen: there are eight of them, the screen renders each one the
  * same way, and a render per refusal would buy nothing but eight seconds. What the screen's own tests
@@ -75,7 +75,7 @@ describe('refusalOf', () => {
 	 *
 	 * `parent category not found` contains `category not found` and the first match wins, so the two lines
 	 * swapped would answer the *delete*'s sentence for a refusal about the parent picker — a message telling
-	 * the operator to reload while the box that has to change is on screen in front of them. Only a pair of
+	 * the admin to reload while the box that has to change is on screen in front of them. Only a pair of
 	 * assertions catches it: either one alone still passes with the order reversed.
 	 */
 	it('tells the two "not found" refusals apart', () => {
@@ -84,7 +84,7 @@ describe('refusalOf', () => {
 	})
 
 	// A validation refusal, which the service words per field and this map deliberately leaves alone: it
-	// already names the box, and the fallthrough is what keeps the operator from being handed nothing.
+	// already names the box, and the fallthrough is what keeps the admin from being handed nothing.
 	it('passes an unmapped refusal through in the service words', () => {
 		expect(refusalOf(refusal('itemCategory.position: cannot be negative'), 'Save failed.')).toBe(
 			'itemCategory.position: cannot be negative'
