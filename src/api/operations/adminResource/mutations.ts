@@ -17,9 +17,13 @@ export const AdminUpdatePwdDocument = graphql(`
  * Creates an shopOwner. It has been on the admin-resource service since v1; this app is its first
  * caller, so its behaviour is proven by these tests and nothing else.
  *
- * The backend also exposes `shopOwnerDel(_id)`, which still has no screen and so still has no
- * document here: an unsent operation is dead weight that has to be typed, tested and kept in step with
- * the schema. Add it alongside the screen that needs it.
+ * The backend also exposes two closures — `shopOwnerDel(_id)` and, since 2026-08-30, `userDel(_id)` —
+ * and neither has a screen, so neither has a document here: an unsent operation is dead weight that has
+ * to be typed, tested and kept in step with the schema. Add each alongside the screen that needs it.
+ *
+ * That the pair is absent together is the point rather than an oversight (ADR-048): an admin acts on a
+ * shop owner and on a customer in the same way, so a screen for one without the other would be the
+ * asymmetry the backend was just brought out of.
  */
 export const ShopOwnerAddDocument = graphql(`
 	mutation ShopOwnerAdd($login: GraphQLInputLogin!, $personalData: GraphQLInputShopOwnerPersonalData!) {
