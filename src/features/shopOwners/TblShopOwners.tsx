@@ -9,15 +9,29 @@ import { messageOf } from '@/api/errors'
 import { ShopOwnersActiveTblDocument } from '@/api/operations/adminResource/queries'
 import { Alert } from '@/components/ui/Alert'
 import { Pagination } from '@/components/ui/Pagination'
+import { SelectField } from '@/components/ui/SelectField'
 import { Spinner } from '@/components/ui/Spinner'
 import { TextField } from '@/components/ui/TextField'
-import { formatAddress, formatDate } from '@/lib/format'
+import type { AccountStatus } from '@/lib/accountStatus'
+import { ACCOUNT_FILTER, ACCOUNT_STATUSES, closedOrSuspendedLabel } from '@/lib/accountStatus'
+import { EMPTY_CELL, formatAddress, formatDate } from '@/lib/format'
 import { useDebouncedValue } from '@/lib/useDebouncedValue'
 
 /** How long the search box waits after the last keystroke before it costs a round-trip. */
 export const SEARCH_DEBOUNCE_MS = 300
 
 export interface ShopOwnersQuery {
+	/**
+	 * Which of the four account states the table is looking at — the same four the customers table
+	 * offers, from the same module, because an admin acts on the two tiers in the same way (platform
+	 * owner, 2026-08-29).
+	 *
+	 * ⚠️ **Not a cosmetic filter: without it this table cannot see a suspended or a closed shop owner at
+	 * all.** `shopOwnersActiveTbl` used to hard-wire both flags to absent, so `shopOwnerUpdateStatus`
+	 * suspending an account removed it from the only list of shop owners there is, and `shopOwnerDel`
+	 * removed it again (ADR-049).
+	 */
+	status: AccountStatus
 	search: string
 	page: number
 	pageSize: number
@@ -32,15 +46,35 @@ interface Row {
 	lastName: string
 	registeredAt: string
 	address: string
-	waitApprov: boolean
+	status: string
+	/**
+	 * Why this account was suspended, and `null` on every account that is not.
+	 *
+	 * ⚠️ **This tier is the only one that can read it at all.** `disabledReason` is randomly encrypted
+	 * (ADR-044, ADR-029), so the shop-owner services hold ciphertext they have no data key for — the
+	 * admin surface decrypts it because it is the surface the reason was written for.
+	 */
+	reason: string | null
 }
 
+/** The state a shop owner is in before an admin has approved them, and the only one with a swatch. */
+export const PENDING_APPROVAL = 'Pending approval'
+
 /**
- * What a cell shows when the account has no `personalData` yet. An em dash rather than an empty cell:
- * a blank reads as a rendering fault, a dash reads as "nothing here", and the row still has an email
- * and a date that say who it is.
+ * The one thing the Status column says about the account, out of the three flags that can say it.
+ *
+ * The first two are the two flags both tiers carry, so they are read by the shared helper and in its
+ * order: a closed account that was suspended first is both, and saying only "Suspended" would send an
+ * admin to lift a suspension that leaves the account closed. `waitApprov` is what is left, and it is
+ * last because a suspended account waiting for approval is suspended first — the approval queue is not
+ * where an admin deals with it.
+ *
+ * ⚠️ `waitApprov` and `disabled` are absent-or-true on the wire — the collection stores `true` or
+ * `$unset`s, never `false` — so both are read on truthiness before they get here. `deleted` is a
+ * timestamp rather than a flag (ADR-011), so presence is what marks it.
  */
-export const EMPTY_CELL = '—'
+export const statusOf = (row: { waitApprov: boolean; disabled: boolean; deleted: boolean }): string =>
+	closedOrSuspendedLabel(row) ?? (row.waitApprov ? PENDING_APPROVAL : ACCOUNT_FILTER.active.label)
 
 /**
  * The **sortable** columns, each paired with the backend sort field it maps to. A column absent from
@@ -56,8 +90,9 @@ export const EMPTY_CELL = '—'
  *
  * ⚠️ **`email` and `status` are deliberately not here.** `login.email` is CSFLE ciphertext in MongoDB
  * and no encryption algorithm on this platform preserves an ordering, so an email sort would have to
- * fetch and sort the whole collection in memory; `waitApprov` has no index and only two states worth
- * distinguishing. Adding either to this map does not add a column sort, it adds a server error.
+ * fetch and sort the whole collection in memory; the status is composed here out of three fields, two of
+ * which the filter above has already pinned to one value for the whole page. Adding either to this map
+ * does not add a column sort, it adds a server error.
  */
 const SORT_FIELD = {
 	lastName: 'LAST_NAME',
@@ -101,9 +136,11 @@ const ariaSort = (
  * `onQueryChange`. The route owns the search params, so a sort or a page is a real navigation — back
  * works, and a link to page 4 sorted by town is a link someone can send.
  *
- * ⚠️ Search, sort and paging all happen in MongoDB, against the indexes marketplace-db-setup builds for
- * exactly these four fields. Never move any of the three into the browser: doing so means fetching the
- * whole `shopOwner` collection to show twenty rows, and the cost grows with every signup.
+ * ⚠️ Search, sort, filtering and paging all happen in MongoDB, against the indexes marketplace-db-setup
+ * builds for exactly these four fields — each of them led by `{deleted, disabled}`, which is why the
+ * status filter is two required booleans rather than an optional narrowing. Never move any of the four
+ * into the browser: doing so means fetching the whole `shopOwner` collection to show twenty rows, and the
+ * cost grows with every signup.
  *
  * There is deliberately no row-selection checkbox column. Nothing here acts on a selection, and a
  * checkbox that collects one is a control that promises a bulk action the app does not have.
@@ -130,6 +167,8 @@ export const TblShopOwners = ({
 		variables: {
 			offset: (query.page - 1) * query.pageSize,
 			limit: query.pageSize,
+			disabled: ACCOUNT_FILTER[query.status].disabled,
+			deleted: ACCOUNT_FILTER[query.status].deleted,
 			search: query.search === '' ? null : query.search,
 			sortBy: query.sortBy,
 			sortDir: query.sortDir
@@ -151,9 +190,14 @@ export const TblShopOwners = ({
 		// Not `item.personalData?.address` — `formatAddress` takes the whole block, so the guard has to be
 		// on the object rather than on one of its members.
 		address: item.personalData == null ? EMPTY_CELL : formatAddress(item.personalData.address),
-		// `waitApprov` is absent-or-true on the wire — it is `$unset` on approval, never written `false`
-		// — so the flag is derived from presence here and the rest of the component reads a boolean.
-		waitApprov: item.waitApprov === true
+		// The three flags are absent-or-true or, for `deleted`, absent-or-a-timestamp, so each is derived
+		// from presence here and the rest of the component reads one composed string.
+		status: statusOf({
+			waitApprov: item.waitApprov === true,
+			disabled: item.disabled === true,
+			deleted: item.deleted != null
+		}),
+		reason: item.disabledReason ?? null
 	}))
 
 	const columns = [
@@ -172,12 +216,32 @@ export const TblShopOwners = ({
 		column.accessor('firstName', { header: 'First name' }),
 		column.accessor('registeredAt', { header: 'RegisteredAt' }),
 		column.accessor('address', { header: 'Address' }),
-		column.accessor('waitApprov', {
+		/*
+		 * The reason rides under the status rather than in a column of its own, as on the customers table:
+		 * it is set on exactly the rows the two suspended filters show and empty on every row the other two
+		 * do, so a column would be blank down the whole default page.
+		 *
+		 * ⚠️ Guarded on the value and not on the status text. A legacy suspension predating ADR-044 carries
+		 * the flag and no reason, and `?? null` above turns that into a row that says "Suspended" and stops
+		 * — which is honest — rather than an empty line pretending a reason was recorded.
+		 */
+		column.accessor('status', {
 			header: 'Status',
-			// The same `account-wait-approv` swatch the detail page paints the header with, so the state
-			// an admin sees in the list is the state they see after clicking through.
-			cell: (info) =>
-				info.getValue() ? <span className="account-wait-approv rounded-box px-2 py-1">Pending approval</span> : 'Active'
+			cell: (info) => {
+				const { reason } = info.row.original
+				const status = info.getValue()
+
+				return (
+					<>
+						{/* The same `account-wait-approv` swatch the detail page paints its header with, so the
+						    state an admin sees in the list is the state they see after clicking through. Painted
+						    on the label rather than on the flag: a suspended account can be waiting for approval
+						    too, and that row says "Suspended". */}
+						{status === PENDING_APPROVAL ? <span className="account-wait-approv rounded-box px-2 py-1">{status}</span> : status}
+						{reason === null ? null : <span className="block text-xs text-tip">{reason}</span>}
+					</>
+				)
+			}
 		})
 	]
 
@@ -207,6 +271,24 @@ export const TblShopOwners = ({
 					setSearchInput(event.target.value)
 				}}
 			/>
+
+			<div className="sm:w-56">
+				<SelectField
+					label="Status"
+					value={query.status}
+					onChange={(event) => {
+						// Back to page 1: the four sets are different sizes, and page 7 of the one an admin was
+						// standing on is very often past the end of the one they asked for.
+						onQueryChange({ status: event.target.value as AccountStatus, page: 1 })
+					}}
+				>
+					{ACCOUNT_STATUSES.map((value) => (
+						<option key={value} value={value}>
+							{ACCOUNT_FILTER[value].label}
+						</option>
+					))}
+				</SelectField>
+			</div>
 
 			{result.error === undefined ? null : <Alert tone="error">{messageOf(result.error)}</Alert>}
 
@@ -266,6 +348,11 @@ export const TblShopOwners = ({
 			</div>
 
 			{result.fetching ? <Spinner label="Loading shop owners" /> : null}
+			{/*
+			 * An empty page is an answer here and has to read as one — an admin who filtered to Closed and
+			 * found nobody has learnt that no shop owner has left. Left as bare headers it reads as a screen
+			 * that failed to load.
+			 */}
 			{!result.fetching && rows.length === 0 ? <p className="text-tip">No shopOwner found.</p> : null}
 
 			<Pagination

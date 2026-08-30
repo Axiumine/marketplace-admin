@@ -99,8 +99,18 @@ describe('statusOf', () => {
 		expect(statusOf({ disabled: true, deleted: null, emailVerified: null })).toBe('Suspended')
 	})
 
-	it('reports an erased account as erased, over both other flags', () => {
-		expect(statusOf({ disabled: true, deleted: '2026-05-01T00:00:00.000Z', emailVerified: true })).toBe('Deleted')
+	it('reports a closed account as closed, over the confirmation flag', () => {
+		expect(statusOf({ disabled: null, deleted: '2026-05-01T00:00:00.000Z', emailVerified: null })).toBe('Closed')
+	})
+
+	/*
+	 * ⚠️ The state that has to be its own name rather than one of the other two, and the reason there are
+	 * four filters instead of three (ADR-049). `userDel` stamps `deleted` and leaves the suspension trio
+	 * exactly as it found it (ADR-048), so this pair is a real document — and reporting it as "Suspended"
+	 * would offer an admin a lift that leaves the account closed.
+	 */
+	it('reports a closed account that was suspended first as both', () => {
+		expect(statusOf({ disabled: true, deleted: '2026-05-01T00:00:00.000Z', emailVerified: true })).toBe('Closed & suspended')
 	})
 })
 
@@ -278,17 +288,47 @@ describe('TblCustomers', () => {
 		})
 	})
 
-	it('asks for the suspended accounts when the URL says so', async () => {
+	/**
+	 * ⚠️ **The four states as a pair of booleans, and each one asserted separately.** The two flags are
+	 * independent — `userDel` never touches the suspension trio (ADR-048) — so the fourth row of this table
+	 * is a document that exists and that the previous two-state filter could not ask for: it was neither
+	 * "not suspended" nor "not closed", and no filter on this screen listed it (ADR-049).
+	 *
+	 * The dropdown's own value is asserted with the variables, because a filter the URL honours and the
+	 * control does not show is a screen that lies about what it is listing.
+	 */
+	it.each([
+		{ status: 'suspended', disabled: true, deleted: false },
+		{ status: 'closed', disabled: false, deleted: true },
+		{ status: 'closedSuspended', disabled: true, deleted: true }
+	])('asks for the $status accounts when the URL says so', async ({ status, disabled, deleted }) => {
 		const stub = stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer({ disabled: true })]) })
-		await renderRoute(`${CUSTOMERS}?status=suspended`)
+		await renderRoute(`${CUSTOMERS}?status=${status}`)
 
 		await waitFor(() => {
-			expect(callsTo(stub.calls, 'UsersActiveTbl')[0]?.variables).toMatchObject({ disabled: true, deleted: false })
+			expect(callsTo(stub.calls, 'UsersActiveTbl')[0]?.variables).toMatchObject({ disabled, deleted })
 		})
-		expect(screen.getByLabelText('Status')).toHaveValue('suspended')
+		expect(screen.getByLabelText('Status')).toHaveValue(status)
 	})
 
-	// Back to the first page: the two sets are different sizes, and page 7 of the one the admin was
+	/*
+	 * The list an admin can actually pick from, asserted as the exact four rather than as "contains
+	 * Closed": the way this goes wrong is a state that exists in the service and not in the dropdown, which
+	 * is precisely how the closed accounts became unreachable in the first place.
+	 */
+	it('offers the four account states, and no others', async () => {
+		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
+		await renderRoute(CUSTOMERS)
+
+		await screen.findByText('ada.stone@example.com')
+		expect(
+			within(screen.getByLabelText('Status'))
+				.getAllByRole('option')
+				.map((option) => option.textContent)
+		).toEqual(['Active', 'Suspended', 'Closed', 'Closed & suspended'])
+	})
+
+	// Back to the first page: the four sets are different sizes, and page 7 of the one the admin was
 	// standing on is very often past the end of the one they asked for.
 	it('pushes a chosen filter into the URL and returns to the first page', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()], 100) })
@@ -635,17 +675,36 @@ describe('TblCustomers', () => {
 	})
 
 	/**
-	 * ⚠️ **No longer a hypothetical fixture.** `userDel` ships on the customer tier since 2026-08-26, so a
-	 * closed account is a document this service really can send. The screen still has no filter that asks
-	 * for one — that is E19 §6 question 3, an admin has no lever over a closed account — but the column
-	 * reads the flag rather than inferring the state from the filter, so one arriving on a cached page
-	 * reads as erased instead of as active.
+	 * Asserted on the **Active** filter, deliberately: the column reads the row's own flag rather than
+	 * inferring the state from the URL, so a closed account arriving on a cached page reads as closed
+	 * instead of as trading.
 	 */
-	it('renders an erased account as erased rather than as active', async () => {
+	it('renders a closed account as closed rather than as active', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer({ deleted: '2026-05-01T00:00:00.000Z' })]) })
 		await renderRoute(CUSTOMERS)
 
-		expect(within(await rowOf('ada.stone@example.com')).getByText('Deleted')).toBeInTheDocument()
+		expect(within(await rowOf('ada.stone@example.com')).getByText('Closed')).toBeInTheDocument()
+	})
+
+	/**
+	 * ⚠️ **A closed account gets no button at all**, and neither of the two it could get would be honest.
+	 * Suspending one writes a flag onto an account nobody can sign into; lifting a suspension on one
+	 * promises a return `deleted` refuses — the personal data is thirty days from being overwritten in
+	 * place (ADR-046), and only registering again with the same address takes the account back.
+	 *
+	 * Driven by the row's own `deleted` rather than by the filter, which is what this asserts by standing
+	 * on the Suspended filter while the row carries both flags.
+	 */
+	it('offers no action on a closed account', async () => {
+		stubGraphQL({
+			...ABOVE,
+			UsersActiveTbl: page([customer({ disabled: true, deleted: '2026-05-01T00:00:00.000Z' })])
+		})
+		await renderRoute(`${CUSTOMERS}?status=suspended`)
+
+		const row = within(await rowOf('ada.stone@example.com'))
+		expect(row.queryByRole('button')).not.toBeInTheDocument()
+		expect(row.getByRole('cell', { name: '—' })).toBeInTheDocument()
 	})
 
 	it('renders an unconfirmed registration as awaiting confirmation', async () => {

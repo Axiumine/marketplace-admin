@@ -10,6 +10,16 @@
 /** The placeholder for a field with nothing in it. */
 export const NO_VALUE = '---'
 
+/**
+ * The placeholder for a **table cell** with nothing in it — a shop owner with no `personalData` yet, a
+ * closed account with no action to offer. An em dash rather than an empty cell: a blank reads as a
+ * rendering fault, a dash reads as "nothing here", and the row's other columns still say who it is.
+ *
+ * Distinct from `NO_VALUE` above, which is what the detail pages print into a field. One character in a
+ * dense grid, three in a form.
+ */
+export const EMPTY_CELL = '—'
+
 const DATE_TIME_FORMAT = new Intl.DateTimeFormat('en-GB', {
 	day: 'numeric',
 	month: 'long',

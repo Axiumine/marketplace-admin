@@ -60,22 +60,45 @@ export const ShopOwnersPerPeriodDocument = graphql(`
  * `personalData` is nullable underneath them: a seller who registered themselves has none until
  * onboarding, so the address is the only thing naming that row and the flag the only thing marking it
  * as waiting. Dropping either from the selection leaves a page that renders and cannot be acted on.
+ *
+ * `disabled` and `deleted` go in as `Boolean!` because the service has no "either" state to offer — the
+ * pair is the leading field of all four `tbl_active_*` indexes — which is why the screen filters by
+ * status rather than listing every account at once. The two flags come back as well, and the row needs
+ * both: they are independent, so a shop owner suspended and then closed carries them together and a
+ * status read off either one alone would be wrong for that row.
+ *
+ * `disabled` and `waitApprov` come back nullable and mean "absent or true": the collection stores `true`
+ * or `$unset`s, never `false`. Read them on truthiness. `deleted` is a timestamp (ADR-011).
  */
 export const ShopOwnersActiveTblDocument = graphql(`
 	query ShopOwnersActiveTbl(
 		$offset: Int!
 		$limit: Int!
+		$disabled: Boolean!
+		$deleted: Boolean!
 		$search: String
 		$sortBy: GraphQLShopOwnersTblSortField!
 		$sortDir: GraphQLSortDirection!
 	) {
-		shopOwnersActiveTbl(offset: $offset, limit: $limit, search: $search, sortBy: $sortBy, sortDir: $sortDir) {
+		shopOwnersActiveTbl(
+			offset: $offset
+			limit: $limit
+			disabled: $disabled
+			deleted: $deleted
+			search: $search
+			sortBy: $sortBy
+			sortDir: $sortDir
+		) {
 			total
 			items {
 				_id
 				registeredAt
 				email
 				waitApprov
+				disabled
+				disabledBy
+				disabledReason
+				deleted
 				personalData {
 					firstName
 					lastName
@@ -296,7 +319,9 @@ export const ShopOwnerCompaniesDocument = graphql(`
  *
  * `disabled` and `deleted` go in as `Boolean!` because the service has no "either" state to offer — the
  * pair is what keeps the page on the `tbl_active_registeredAt` index — which is why the screen filters by
- * status rather than showing every account at once.
+ * status rather than showing every account at once. The two are independent: `userDel` stamps `deleted`
+ * and leaves the suspension trio alone, so a closed account that was suspended first answers to both
+ * flags and to no single one of them (ADR-049).
  *
  * Both flags come back nullable and mean "absent or true": the collection stores `true` or `$unset`s,
  * never `false`. Read them on truthiness.

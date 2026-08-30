@@ -102,10 +102,10 @@ schema slices; it describes nothing that exists.
 | `/security` | cookie-signing keys — version, fingerprint, key ages, holders table, rotate |
 | `/categories` | the whole `itemCategory` taxonomy — add, edit, retire; no search params, the list is unpaged |
 | `/shopOwners` | counter + registrations chart + section menu |
-| `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?sortBy`, `?sortDir`) |
+| `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?status=active\|suspended\|closed\|closedSuspended`, `?sortBy`, `?sortDir`) |
 | `/p/shopOwners/add-shopOwner` | create form |
 | `/p/shopOwners/id/$_id` | detail — personalData + companies |
-| `/customers` | counter + registrations chart + paginated customers table (`?page`, `?pageSize`, `?status=active\|suspended`, `?sortDir`) — email, registered date, status, and the enable/disable switch. No `?search`, no `?sortBy`: see below |
+| `/customers` | counter + registrations chart + paginated customers table (`?page`, `?pageSize`, `?status=active\|suspended\|closed\|closedSuspended`, `?sortDir`) — email, registered date, status, and the enable/disable switch. No `?search`, no `?sortBy`: see below |
 
 Everything except `/` and `/loading` is behind a pathless guarded route. An empty session redirects to
 `/loading`, not to `/`: only a round-trip can tell "never signed in" from "signed in and reloaded".
@@ -147,11 +147,23 @@ they guard against all render as a working screen.
   works — it still cannot be ordered or prefix-matched. `registeredAt` and the three status flags were
   never encrypted, which is why they are the whole of what the screen sorts and filters on. Adding a search
   input, a name column or a second `UsersTblSortField` member is the change to refuse (E19-S05).
-- **The status filter exists because `usersActiveTbl` has no "either" state.** `disabled` and `deleted` are
-  `Boolean!` with server-side defaults, deliberately: they are the leading keys of
-  `tbl_active_registeredAt`, and a nullable "both" would unbind them and turn the sort into a blocking
-  in-memory one. So the screen names one state per page, and a suspended customer is visible under the
-  Suspended filter the success message points at — never mixed into the active list.
+- **The status filter exists because neither table's query has an "either" state.** `disabled` and
+  `deleted` are `Boolean!` with server-side defaults on `usersActiveTbl` and on `shopOwnersActiveTbl`
+  alike, deliberately: they are the leading keys of `tbl_active_registeredAt` on `user` and of all four
+  `tbl_active_*` indexes on `shopOwner`, and a nullable "both" would unbind them and turn the sort into a
+  blocking in-memory one. So each screen names one state per page, and a suspended customer is visible
+  under the Suspended filter the success message points at — never mixed into the active list.
+- **Four states rather than three, on both tables, and the fourth is the reason** (ADR-049). `userDel` and
+  `shopOwnerDel` stamp `deleted` and leave the suspension trio exactly as they found it, so an account
+  suspended and *then* closed carries both flags — under an Active/Suspended/Closed enum it would answer
+  to none of the three and be listed by no screen at all. The four live in `src/lib/accountStatus.ts`,
+  which is what keeps the two tiers identical: an admin acts on a shop owner and on a customer in the same
+  way (platform owner, 2026-08-29), so a state reachable on one screen and not on the other is a bug.
+- **A closed row carries no action button on either table.** Suspending an account nobody can sign into
+  writes a flag for nothing, and lifting a suspension on one promises a return `deleted` refuses — the
+  personal data is thirty days from being overwritten in place (ADR-046). The cell is an em dash, and the
+  branch reads the row's own `deleted` rather than the filter in the URL, so a closed account arriving on
+  a cached page loses the button too.
 - **`userUpdateStatus` sends the toggle's state, not a transition.** Re-disabling an already-disabled
   customer revokes their sessions again, which costs one `hKeys` over an empty index. Reading the previous
   state first to skip that would add a round trip on every save and open a window between the read and the

@@ -62,13 +62,24 @@ type QueriesApi {
 	infoAdminAfterLogin: GraphQLAdminInfoAfterLogin!
 
 	"""
-	One page of the admin table, filtered to the shopOwners that are neither disabled nor
-	soft-deleted. Every argument has a server-side default, so `shopOwnersActiveTbl { … }` with no
-	arguments is a legal first page.
+	One page of the admin's shopOwners table. Every argument has a server-side default, so
+	`shopOwnersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
+
+	⚠️ `disabled` and `deleted` are `Boolean!` with a default rather than nullable filters, so every page
+	names one state of each and the query stays on one of the four `tbl_active_*` indexes — every one of
+	them leads with `{deleted, disabled}`, so an unbound leading field costs the index for the sort as
+	well as for the filter. Their four combinations are the four account states the screen offers
+	(ADR-049), and the fourth is not a curiosity: `shopOwnerDel` stamps `deleted` and leaves the
+	suspension trio exactly as it found it, so an account suspended and then closed carries both.
+
+	`search` is a case-insensitive prefix over the first name, the last name and the city. It is legal
+	here and refused on the customer table, where all three are ciphertext (E19-S05).
 	"""
 	shopOwnersActiveTbl(
 		offset: Int! = 0
 		limit: Int! = 25
+		disabled: Boolean! = false
+		deleted: Boolean! = false
 		search: String
 		sortBy: GraphQLShopOwnersTblSortField! = REGISTERED_AT
 		sortDir: GraphQLSortDirection! = DESC
@@ -620,10 +631,10 @@ type GraphQLUserActiveTbl {
 	disabledBy: ID
 	disabledReason: String
 	"""
-	A timestamp, not a flag (ADR-011), written by `userDel` on the customer tier — a customer closing
-	their own account — and by nothing else: there is still no Admin counterpart to `shopOwnerDel`
-	(E19 §6, question 3). The stamp is permanent (ADR-041); what ends thirty days later is the personal
-	data, overwritten in place, unless the same address registers again first and takes the account back
+	A timestamp, not a flag (ADR-011), written by two closures: `userDel` on the customer tier, where a
+	customer closes their own account, and `userDel` on this one, where an admin closes it for them
+	(ADR-048). The stamp is permanent (ADR-041); what ends thirty days later is the personal data,
+	overwritten in place, unless the same address registers again first and takes the account back
 	(ADR-046).
 	"""
 	deleted: DateTime
@@ -731,6 +742,24 @@ type GraphQLShopOwnerActiveTbl {
 	`false` — render "pending" on truthiness, not on equality.
 	"""
 	waitApprov: Boolean
+	"""
+	Nullable for the reason `waitApprov` is: the flag is stored `true` or removed outright, so an enabled
+	account has no `disabled` key and reads as absent rather than `false`. Render on truthiness.
+	"""
+	disabled: Boolean
+	"""
+	Who suspended this account and why (ADR-044), absent together on an account that is not suspended.
+	`disabledReason` is randomly encrypted (ADR-029) and legible on this tier alone; `disabledBy` is an
+	attribution, not a foreign key.
+	"""
+	disabledBy: ID
+	disabledReason: String
+	"""
+	A timestamp, not a flag (ADR-011), written by `shopOwnerDel`, which also withdraws the storefront
+	(ADR-045). The stamp is permanent (ADR-041) and independent of the suspension trio, so a row can
+	carry both — which is why the table filters on the two flags separately rather than on one status.
+	"""
+	deleted: DateTime
 }
 
 type GraphQLPersonalData {

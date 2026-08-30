@@ -14,7 +14,14 @@ const CUSTOMERS = '/customers'
 const emptyCustomers = { data: { usersActiveTbl: { __typename: 'GraphQLUsersActiveTblPage', total: 0, items: [] } } }
 
 /** The search state the route hands the table when the URL says nothing. */
-const DEFAULTS = { page: 1, pageSize: DEFAULT_PAGE_SIZE, search: '', sortBy: 'LAST_NAME', sortDir: 'ASC' }
+const DEFAULTS = {
+	page: 1,
+	pageSize: DEFAULT_PAGE_SIZE,
+	search: '',
+	status: 'active',
+	sortBy: 'LAST_NAME',
+	sortDir: 'ASC'
+}
 
 describe('route guard', () => {
 	/**
@@ -38,7 +45,7 @@ describe('route guard', () => {
 		const { router } = await renderRoute(`${MANAGE}?page=3`, { session: null })
 
 		expect(router.state.location.search).toEqual({
-			redirect: `${MANAGE}?page=3&pageSize=20&search=&sortBy=LAST_NAME&sortDir=ASC`
+			redirect: `${MANAGE}?page=3&pageSize=20&search=&status=active&sortBy=LAST_NAME&sortDir=ASC`
 		})
 	})
 
@@ -70,13 +77,31 @@ describe('shopOwners search params', () => {
 	})
 
 	it('reads the whole state out of the URL', async () => {
-		expect(await searchOf(`${MANAGE}?page=3&pageSize=50&search=rivers&sortBy=CITY&sortDir=DESC`)).toEqual({
+		expect(await searchOf(`${MANAGE}?page=3&pageSize=50&search=rivers&status=closed&sortBy=CITY&sortDir=DESC`)).toEqual({
 			page: 3,
 			pageSize: 50,
 			search: 'rivers',
+			status: 'closed',
 			sortBy: 'CITY',
 			sortDir: 'DESC'
 		})
+	})
+
+	/*
+	 * The same four names the customers route takes, from the same tuple, because an admin acts on the two
+	 * tiers in the same way (ADR-049). Named one at a time rather than looped over `ACCOUNT_STATUSES`: a
+	 * state that fell out of that tuple would take its own test with it and the loop would still pass.
+	 */
+	it.each(['active', 'suspended', 'closed', 'closedSuspended'])('carries %s through to the query', async (status) => {
+		expect((await searchOf(`${MANAGE}?status=${status}`)).status).toBe(status)
+	})
+
+	it('falls back on a status the screen does not offer', async () => {
+		expect((await searchOf(`${MANAGE}?status=deleted`)).status).toBe('active')
+	})
+
+	it('falls back on an empty status', async () => {
+		expect((await searchOf(`${MANAGE}?status=`)).status).toBe('active')
 	})
 
 	// Every field `.catch()`es rather than throwing. A hand-edited or truncated URL is a typo, not an
@@ -186,8 +211,9 @@ describe('customers search params', () => {
 	})
 
 	// Named one at a time, as on the shopOwners enums: a value that fell out of the list would come back
-	// as the default and look identical to one that was never asked for.
-	it.each(['active', 'suspended'])('carries %s through to the query', async (status) => {
+	// as the default and look identical to one that was never asked for. The last two are the pair
+	// `userDel` creates and no filter used to reach (ADR-049).
+	it.each(['active', 'suspended', 'closed', 'closedSuspended'])('carries %s through to the query', async (status) => {
 		expect((await searchOf(`${CUSTOMERS}?status=${status}`)).status).toBe(status)
 	})
 
