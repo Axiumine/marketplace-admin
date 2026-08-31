@@ -9,11 +9,10 @@ import { TblCustomers } from '@/features/customers/TblCustomers'
  * a shop owner: a customer belongs to the platform, orders from many shops, and is reached from no shop's
  * detail page.
  *
- * Counter, chart, table — the same three rows as ShopOwners since the platform owner answered E19 §6
- * question 2 on 2026-08-29. `usersStats` and `usersPerPeriod` were never blocked by ADR-029: a count
- * touches no field and the series reads only `registeredAt`, which was never encrypted. What the
- * encryption still blocks is the table's search box, which is why this page has a counter above a table
- * that cannot be searched.
+ * Counter, chart, table — the same three rows as ShopOwners since the platform owner asked for them on
+ * 2026-08-29. `usersStats` and `usersPerPeriod` were never blocked by ADR-029: a count touches no field
+ * and the series reads only `registeredAt`, which was never encrypted. What the encryption still blocks
+ * is the table's search box, which is why this page has a counter above a table that cannot be searched.
  *
  * ⚠️ The counter and the table's `total` are different numbers on purpose. The counter is every account
  * ever registered; the `total` is the size of whatever the status filter currently selects. A chart drawn

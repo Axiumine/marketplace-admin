@@ -37,10 +37,10 @@ export interface CustomersQuery {
 }
 
 /**
- * ⚠️ **The only sortable column, and it stays the only one** (E19-S05). `GraphQLUsersTblSortField` has a
- * single member because the registration date is the only field on `user` left in the clear: the names and
- * the city are randomly encrypted (ADR-029), so a column sort on any of them would order the customer base
- * by ciphertext — stable, arbitrary, and indistinguishable from a working sort until somebody checks.
+ * ⚠️ **The only sortable column, and it stays the only one.** `GraphQLUsersTblSortField` has a single
+ * member because the registration date is the only field on `user` left in the clear: the names and the
+ * city are randomly encrypted (ADR-029), so a column sort on any of them would order the customer base by
+ * ciphertext — stable, arbitrary, and indistinguishable from a working sort until somebody checks.
  *
  * Sent explicitly rather than left to the service's own default, so the wire says which ordering the screen
  * is showing rather than inheriting one that could change underneath it.
@@ -166,16 +166,16 @@ export const outcomeMessage = (email: string, disabled: boolean) =>
 const column = createColumnHelper<Row>()
 
 /**
- * The customers table (E19-S04).
+ * The customers table.
  *
  * Pure with respect to the URL, like the shop-owners table: the whole query state arrives as props and
  * changes go back through `onQueryChange`, so a filter and a page are real navigations that survive a
  * reload and can be sent to somebody.
  *
- * ⚠️ **There is no search box, and adding one is what E19-S05 exists to refuse.** Every field a search
- * could match on `user` is encrypted — randomly, for all but the login address — so a term would be
- * compared against base64 and match nothing, on every account, without erroring. An input that silently
- * answers "no customers" is worse than an absent one.
+ * ⚠️ **There is no search box, and there will not be one.** Every field a search could match on `user` is
+ * encrypted — randomly, for all but the login address — so a term would be compared against base64 and
+ * match nothing, on every account, without erroring. An input that silently answers "no customers" is worse
+ * than an absent one.
  *
  * ⚠️ **No name, city or address column either, and for the same reason** — this is the table ADR-029 was
  * designed to make possible, not a shop-owner table over a different collection.

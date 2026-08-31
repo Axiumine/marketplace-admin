@@ -17,7 +17,7 @@ const SECTIONS = [
 	{ to: '/home', label: 'Dashboard', prefixes: ['/home'] },
 	{ to: '/shopOwners', label: 'ShopOwners', prefixes: ['/shopOwners', '/p/shopOwners'] },
 	// Alongside ShopOwners rather than under it: a customer belongs to the platform and orders from many
-	// shops, so there is no shop owner whose section they would sit inside (E19-S04).
+	// shops, so there is no shop owner whose section they would sit inside.
 	{ to: '/customers', label: 'Customers', prefixes: ['/customers'] },
 	{ to: '/categories', label: 'Categories', prefixes: ['/categories'] },
 	{ to: '/settings', label: 'Settings', prefixes: ['/settings'] },

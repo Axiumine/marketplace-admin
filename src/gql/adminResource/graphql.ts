@@ -123,21 +123,21 @@ export type GraphQlPeriodGranularity =
   | 'MONTH';
 
 /**
- * Why a lineage was revoked (E17-S05).
+ * Why a lineage was revoked.
  *
- * ⚠️ **The one enum in this slice with a test on the other side proving the two lists are equal** (E17-S01):
+ * ⚠️ **The one enum in this slice with a test on the other side proving the two lists are equal**:
  * the service builds `GraphQLReuseEventAction` from `REUSE_EVENT_ACTIONS` and asserts the value sets match,
  * so a third case added to that constant fails the service's suite until it is transcribed here. Without
  * that, drift would surface as an admin reading a blank cell rather than as a failing build.
  *
- * ⚠️ **An admin's own revocation is not a value here.** E17's open question 4 answered "not
- * attributable"; a case for it would answer that question by accident and would need its own retention
+ * ⚠️ **An admin's own revocation is not a value here.** The platform owner ruled it "not
+ * attributable"; a case for it would reverse that ruling by accident and would need its own retention
  * decision.
  */
 export type GraphQlReuseEventAction =
-  /** A consumed refresh token was presented again, past the grace window (E14-S02/S03). */
+  /** A consumed refresh token was presented again, past the grace window. */
   | 'refreshTokenReplayed'
-  /** The session reached its absolute age cap, measured from the login it descends from (E14-S05). */
+  /** The session reached its absolute age cap, measured from the login it descends from. */
   | 'sessionCapReached';
 
 /**
@@ -194,7 +194,7 @@ export type GraphQlUsersPeriod =
   | 'THREE_MONTHS';
 
 /**
- * ⚠️ **One member, and it stays one member** (E19-S05). `sortBy` becomes a key of the Mongo sort document,
+ * ⚠️ **One member, and it stays one member.** `sortBy` becomes a key of the Mongo sort document,
  * and on `user` the only clear field worth ordering by is the registration date: the names and the city are
  * randomly encrypted (ADR-029), so a `LAST_NAME` here would sort the customer base by ciphertext — an order
  * that is stable, arbitrary, and indistinguishable from a working sort until somebody checks.

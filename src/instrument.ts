@@ -29,9 +29,9 @@ import { env } from '@/env'
  * of 5; it is source text, not user data.
  *
  * ⚠️ **`urlQueryParams: false` does not hold here, and `beforeSend` is why the option list is not the
- * whole story.** Measured against a local collector with the real SDK and a real transport (E12-S24,
- * `docs/report/sentry-event-capture.md` §9): a page opened at `/reset-password/confirm?token=…#/…` shipped
- * that whole address — query string and fragment — on `event.request.url`, on
+ * whole story.** Measured against a local collector with the real SDK and a real transport
+ * (`docs/report/sentry-event-capture.md` §9): a page opened at `/reset-password/confirm?token=…#/…`
+ * shipped that whole address — query string and fragment — on `event.request.url`, on
  * `contexts.trace.data['url.full']`, on the `description` of eight browser-metric spans and on both `from`
  * and `to` of the navigation breadcrumb, which then rides along on *every later event of the session*.
  * `urlQueryParams` gates `event.request.query_string`, a field the browser never fills in;

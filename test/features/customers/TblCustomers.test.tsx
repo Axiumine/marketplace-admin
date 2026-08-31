@@ -209,11 +209,11 @@ describe('TblCustomers', () => {
 	})
 
 	/**
-	 * ⚠️ **The anti-story, as markup** (E19-S05). Four columns and no fifth: every field a name, city or
-	 * address column would render on `user` is encrypted — randomly, for all but the login address — so such
-	 * a column would print base64 and a sort on it would order the customer base by ciphertext. The
-	 * assertion is on the exact list rather than on the absence of one name, because the way this goes wrong
-	 * is somebody adding the column they happen to want.
+	 * ⚠️ **The refusal, as markup.** Four columns and no fifth: every field a name, city or address column
+	 * would render on `user` is encrypted — randomly, for all but the login address — so such a column would
+	 * print base64 and a sort on it would order the customer base by ciphertext. The assertion is on the
+	 * exact list rather than on the absence of one name, because the way this goes wrong is somebody adding
+	 * the column they happen to want.
 	 */
 	it('shows the four columns the collection can answer for, and no others', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
@@ -229,9 +229,9 @@ describe('TblCustomers', () => {
 	})
 
 	/**
-	 * ⚠️ The other half of E19-S05. A search box here would compare a term against random ciphertext and
-	 * match nothing, on every account, without erroring — an input that silently answers "no customers".
-	 * The status dropdown is the screen's only filter, and it filters on the two clear flags.
+	 * ⚠️ The other half of the same refusal. A search box here would compare a term against random
+	 * ciphertext and match nothing, on every account, without erroring — an input that silently answers "no
+	 * customers". The status dropdown is the screen's only filter, and it filters on the two clear flags.
 	 */
 	it('offers no free-text search', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })
@@ -372,9 +372,9 @@ describe('TblCustomers', () => {
 	})
 
 	/**
-	 * ⚠️ Three of the four columns carry no sort, and cannot. `GraphQLUsersTblSortField` has one member
-	 * (E19-S05): a header button on any other column would send a value the service refuses at schema
-	 * validation, and an `aria-sort` would promise a screen-reader user an ordering that does not exist.
+	 * ⚠️ Three of the four columns carry no sort, and cannot. `GraphQLUsersTblSortField` has one member:
+	 * a header button on any other column would send a value the service refuses at schema validation,
+	 * and an `aria-sort` would promise a screen-reader user an ordering that does not exist.
 	 */
 	it('offers no sort on the columns the service cannot order by', async () => {
 		stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer()]) })

@@ -65,8 +65,8 @@ const createAppRouteTree = () => {
 	 * The customers table state, as URL search params.
 	 *
 	 * ⚠️ **No `search` and no `sortBy`**, and neither is an omission: on `user` every field a search could
-	 * match is encrypted and the sort enum has exactly one member (E19-S05). A URL that carried either
-	 * would be a URL promising an ordering or a filter the service cannot answer.
+	 * match is encrypted and the sort enum has exactly one member. A URL that carried either would be a URL
+	 * promising an ordering or a filter the service cannot answer.
 	 *
 	 * `status` is the screen's own vocabulary rather than the backend's, because the backend has no
 	 * "either" state — `disabled` and `deleted` are two required booleans there, and this is the one name

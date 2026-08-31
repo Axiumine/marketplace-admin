@@ -146,7 +146,7 @@ they guard against all render as a working screen.
   working sort. `login.email` is deterministic, so it decrypts on the way out and an equality lookup on it
   works — it still cannot be ordered or prefix-matched. `registeredAt` and the three status flags were
   never encrypted, which is why they are the whole of what the screen sorts and filters on. Adding a search
-  input, a name column or a second `UsersTblSortField` member is the change to refuse (E19-S05).
+  input, a name column or a second `UsersTblSortField` member is the change to refuse.
 - **The status filter exists because neither table's query has an "either" state.** `disabled` and
   `deleted` are `Boolean!` with server-side defaults on `usersActiveTbl` and on `shopOwnersActiveTbl`
   alike, deliberately: they are the leading keys of `tbl_active_registeredAt` on `user` and of all four

@@ -416,7 +416,7 @@ describe('Categories — editing', () => {
 })
 
 /**
- * ⚠️ **The second acceptance criterion of E06-S07, and the reason this screen has a `refusals` map.**
+ * ⚠️ **The reason this screen has a `refusals` map.**
  *
  * The taxonomy is the only thing in this app whose writes are turned down for reasons that are neither
  * "that box is wrong" nor "no such document": the depth cap, the slug's global uniqueness, and the two

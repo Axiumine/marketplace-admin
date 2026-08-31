@@ -29,7 +29,7 @@ const CTX_ROTATE_KEYGRIP: Partial<OperationContext> = Object.freeze({
 })
 
 /**
- * How long the fleet takes to agree, stated on the screen that starts the disagreement (E16-S02, E16-S09).
+ * How long the fleet takes to agree, stated on the screen that starts the disagreement.
  *
  * ⚠️ **These are measured numbers, not a target.** Adoption rides a Redis publish and was clocked at 37 ms
  * to all five signing services; `KEYGRIP_POLL_MS` = 5 minutes is the fallback poll, so it is the ceiling for
@@ -58,7 +58,7 @@ export const ROTATE_WARNING =
 	'previous keys are kept until nothing can still be verified with them.'
 
 /**
- * Shown before a key is dropped from the set (E16-S04).
+ * Shown before a key is dropped from the set.
  *
  * ⚠️ **This is the one button in the app that logs customers out on purpose.** Every cookie the retired key
  * signed stops verifying as each process picks the new record up, which is exactly what an admin
@@ -79,7 +79,7 @@ export const retireWarning = (id: string) =>
  * The cookie-signing key set, and who is holding it.
  *
  * The panel exists because "the mutation returned true" and "the fleet agrees" are two different
- * claims (E01-S14). A rotation writes one Redis record; each signing service then reads it on its own
+ * claims. A rotation writes one Redis record; each signing service then reads it on its own
  * schedule, and until it has, that service is still signing with the key before. The holders table is
  * the only place on the platform where the difference is visible.
  *
@@ -100,9 +100,9 @@ export const KeygripPanel = () => {
 	const rotated = rotation.error === undefined && rotation.data?.keygripRotate === true
 
 	/*
-	 * ⚠️ The same check, and here it is the story's own criterion rather than a nicety: E16-S04 refuses an id
-	 * nothing matches with a **404**, precisely so a retire cannot be closed on a success that never happened.
-	 * A confirmation shown under that error would tell an admin a compromised key is gone while every
+	 * ⚠️ The same check, and here it is the screen's own criterion rather than a nicety: the service refuses an
+	 * id nothing matches with a **404**, precisely so a retire cannot be closed on a success that never
+	 * happened. A confirmation shown under that error would tell an admin a compromised key is gone while every
 	 * process still verifies with it.
 	 */
 	const retired = retirement.error === undefined && retirement.data?.keygripRetire === true
@@ -255,7 +255,7 @@ export const KeygripPanel = () => {
 			{rotation.error === undefined ? null : <Toast tone="error">{messageOf(rotation.error)}</Toast>}
 			{rotated ? <Toast tone="success">The key set was rotated</Toast> : null}
 			{/* ⚠️ A refused retire is a *visible* failure, never a quiet no-op — the 404 above is the whole
-			    reason E16-S04 throws instead of answering the array unchanged. */}
+			    reason the service throws instead of answering the array unchanged. */}
 			{retirement.error === undefined ? null : <Toast tone="error">{messageOf(retirement.error)}</Toast>}
 			{retired ? <Toast tone="success">The key was retired</Toast> : null}
 		</div>

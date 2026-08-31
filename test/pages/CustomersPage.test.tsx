@@ -17,9 +17,9 @@ const stone = {
 }
 
 /*
- * Three rows since E19 §6 question 2 was answered: the counter, the chart, then the table. The page
- * fires all three queries on entry, so all three are answered here — an unstubbed one throws rather
- * than rendering empty.
+ * Three rows since the platform owner asked for them: the counter, the chart, then the table. The
+ * page fires all three queries on entry, so all three are answered here — an unstubbed one throws
+ * rather than rendering empty.
  */
 describe('CustomersPage', () => {
 	it('renders', async () => {

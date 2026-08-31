@@ -9,7 +9,7 @@ import { stubGraphQL } from '../../helpers/graphql'
 import { renderRoute } from '../../helpers/render'
 
 /**
- * E17-S07, the frontend half: **no screen this epic adds can put a credential on a page or on the wire.**
+ * The frontend half: **no security screen can put a credential on a page or on the wire.**
  *
  * The backend half proves the resolvers never serialise one. This half proves the app never renders one it
  * was handed anyway, which is a different failure and not implied by the first: a response is a JSON
@@ -29,7 +29,7 @@ import { renderRoute } from '../../helpers/render'
 /** A real-shaped access token. Seeded into the token store, so it travels on every request for real. */
 const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI2NWYwMDAwMDAwMDAwMDAwMDAwMDAwYTEifQ.s3cr3t-s1gnatur3-nobody-may-see'
 
-/** Its signature alone, asserted separately: a truncated token is still a token (E17 §2). */
+/** Its signature alone, asserted separately: a truncated token is still a token. */
 const TOKEN_BODY = 's3cr3t-s1gnatur3-nobody-may-see'
 
 /** A real-shaped cookie-signing key: what `keygripStatus` unwraps and must never hand out. */
@@ -175,9 +175,9 @@ const DRIVE: Record<SecurityOperation, () => Promise<void>> = {
 
 describe('the security screens leak no credential', () => {
 	/**
-	 * ⚠️ The loop E17-S07 asks for. Every operation this epic adds is driven for real, against fixtures
-	 * carrying a signing key, a refresh token and an access token in fields no document selects — and the
-	 * page is then read in full.
+	 * ⚠️ The loop this file exists for. Every operation the security screens send is driven for real, against
+	 * fixtures carrying a signing key, a refresh token and an access token in fields no document selects — and
+	 * the page is then read in full.
 	 *
 	 * `document.body.textContent` and not a query for a particular element: the point is that the value is
 	 * nowhere at all, including in a title attribute's neighbour, a debug block or a stray `JSON.stringify`.
@@ -261,8 +261,8 @@ describe('the security screens leak no credential', () => {
 })
 
 /**
- * ⚠️ E17-S07's second criterion, as a check over the sources this epic touched rather than over its diff: no
- * log statement anywhere in them.
+ * ⚠️ The same rule, as a check over the security sources rather than over a diff: no log statement anywhere
+ * in them.
  *
  * A `console.log` of a query result is how a credential reaches a browser's console and, through any error
  * reporter wired to it later, a third party's servers — and it is exactly the line somebody adds while
