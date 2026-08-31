@@ -447,6 +447,32 @@ exports[`SecurityPage > renders 1`] = `
         </table>
       </div>
     </section>
+    <section
+      aria-labelledby=":id-6:"
+      class="h-full overflow-hidden rounded-box border-4 border-third bg-white p-[10px] shadow "
+    >
+      <div
+        class="mb-2 flex items-center justify-between gap-2"
+      >
+        <h3
+          class="font-bold"
+          id=":id-6:"
+        >
+          Unfinished retirement
+        </h3>
+        <button
+          class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-box py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 bg-app-error text-palette-white hover:bg-tomato px-4"
+          type="button"
+        >
+          Sign everyone out
+        </button>
+      </div>
+      <p
+        class="text-tip"
+      >
+        A retirement writes the new key set and then ends every session on the platform. If it reported that it could not reach every account, the key is already gone — retiring it again answers "no such key" — and this is what finishes it. It ends every session again, including yours, and is safe to run as often as it takes.
+      </p>
+    </section>
   </div>
 </main>
 `;

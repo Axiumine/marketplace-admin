@@ -3,7 +3,7 @@ import { useMutation, useQuery } from 'urql'
 
 import { CTX_ADMIN_RESOURCE } from '@/api/endpoints'
 import { messageOf } from '@/api/errors'
-import { KeygripRetireDocument, KeygripRotateDocument } from '@/api/operations/adminResource/mutations'
+import { KeygripResweepDocument, KeygripRetireDocument, KeygripRotateDocument } from '@/api/operations/adminResource/mutations'
 import { KeygripStatusDocument } from '@/api/operations/adminResource/queries'
 import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
@@ -26,6 +26,19 @@ import { formatDateTime } from '@/lib/format'
 const CTX_ROTATE_KEYGRIP: Partial<OperationContext> = Object.freeze({
 	...CTX_ADMIN_RESOURCE,
 	additionalTypenames: ['GraphQLKeygripStatus']
+})
+
+/**
+ * A resweep changes no key and every session, so it invalidates the console above rather than the panel
+ * around it — the opposite of `CTX_ROTATE_KEYGRIP`, and the reason the two are separate constants instead
+ * of one list naming both.
+ *
+ * `GraphQLSession`, the typename `SessionConsole` invalidates on its own revocations. Both live on this
+ * page, and after a resweep the table it renders describes sessions that no longer exist.
+ */
+const CTX_RESWEEP: Partial<OperationContext> = Object.freeze({
+	...CTX_ADMIN_RESOURCE,
+	additionalTypenames: ['GraphQLSession']
 })
 
 /**
@@ -83,6 +96,24 @@ export const retireWarning = (id: string) =>
 	'maintenance: rotation is what retires keys safely, on age, without ending a single session.'
 
 /**
+ * Shown before the sweep is run again.
+ *
+ * ⚠️ **It is the same blast radius as a retirement and it must not read as a repair.** Nothing here is
+ * undone or restored: every session on the platform ends, including this admin's, exactly as when the key
+ * was retired. The warning says that in the same words as `retireWarning`, because an admin who thinks
+ * this button only finishes something is an admin who presses it to see what happens.
+ *
+ * ⚠️ **And it names the one thing this button does *not* do**: no key is minted, retired or changed. An
+ * admin reaching it is holding a platform whose retirement reported that it could not reach every account,
+ * and their first fear is that pressing it again will drop a second key.
+ */
+export const RESWEEP_WARNING =
+	'Sign every account out again?\n\n' +
+	'This finishes a retirement whose sweep could not reach every account. No key is minted, retired or ' +
+	'changed. Every session on the platform ends — every customer, every shop owner, and you: this page ' +
+	'will send you back to the login screen.'
+
+/**
  * The cookie-signing key set, and who is holding it.
  *
  * The panel exists because "the mutation returned true" and "the fleet agrees" are two different
@@ -99,6 +130,7 @@ export const KeygripPanel = () => {
 	const [result] = useQuery({ query: KeygripStatusDocument, context: CTX_ADMIN_RESOURCE })
 	const [rotation, executeRotate] = useMutation(KeygripRotateDocument)
 	const [retirement, executeRetire] = useMutation(KeygripRetireDocument)
+	const [resweep, executeResweep] = useMutation(KeygripResweepDocument)
 
 	const status = result.data?.keygripStatus
 
@@ -113,6 +145,13 @@ export const KeygripPanel = () => {
 	 * process still verifies with it.
 	 */
 	const retired = retirement.error === undefined && retirement.data?.keygripRetire === true
+
+	/*
+	 * ⚠️ The same check again, and here the *value* is the whole signal: a resweep that left accounts
+	 * standing answers 500 rather than `false`, so this reads `true` and not "no error" — a confirmation on
+	 * the absence of an error would tell an admin the platform is signed out while part of it is not.
+	 */
+	const reswept = resweep.error === undefined && resweep.data?.keygripResweep === true
 
 	// The error first: a failed read has no record to render, and `status` is undefined in both that
 	// case and the first one. Ordered the other way round, a refused read would spin forever.
@@ -259,12 +298,51 @@ export const KeygripPanel = () => {
 				{status.holders.length === 0 ? <p className="text-tip">No service has reported holding this key set.</p> : null}
 			</Infobox>
 
+			{/*
+			 * ⚠️ **Its own card, below the keys and never a button on one of their rows.** This mutation takes
+			 * no key id and drops no key: it repeats the session sweep, which is the half of a retirement that
+			 * is safe to repeat and the half that can fail on its own (R55). A "Retire" row that also meant
+			 * "sweep again" would put the two behind one click, and the one that cannot be undone is the
+			 * other one.
+			 *
+			 * ⚠️ **Always offered, not only after a failed retire.** The sweep that fell short is the sweep
+			 * that signed this admin out, so the screen that reported it is gone by the time they read the
+			 * error: they log back in and come here. A button that appeared only beside a live error message
+			 * would never be on screen at the moment it is needed.
+			 */}
+			<Infobox
+				title="Unfinished retirement"
+				actions={
+					<Button
+						variant="danger"
+						loading={resweep.fetching}
+						onClick={() => {
+							if (!window.confirm(RESWEEP_WARNING)) return
+							void executeResweep({}, CTX_RESWEEP)
+						}}
+					>
+						Sign everyone out
+					</Button>
+				}
+			>
+				<p className="text-tip">
+					A retirement writes the new key set and then ends every session on the platform. If it reported that it could not reach
+					every account, the key is already gone — retiring it again answers "no such key" — and this is what finishes it. It
+					ends every session again, including yours, and is safe to run as often as it takes.
+				</p>
+			</Infobox>
+
 			{rotation.error === undefined ? null : <Toast tone="error">{messageOf(rotation.error)}</Toast>}
 			{rotated ? <Toast tone="success">The key set was rotated</Toast> : null}
 			{/* ⚠️ A refused retire is a *visible* failure, never a quiet no-op — the 404 above is the whole
 			    reason the service throws instead of answering the array unchanged. */}
 			{retirement.error === undefined ? null : <Toast tone="error">{messageOf(retirement.error)}</Toast>}
 			{retired ? <Toast tone="success">The key was retired</Toast> : null}
+			{/* ⚠️ The 500 a partial resweep answers carries the count of what is still standing, and that count
+			    is the admin's next decision — so the error is rendered as it arrived rather than replaced by a
+			    sentence of ours. */}
+			{resweep.error === undefined ? null : <Toast tone="error">{messageOf(resweep.error)}</Toast>}
+			{reswept ? <Toast tone="success">Every account was signed out</Toast> : null}
 		</div>
 	)
 }

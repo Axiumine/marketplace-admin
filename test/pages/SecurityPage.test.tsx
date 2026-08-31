@@ -103,6 +103,7 @@ describe('SecurityPage', () => {
 		expect(screen.getByRole('heading', { name: 'Current key set', level: 3 })).toBeInTheDocument()
 		expect(screen.getByRole('heading', { name: 'Keys', level: 3 })).toBeInTheDocument()
 		expect(screen.getByRole('heading', { name: 'Holders', level: 3 })).toBeInTheDocument()
+		expect(screen.getByRole('heading', { name: 'Unfinished retirement', level: 3 })).toBeInTheDocument()
 	})
 
 	/**
@@ -558,5 +559,143 @@ describe('retiring a key', () => {
 			expect(retireButtonFor('k1')).toBeDisabled()
 		})
 		expect(retireButtonFor('k2')).toBeDisabled()
+	})
+})
+
+/**
+ * The retirement's second half, on its own button (R55).
+ *
+ * ⚠️ Every test here asserts a blocked round-trip, a sent one, or a confirmation that did not appear. The
+ * blast radius is a retirement's — every session on the platform, this admin's included — and the one
+ * thing an admin must never be told wrongly is that the sweep finished.
+ */
+describe('resweeping the platform', () => {
+	const resweep = async () => {
+		await userEvent.click(screen.getByRole('button', { name: /Sign everyone out/ }))
+	}
+
+	/*
+	 * ⚠️ **Offered whether or not a retire has just failed on this screen.** The sweep that fell short is
+	 * the sweep that signed the admin out, so by the time they have read the error they have logged back in
+	 * and the screen that reported it is gone. A button that only appeared beside a live error would never
+	 * be there at the moment it is wanted.
+	 */
+	it('offers the sweep on a page that has done nothing else', async () => {
+		stubGraphQL({ KeygripStatus: READ })
+		await renderRoute('/security')
+
+		await loaded()
+
+		const card = screen.getByRole('region', { name: 'Unfinished retirement' })
+
+		expect(within(card).getByRole('button', { name: /Sign everyone out/ })).toBeInTheDocument()
+		// The card says what the button does *not* do, because an admin reaching it fears dropping a second key.
+		expect(card).toHaveTextContent('retiring it again answers "no such key"')
+	})
+
+	it('asks first, and sends nothing when the admin says no', async () => {
+		const confirm = respond(false)
+		const stub = stubGraphQL({ KeygripStatus: READ })
+		await renderRoute('/security')
+
+		await loaded()
+		await resweep()
+
+		expect(confirm).toHaveBeenCalledWith(
+			'Sign every account out again?\n\n' +
+				'This finishes a retirement whose sweep could not reach every account. No key is minted, retired or ' +
+				'changed. Every session on the platform ends — every customer, every shop owner, and you: this page ' +
+				'will send you back to the login screen.'
+		)
+		expect(callsTo(stub.calls, 'KeygripResweep')).toHaveLength(0)
+	})
+
+	// No variables at all, and that is the security property: this mutation reads no record and narrows no
+	// sweep, so there is nothing for a request body to name.
+	it('sends the sweep with no arguments once the admin agrees', async () => {
+		respond(true)
+		const stub = stubGraphQL({ KeygripStatus: READ, KeygripResweep: { data: { keygripResweep: true } } })
+		await renderRoute('/security')
+
+		await loaded()
+		await resweep()
+
+		await waitFor(() => {
+			expect(callsTo(stub.calls, 'KeygripResweep')).toHaveLength(1)
+		})
+		expect(callsTo(stub.calls, 'KeygripResweep')[0]?.variables).toEqual({})
+		expect(callsTo(stub.calls, 'KeygripResweep')[0]?.url).toBe(ENDPOINT.adminResource)
+	})
+
+	it('confirms a sweep that reached every account', async () => {
+		respond(true)
+		stubGraphQL({ KeygripStatus: READ, KeygripResweep: { data: { keygripResweep: true } } })
+		await renderRoute('/security')
+
+		await loaded()
+		await resweep()
+
+		expect(await screen.findByText('Every account was signed out')).toBeInTheDocument()
+	})
+
+	/*
+	 * ⚠️ The failure this whole button exists for, arriving a second time. The 500 carries the count of
+	 * accounts still standing, and that count is what decides whether the admin runs it again or goes
+	 * looking at Redis — so it is rendered as it arrived, and no confirmation appears beside it.
+	 */
+	it('shows a sweep that left accounts standing as a failure, with the service’s own count', async () => {
+		respond(true)
+		stubGraphQL({
+			KeygripStatus: READ,
+			KeygripResweep: {
+				errors: [
+					graphQLError('Internal Server Error', 'The resweep ended 4 sessions, but 2 accounts could not be reached', 500)
+				],
+				status: 500
+			}
+		})
+		await renderRoute('/security')
+
+		await loaded()
+		await resweep()
+
+		expect(await screen.findByRole('alert')).toHaveTextContent(
+			'The resweep ended 4 sessions, but 2 accounts could not be reached'
+		)
+		expect(screen.queryByText('Every account was signed out')).not.toBeInTheDocument()
+	})
+
+	// Data and errors in one answer is legal GraphQL, and "every account was signed out" under a red toast
+	// would leave the admin to guess which half is true on the action they came here to be sure of.
+	it('does not confirm when the answer carries an error alongside the data', async () => {
+		respond(true)
+		stubGraphQL({
+			KeygripStatus: READ,
+			KeygripResweep: {
+				data: { keygripResweep: true },
+				errors: [graphQLError('Too Many Requests', 'Too Many Requests', 429)],
+				status: 429
+			}
+		})
+		await renderRoute('/security')
+
+		await loaded()
+		await resweep()
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Too Many Requests')
+		expect(screen.queryByText('Every account was signed out')).not.toBeInTheDocument()
+	})
+
+	it('holds the button while the sweep is in flight', async () => {
+		respond(true)
+		stubGraphQL({ KeygripStatus: READ, KeygripResweep: { pending: true } })
+		await renderRoute('/security')
+
+		await loaded()
+		await resweep()
+
+		await waitFor(() => {
+			expect(screen.getByRole('button', { name: /Sign everyone out/ })).toBeDisabled()
+		})
 	})
 })

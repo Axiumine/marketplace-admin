@@ -29,6 +29,7 @@ type Documents = {
     "\n\tmutation ItemCategoryDel($_id: ID!) {\n\t\titemCategoryDel(_id: $_id)\n\t}\n": typeof types.ItemCategoryDelDocument,
     "\n\tmutation KeygripRotate {\n\t\tkeygripRotate\n\t}\n": typeof types.KeygripRotateDocument,
     "\n\tmutation KeygripRetire($id: String!) {\n\t\tkeygripRetire(id: $id)\n\t}\n": typeof types.KeygripRetireDocument,
+    "\n\tmutation KeygripResweep {\n\t\tkeygripResweep\n\t}\n": typeof types.KeygripResweepDocument,
     "\n\tmutation RevokeSession($tier: GraphQLTier!, $accountId: String!, $id: String!) {\n\t\trevokeSession(tier: $tier, accountId: $accountId, id: $id)\n\t}\n": typeof types.RevokeSessionDocument,
     "\n\tmutation RevokeAllSessions($tier: GraphQLTier!, $accountId: String!) {\n\t\trevokeAllSessions(tier: $tier, accountId: $accountId)\n\t}\n": typeof types.RevokeAllSessionsDocument,
     "\n\tmutation UserUpdateStatus($_id: ID!, $disabled: Boolean!, $disabledReason: String) {\n\t\tuserUpdateStatus(_id: $_id, disabled: $disabled, disabledReason: $disabledReason)\n\t}\n": typeof types.UserUpdateStatusDocument,
@@ -62,6 +63,7 @@ const documents: Documents = {
     "\n\tmutation ItemCategoryDel($_id: ID!) {\n\t\titemCategoryDel(_id: $_id)\n\t}\n": types.ItemCategoryDelDocument,
     "\n\tmutation KeygripRotate {\n\t\tkeygripRotate\n\t}\n": types.KeygripRotateDocument,
     "\n\tmutation KeygripRetire($id: String!) {\n\t\tkeygripRetire(id: $id)\n\t}\n": types.KeygripRetireDocument,
+    "\n\tmutation KeygripResweep {\n\t\tkeygripResweep\n\t}\n": types.KeygripResweepDocument,
     "\n\tmutation RevokeSession($tier: GraphQLTier!, $accountId: String!, $id: String!) {\n\t\trevokeSession(tier: $tier, accountId: $accountId, id: $id)\n\t}\n": types.RevokeSessionDocument,
     "\n\tmutation RevokeAllSessions($tier: GraphQLTier!, $accountId: String!) {\n\t\trevokeAllSessions(tier: $tier, accountId: $accountId)\n\t}\n": types.RevokeAllSessionsDocument,
     "\n\tmutation UserUpdateStatus($_id: ID!, $disabled: Boolean!, $disabledReason: String) {\n\t\tuserUpdateStatus(_id: $_id, disabled: $disabled, disabledReason: $disabledReason)\n\t}\n": types.UserUpdateStatusDocument,
@@ -154,6 +156,10 @@ export function graphql(source: "\n\tmutation KeygripRotate {\n\t\tkeygripRotate
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n\tmutation KeygripRetire($id: String!) {\n\t\tkeygripRetire(id: $id)\n\t}\n"): (typeof documents)["\n\tmutation KeygripRetire($id: String!) {\n\t\tkeygripRetire(id: $id)\n\t}\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n\tmutation KeygripResweep {\n\t\tkeygripResweep\n\t}\n"): (typeof documents)["\n\tmutation KeygripResweep {\n\t\tkeygripResweep\n\t}\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

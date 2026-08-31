@@ -99,7 +99,7 @@ schema slices; it describes nothing that exists.
 | `/loading` | session restore, then `?redirect=` |
 | `/home` | dashboard |
 | `/settings` | change own password |
-| `/security` | cookie-signing keys — version, fingerprint, key ages, holders table, rotate |
+| `/security` | cookie-signing keys — version, fingerprint, key ages, holders table, rotate, retire, and the session console. **Retiring a key signs the whole platform out, this tab included**; if its sweep does not reach every account the *Unfinished retirement* box runs it again (`keygripResweep`) |
 | `/categories` | the whole `itemCategory` taxonomy — add, edit, retire; no search params, the list is unpaged |
 | `/shopOwners` | counter + registrations chart + section menu |
 | `/p/shopOwners/manage-shopOwners` | paginated table (`?page`, `?pageSize`, `?search`, `?status=active\|suspended\|closed\|closedSuspended`, `?sortBy`, `?sortDir`) |

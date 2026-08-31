@@ -202,6 +202,31 @@ export const KeygripRetireDocument = graphql(`
 `)
 
 /**
+ * Signs every account out again, finishing a retirement whose session sweep fell short.
+ *
+ * ⚠️ **This exists because `keygripRetire` cannot be retried.** The key leaves the record before the
+ * sessions are swept, so a retirement that failed part way through the sweep answers 404 on a second
+ * attempt — correctly, since nothing is left to retire — and the sessions the retired key signed would
+ * otherwise stay live on any service that has not adopted the new record yet (R55). The sweep is the half
+ * that is safe to repeat, so it is the half with its own button.
+ *
+ * No variables, and not even the key id: this mutation reads no keygrip record and changes none. It cannot
+ * answer 404 or 409, and the only sweep it can run is the whole platform.
+ *
+ * ⚠️ **`true` means every account was reached.** A run that left accounts standing is a 500 naming how
+ * many, so the panel must confirm on the value and never on the absence of an error — an admin told "done"
+ * by a partial sweep would stop finishing the retirement they came here to finish.
+ *
+ * `Boolean!`, so the call site names `additionalTypenames` itself — `GraphQLSession`, because what this
+ * empties is the session console beside it and not the key set above it.
+ */
+export const KeygripResweepDocument = graphql(`
+	mutation KeygripResweep {
+		keygripResweep
+	}
+`)
+
+/**
  * Ends one session of one account.
  *
  * `id` is the row's own `id` — the session index field, a SHA-256 digest — handed straight back. See the

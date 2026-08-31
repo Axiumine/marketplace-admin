@@ -36,6 +36,11 @@
 # `GraphQLPeriodGranularity` is NOT duplicated for them: the service moved that enum out of the
 # shopOwner file and both series now answer with the same one.
 #
+# ⚠️ `keygripResweep` was transcribed on 2026-08-31, against mutations/keygripResweep.mts and
+# lib/keygrip/funKeygripResweep.mts. It is the retirement's second half on its own button: the record
+# write and the session sweep are two steps, the first cannot be repeated and the second must be
+# (R55). It reads no record, so it is the one keygrip mutation with no 404 and no 409.
+#
 # This is the only endpoint that serves domain data to the admin app. Everything the app queries
 # that is not login / refresh / logout goes here.
 
@@ -334,6 +339,26 @@ type MutationsApi {
 	read as a successful retire that did nothing.
 	"""
 	keygripRetire(id: String!): Boolean!
+
+	"""
+	Signs every account out again, to finish a retirement whose session sweep did not reach the whole
+	platform.
+
+	⚠️ **The retirement is the write plus the sweep, and only the write is atomic.** The key leaves the
+	record first, so a `keygripRetire` that fails part way through the sweep cannot be retried — the second
+	attempt answers 404, correctly, because nothing is left to retire. What is left is the sweep, and the
+	sweep is safe to repeat: every account's session index is deleted last, so a second pass over an
+	interrupted account deletes nothing (R55).
+
+	No arguments — not even the key id. This mutation reads no keygrip record and changes none, so it
+	answers neither 404 nor 409; the only sweep it can run is the whole platform, and an argument could
+	only narrow it back into the partial sweep it exists to repair.
+
+	500 when the sweep could not start, and 500 again — naming how many accounts are still standing — when
+	it ran and some of them could not be reached. `true` means every account was reached, so the screen must
+	not confirm on anything else.
+	"""
+	keygripResweep: Boolean!
 
 	"""
 	Ends one session of one account and stops it being listed.

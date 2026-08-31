@@ -695,3 +695,33 @@ describe('ending every session an account holds', () => {
 		expect(rowsOf('Sessions')).toHaveLength(2)
 	})
 })
+
+/**
+ * The keygrip panel's resweep, read from the console it empties (R55).
+ *
+ * ⚠️ **The two halves of this page are one screen for exactly this reason.** A resweep ends every session
+ * on the platform, and the table that lists the account's sessions is right above the button that does it.
+ * The mutation answers a bare `Boolean`, so nothing in its response names `GraphQLSession` and urql has no
+ * way to know — the panel's `additionalTypenames` is what re-reads the table, and this is where that shows.
+ */
+describe('a resweep from the keygrip panel', () => {
+	it('re-reads the sessions the sweep just ended', async () => {
+		respond(true)
+		const stub = stubGraphQL({
+			KeygripStatus: KEYGRIP,
+			Sessions: [SESSIONS, NO_SESSIONS],
+			ReuseEvents: EVENTS,
+			KeygripResweep: { data: { keygripResweep: true } }
+		})
+		await renderRoute(AT_ACCOUNT)
+
+		await loaded()
+		await userEvent.click(screen.getByRole('button', { name: /Sign everyone out/ }))
+
+		expect(await screen.findByText('Every account was signed out')).toBeInTheDocument()
+		await waitFor(() => {
+			expect(callsTo(stub.calls, 'Sessions')).toHaveLength(2)
+		})
+		expect(screen.getByText('This account holds no live session.')).toBeInTheDocument()
+	})
+})
