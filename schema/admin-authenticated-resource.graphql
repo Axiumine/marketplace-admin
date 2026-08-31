@@ -316,7 +316,13 @@ type MutationsApi {
 	keygripRotate: Boolean!
 
 	"""
-	Drops one cookie-signing key from the whole platform, logging out everyone whose cookie it signed.
+	Drops one cookie-signing key from the whole platform and signs every account out, the calling admin
+	included.
+
+	⚠️ **It ends every live session, not only the ones the retired key signed.** Nothing records which key
+	signed which cookie, and a service that has not adopted the new key set yet still verifies what the
+	retirement was meant to kill — so the sessions go instead, and the adoption window stops mattering
+	(R47). The admin who presses it is signed out with everybody else.
 
 	One argument, and it is an id — never key material, never a version. The id is public by construction:
 	`keygripStatus` renders it and the fingerprint is computed over the ids.

@@ -439,9 +439,9 @@ describe('retiring a key', () => {
 
 		expect(confirm).toHaveBeenCalledWith(
 			'Retire the signing key k2 from the whole platform?\n\n' +
-				'Every cookie this key signed stops verifying, so everyone still holding one is signed out — customers ' +
-				'included. This is the answer to a key you believe has leaked, not routine maintenance: rotation is ' +
-				'what retires keys safely, on age, without ending a single session.'
+				'Every session on the platform ends — every customer, every shop owner, and you: this page will send ' +
+				'you back to the login screen. This is the answer to a key you believe has leaked, not routine ' +
+				'maintenance: rotation is what retires keys safely, on age, without ending a single session.'
 		)
 		expect(callsTo(stub.calls, 'KeygripRetire')).toHaveLength(0)
 	})

@@ -33,10 +33,11 @@ const CTX_ROTATE_KEYGRIP: Partial<OperationContext> = Object.freeze({
  *
  * ⚠️ **These are measured numbers, not a target.** Adoption rides a Redis publish and was clocked at 37 ms
  * to all five signing services; `KEYGRIP_POLL_MS` = 5 minutes is the fallback poll, so it is the ceiling for
- * a *lost* message rather than the normal path. Both belong next to the buttons: an admin who thought a
- * retire took effect the instant the toast appeared would tell an incident channel that a compromised key
- * was out of use while a service that missed the nudge was still verifying with it. The Holders table below
- * is where they can watch it actually happen.
+ * a *lost* message rather than the normal path. Both belong next to the buttons, because what the window
+ * governs is which key the fleet *signs* with — the Holders table below is where an admin watches the fleet
+ * agree. It is no longer a window in which a retired key can still get somebody in: a retirement ends every
+ * session as it writes, so a service that missed the nudge has a signature it accepts and no session behind
+ * it (R47).
  */
 export const PROPAGATION_WINDOW =
 	'Neither takes effect everywhere at once. Each service picks the change up on its own — 37 ms measured ' +
@@ -60,20 +61,26 @@ export const ROTATE_WARNING =
 /**
  * Shown before a key is dropped from the set.
  *
- * ⚠️ **This is the one button in the app that logs customers out on purpose.** Every cookie the retired key
- * signed stops verifying as each process picks the new record up, which is exactly what an admin
- * responding to a leaked key is asking for — and why it is a separate button from rotation rather than
- * something rotation does quietly. The warning says whose sessions end, because "the platform's users" is
- * the blast radius and no smaller word is honest about it.
+ * ⚠️ **This is the one button in the app that logs the whole platform out on purpose, and it ends *every*
+ * session rather than only the ones the retired key signed.** The service sweeps all three tiers once the
+ * new key set is written, because nothing records which key signed which cookie and the alternative is a
+ * window in which a service that has not adopted the new record yet still accepts what the retirement was
+ * meant to kill (R47). The warning has to say that plainly: "the platform's users" is the blast radius and
+ * no smaller word is honest about it.
+ *
+ * ⚠️ **The admin pressing it is signed out with everyone else**, so the warning says so before the click
+ * rather than leaving the login screen to explain it afterwards. That is not a rough edge: an exemption
+ * would be granted to whichever session sent the mutation, and someone holding a stolen admin cookie can
+ * send it.
  *
  * It names the key, because the panel offers one button per row and a mis-click is otherwise invisible
  * until the wrong key is gone.
  */
 export const retireWarning = (id: string) =>
 	`Retire the signing key ${id} from the whole platform?\n\n` +
-	'Every cookie this key signed stops verifying, so everyone still holding one is signed out — customers ' +
-	'included. This is the answer to a key you believe has leaked, not routine maintenance: rotation is ' +
-	'what retires keys safely, on age, without ending a single session.'
+	'Every session on the platform ends — every customer, every shop owner, and you: this page will send ' +
+	'you back to the login screen. This is the answer to a key you believe has leaked, not routine ' +
+	'maintenance: rotation is what retires keys safely, on age, without ending a single session.'
 
 /**
  * The cookie-signing key set, and who is holding it.
