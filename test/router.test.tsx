@@ -226,10 +226,10 @@ describe('customers search params', () => {
 	})
 
 	/**
-	 * ⚠️ **The schema has no `search` and no `sortBy`** (E19-S05), and a URL carrying them changes nothing
-	 * the screen reads. The router leaves parameters no route claims sitting in the location, so the
-	 * assertion is that the state it hands the table is the default one — the term and the column are
-	 * inert rather than honoured. That they never reach the wire either is asserted on the table itself.
+	 * ⚠️ **The schema has no `search` and no `sortBy`**, and a URL carrying them changes nothing the screen
+	 * reads. The router leaves parameters no route claims sitting in the location, so the assertion is that
+	 * the state it hands the table is the default one — the term and the column are inert rather than
+	 * honoured. That they never reach the wire either is asserted on the table itself.
 	 */
 	it('honours neither a search term nor a sort column from the URL', async () => {
 		expect(await searchOf(`${CUSTOMERS}?search=stone&sortBy=EMAIL`)).toMatchObject({

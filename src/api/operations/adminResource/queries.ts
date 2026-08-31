@@ -204,7 +204,7 @@ export const KeygripStatusDocument = graphql(`
 `)
 
 /**
- * The live sessions one account holds (E17-S02).
+ * The live sessions one account holds.
  *
  * ⚠️ The selection set is the whole type, and asking for less would not make it safer: no field on
  * `GraphQLSession` can hold token or key material, and the service's `schema.test.mts` enumerates the four
@@ -232,7 +232,7 @@ export const SessionsDocument = graphql(`
 `)
 
 /**
- * The lineages of one account that were revoked, and why (E17-S05).
+ * The lineages of one account that were revoked, and why.
  *
  * Newest first, as the service returns them, and capped there. It is the trail that explains a mass logout
  * an admin would otherwise be handed as a mystery ticket: `familyId` ties a line here to the rows
@@ -309,12 +309,12 @@ export const ShopOwnerCompaniesDocument = graphql(`
 `)
 
 /**
- * One page of the customers table (E19-S02).
+ * One page of the customers table.
  *
  * ⚠️ **Four fields, and there is no fifth to ask for.** `user` carries a name, a city and several
  * addresses, and every one of them is encrypted — randomly, for all but the login address (ADR-029) — so
  * they are not merely absent from this selection, they are unreadable to a query and unsortable by one.
- * Adding a column here is E19-S05's anti-story, and the symptom is not an error: a name column would
+ * Adding a column here is the change to refuse, and the symptom is not an error: a name column would
  * render base64 and a name sort would order the customer base by ciphertext.
  *
  * `disabled` and `deleted` go in as `Boolean!` because the service has no "either" state to offer — the

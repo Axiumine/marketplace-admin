@@ -50,8 +50,8 @@ export const TIERS: readonly GraphQlTier[] = ['admin', 'shopOwner', 'user']
  * listing the session that was just ended, which on this screen is not a stale read but a wrong answer to
  * "did it work": the admin is here because they believe a session is in the wrong hands.
  *
- * `GraphQLSession` only. The reuse trail is not written by a revocation an admin asked for — E17's open
- * question 4 answered "not attributable" — so invalidating it would re-read a list that cannot have changed.
+ * `GraphQLSession` only. The reuse trail is not written by a revocation an admin asked for — the platform
+ * owner ruled it "not attributable" — so invalidating it would re-read a list that cannot have changed.
  */
 const CTX_REVOKE: Partial<OperationContext> = Object.freeze({
 	...CTX_ADMIN_RESOURCE,
@@ -100,7 +100,7 @@ export const revokeAllWarning = (query: SessionQuery, count: number) =>
 	'Their access tokens end with them, as above.'
 
 /**
- * The session and revocation half of the security page (E17-S06).
+ * The session and revocation half of the security page.
  *
  * Two lists of one account: what it is signed in on now, and which of its lineages have been revoked and
  * why. They are on one screen because they are read together — the trail is what turns "I was logged out of

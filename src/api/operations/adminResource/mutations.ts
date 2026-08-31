@@ -178,7 +178,7 @@ export const KeygripRotateDocument = graphql(`
 `)
 
 /**
- * Drops one cookie-signing key from the whole platform (E16-S04).
+ * Drops one cookie-signing key from the whole platform.
  *
  * ⚠️ **This is the one operation the app can send that logs customers out on purpose.** Every cookie the
  * retired key signed stops verifying as each process picks the new record up. That is what an admin
@@ -202,7 +202,7 @@ export const KeygripRetireDocument = graphql(`
 `)
 
 /**
- * Ends one session of one account (E17-S03).
+ * Ends one session of one account.
  *
  * `id` is the row's own `id` — the session index field, a SHA-256 digest — handed straight back. See the
  * note on `SessionsDocument` for why a value safe to render is also safe to accept: a bare digest carries
@@ -224,7 +224,7 @@ export const RevokeSessionDocument = graphql(`
 `)
 
 /**
- * Ends every session one account holds, and answers how many there were (E17-S04).
+ * Ends every session one account holds, and answers how many there were.
  *
  * ⚠️ **Per account, and there is deliberately no "every account" form of it anywhere on the platform.** A
  * button that logged out an entire tier is a platform-wide outage one click away, and no incident this
@@ -240,7 +240,7 @@ export const RevokeAllSessionsDocument = graphql(`
 `)
 
 /**
- * Suspends or re-enables one customer (E19-S03).
+ * Suspends or re-enables one customer.
  *
  * ⚠️ **Suspending ends every session the account holds, in the same call**, so this is `revokeAllSessions`
  * plus a flag rather than a flag on its own. The residual is one access-token lifetime, the same window

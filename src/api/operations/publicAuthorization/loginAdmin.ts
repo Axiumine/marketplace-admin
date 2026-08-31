@@ -9,7 +9,7 @@ import { graphql } from '@gql/publicAuthorization'
  * admin app must never branch on.
  *
  * `rememberMe` chooses the session cap the server stamps into the refresh session at login — one day
- * unchecked, thirty checked (E14-S05, E14-S07) — not the cookie's lifetime, which is the same either way.
+ * unchecked, thirty checked — not the cookie's lifetime, which is the same either way.
  * The cap is fixed at that moment and enforced on every refresh, so it is a real checkbox on the login form
  * rather than a constant: pinning it here would silently decide how long an admin stays signed in.
  *

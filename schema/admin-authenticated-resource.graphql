@@ -5,12 +5,12 @@
 # the two shared fragments in marketplace-common (GraphQLBaseAddressFrag, GraphQLPositionFrag).
 # The keygrip query, mutation and three types were transcribed on 2026-08-12, against
 # queries/keygripStatus.mts, mutations/keygripRotate.mts and types/GraphQLKeygripStatus.mts as they
-# stood after E01-S13 and E01-S14.
+# stood after the admin gained key rotation and the per-service key view.
 # The taxonomy — one query, three mutations, one type and one input — was transcribed on 2026-08-13,
 # against queries/itemCategories.mts, mutations/itemCategory{Add,Update,Del}.mts,
 # types/GraphQLItemCategory.mts, GraphQLInput/GraphQLInputItemCategory.mts and the three lib functions
-# behind them. The service had carried all four since before this app existed; E06-S07 is the story
-# that gave them a call site.
+# behind them. The service had carried all four since before this app existed; the admin
+# category-management screens are what gave them a call site.
 #
 # ⚠️ On 2026-08-14 `published` left `GraphQLInputCompany` on the service and publishing became its own
 # operation on both tiers — `companyUpdatePublished(_id, published)` here and on 4026, plus
@@ -26,13 +26,15 @@
 #
 # The customers half — one query, one mutation and three types — was transcribed on 2026-08-25 against
 # queries/usersActiveTbl.mts, mutations/userUpdateStatus.mts and types/GraphQLUserActiveTbl.mts,
-# GraphQLUsersActiveTblPage.mts, GraphQLUsersTblSort.mts, as they stood after E19-S02 and E19-S03.
+# GraphQLUsersActiveTblPage.mts, GraphQLUsersTblSort.mts, as they stood after the customers table and
+# its status lever landed.
 #
 # The customers counters — `usersStats`, `usersPerPeriod` and the two types under them — were
 # transcribed on 2026-08-29 against queries/usersStats.mts, queries/usersPerPeriod.mts and
 # types/GraphQLUsersPeriod.mts, GraphQLUsersPerPeriod.mts, as they stood after the platform owner
-# answered E19 §6 question 2. `GraphQLPeriodGranularity` is NOT duplicated for them: the service moved
-# that enum out of the shopOwner file and both series now answer with the same one.
+# asked for the customer counterparts of `shopOwnersStats` and `shopOwnersPerPeriod`.
+# `GraphQLPeriodGranularity` is NOT duplicated for them: the service moved that enum out of the
+# shopOwner file and both series now answer with the same one.
 #
 # This is the only endpoint that serves domain data to the admin app. Everything the app queries
 # that is not login / refresh / logout goes here.
@@ -73,7 +75,7 @@ type QueriesApi {
 	suspension trio exactly as it found it, so an account suspended and then closed carries both.
 
 	`search` is a case-insensitive prefix over the first name, the last name and the city. It is legal
-	here and refused on the customer table, where all three are ciphertext (E19-S05).
+	here and refused on the customer table, where all three are ciphertext.
 	"""
 	shopOwnersActiveTbl(
 		offset: Int! = 0
@@ -125,7 +127,7 @@ type QueriesApi {
 	keygripStatus: GraphQLKeygripStatus!
 
 	"""
-	The live sessions one account is holding, newest login first (E17-S02).
+	The live sessions one account is holding, newest login first.
 
 	Both halves of the account, always: ids come from three separate collections and nothing stops two of
 	them minting the same `ObjectId`, so a query by id alone could list — and then end — a stranger's
@@ -137,7 +139,7 @@ type QueriesApi {
 	sessions(tier: GraphQLTier!, accountId: String!): [GraphQLSession!]!
 
 	"""
-	The refresh-token replays recorded against one account, newest first (E17-S05).
+	The refresh-token replays recorded against one account, newest first.
 
 	Bounded and expiring at the store: the newest 50 lines, kept 30 days. An account with none answers an
 	empty list, which is the ordinary case and not an error.
@@ -161,13 +163,13 @@ type QueriesApi {
 	itemCategories: [GraphQLItemCategory!]!
 
 	"""
-	One page of the admin's customers table (E19-S02). Every argument has a server-side default, so
+	One page of the admin's customers table. Every argument has a server-side default, so
 	`usersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
 
-	⚠️ **There is no `search` argument, and adding one is the anti-story E19-S05 refuses.** Every field a
-	search could match on `user` — the two names, the city, a partial email — is encrypted, randomly for
-	all but the login address (ADR-029). A regex over random ciphertext compares against base64 and
-	answers zero rows without erroring, which looks like a customer base with nobody in it.
+	⚠️ **There is no `search` argument, and there will not be one.** Every field a search could match on
+	`user` — the two names, the city, a partial email — is encrypted, randomly for all but the login
+	address (ADR-029). A regex over random ciphertext compares against base64 and answers zero rows
+	without erroring, which looks like a customer base with nobody in it.
 
 	⚠️ `disabled` and `deleted` are `Boolean!` with a default rather than nullable filters, so every page
 	names one state of each and the query stays on the `tbl_active_registeredAt` index. There is no
@@ -328,7 +330,7 @@ type MutationsApi {
 	keygripRetire(id: String!): Boolean!
 
 	"""
-	Ends one session of one account and stops it being listed (E17-S03).
+	Ends one session of one account and stops it being listed.
 
 	`id` is the row's own id from `sessions` — the digest of the session key, never a token. Answers
 	whether a *live* session was ended: a row whose session had already expired answers `false` and still
@@ -342,7 +344,7 @@ type MutationsApi {
 	revokeSession(tier: GraphQLTier!, accountId: String!, id: String!): Boolean!
 
 	"""
-	Ends every session one account holds and answers how many there were (E17-S03, E17-S04).
+	Ends every session one account holds and answers how many there were.
 
 	⚠️ **One account, by construction — there is no "every account" form and there will not be one.** It
 	would be a single call that logs out the whole platform, and no incident this console exists for is
@@ -397,11 +399,10 @@ type MutationsApi {
 	itemCategoryDel(_id: ID!): Boolean!
 
 	"""
-	The customer's disable switch — the only status lever `user` has, and the only one it will get
-	(E19-S03).
+	The customer's disable switch — the only status lever `user` has, and the only one it will get.
 
 	No `waitApprov` counterpart, unlike `shopOwnerUpdateStatus`: a customer registers and confirms their
-	address, and there is no manual gate between the two (E07 §6). `false` REMOVES the field rather than
+	address, and there is no manual gate between the two. `false` REMOVES the field rather than
 	storing it, so an enabled account has no `disabled` key at all.
 
 	⚠️ **Suspending also ends every session the customer holds**, in the same call, and both halves of each
@@ -423,7 +424,7 @@ type GraphQLAdminInfoAfterLogin {
 }
 
 """
-⚠️ **No type below has a `material` field, and none of them ever may** (ADR-034, E01-S14). These three
+⚠️ **No type below has a `material` field, and none of them ever may** (ADR-034). These three
 describe the record that holds the platform's cookie-signing keys: a reader of one could sign a session
 cookie for any account on the platform, which is a strictly larger power than "may rotate the keys" —
 the one this screen exists to grant. The service asserts the absence by field name in its own schema
@@ -487,32 +488,32 @@ enum GraphQLTier {
 }
 
 """
-Why a lineage was revoked (E17-S05).
+Why a lineage was revoked.
 
-⚠️ **The one enum in this slice with a test on the other side proving the two lists are equal** (E17-S01):
+⚠️ **The one enum in this slice with a test on the other side proving the two lists are equal**:
 the service builds `GraphQLReuseEventAction` from `REUSE_EVENT_ACTIONS` and asserts the value sets match,
 so a third case added to that constant fails the service's suite until it is transcribed here. Without
 that, drift would surface as an admin reading a blank cell rather than as a failing build.
 
-⚠️ **An admin's own revocation is not a value here.** E17's open question 4 answered "not
-attributable"; a case for it would answer that question by accident and would need its own retention
+⚠️ **An admin's own revocation is not a value here.** The platform owner ruled it "not
+attributable"; a case for it would reverse that ruling by accident and would need its own retention
 decision.
 """
 enum GraphQLReuseEventAction {
 	"""
-	A consumed refresh token was presented again, past the grace window (E14-S02/S03).
+	A consumed refresh token was presented again, past the grace window.
 	"""
 	refreshTokenReplayed
 	"""
-	The session reached its absolute age cap, measured from the login it descends from (E14-S05).
+	The session reached its absolute age cap, measured from the login it descends from.
 	"""
 	sessionCapReached
 }
 
 """
-One live session of one account (E17-S02).
+One live session of one account.
 
-⚠️ **No field here is capable of holding a token, and none ever may be** (BCON-01, E17 §2). `id` is the
+⚠️ **No field here is capable of holding a token, and none ever may be** (BCON-01). `id` is the
 session index field — the SHA-256 of the prefixed refresh token — and it is safe to render *and* to send
 back because every raw-token key on the platform carries an `access:` / `refresh:` prefix that a bare
 digest does not: the digest names no live key and authenticates nothing. The service's schema test
@@ -536,7 +537,7 @@ type GraphQLSession {
 }
 
 """
-One line of an account's reuse trail (E17-S05).
+One line of an account's reuse trail.
 
 ⚠️ **Five fields, and the omissions are the contract** — no token, no digest of one, no prefix of one,
 nothing network-derived. `familyId` is the handle the revocation was issued against, which is what ties a
@@ -588,7 +589,7 @@ type GraphQLUsersActiveTblPage {
 }
 
 """
-⚠️ **One member, and it stays one member** (E19-S05). `sortBy` becomes a key of the Mongo sort document,
+⚠️ **One member, and it stays one member.** `sortBy` becomes a key of the Mongo sort document,
 and on `user` the only clear field worth ordering by is the registration date: the names and the city are
 randomly encrypted (ADR-029), so a `LAST_NAME` here would sort the customer base by ciphertext — an order
 that is stable, arbitrary, and indistinguishable from a working sort until somebody checks.
@@ -640,7 +641,7 @@ type GraphQLUserActiveTbl {
 	deleted: DateTime
 	"""
 	Whether the customer confirmed the address above — the one gate between registering and logging in on
-	this tier, since `user` has no `waitApprov` and never will (E07 §6). Nullable for the reason `disabled`
+	this tier, since `user` has no `waitApprov` and never will. Nullable for the reason `disabled`
 	is: an unconfirmed account has no `emailVerify.valid` key rather than a `false` one.
 	"""
 	emailVerified: Boolean

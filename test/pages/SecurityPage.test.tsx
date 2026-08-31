@@ -106,11 +106,11 @@ describe('SecurityPage', () => {
 	})
 
 	/**
-	 * ⚠️ E17-S08's third criterion, and it is on the card with the buttons rather than in a footnote. Neither
-	 * action takes effect everywhere at once: adoption rides a Redis publish, measured at 37 ms across the
-	 * five signing services, with the 5-minute fallback poll as the ceiling for a lost message. An admin
-	 * who read the toast as "done everywhere" would tell an incident channel a compromised key was out of use
-	 * while a service that missed the nudge was still verifying with it.
+	 * ⚠️ The adoption delay is on the card with the buttons rather than in a footnote. Neither action takes
+	 * effect everywhere at once: adoption rides a Redis publish, measured at 37 ms across the five signing
+	 * services, with the 5-minute fallback poll as the ceiling for a lost message. An admin who read the
+	 * toast as "done everywhere" would tell an incident channel a compromised key was out of use while a
+	 * service that missed the nudge was still verifying with it.
 	 */
 	it('states the propagation window beside the actions', async () => {
 		stubGraphQL({ KeygripStatus: READ })
@@ -205,10 +205,10 @@ describe('SecurityPage', () => {
 	})
 
 	/**
-	 * The reason the screen exists (E01-S14): "the mutation returned true" and "the fleet agrees" are two
-	 * different claims, and the second one is only visible here. The state is spelled as a word and not
-	 * only as a colour — a red cell reading the same as the green one beside it is invisible to a
-	 * colour-blind admin and in any black-and-white printout of a ticket.
+	 * The reason the screen exists: "the mutation returned true" and "the fleet agrees" are two different
+	 * claims, and the second one is only visible here. The state is spelled as a word and not only as a
+	 * colour — a red cell reading the same as the green one beside it is invisible to a colour-blind admin
+	 * and in any black-and-white printout of a ticket.
 	 */
 	it('marks the service whose fingerprint is behind the record', async () => {
 		stubGraphQL({ KeygripStatus: READ })
@@ -392,10 +392,10 @@ describe('rotating the key', () => {
 })
 
 /**
- * ⚠️ Retiring a key is the one action this app can send that signs customers out on purpose (E16-S04,
- * E17-S08). Every test below asserts either a blocked round-trip, a sent one, or a refusal made visible —
- * "the button looks right" and "the button did the right thing" are told apart by the call count, and a
- * refusal that renders as nothing is the specific failure the server-side 404 exists to prevent.
+ * ⚠️ Retiring a key is the one action this app can send that signs customers out on purpose. Every test
+ * below asserts either a blocked round-trip, a sent one, or a refusal made visible — "the button looks
+ * right" and "the button did the right thing" are told apart by the call count, and a refusal that renders
+ * as nothing is the specific failure the server-side 404 exists to prevent.
  */
 describe('retiring a key', () => {
 	/** The retire button on one row of the Keys table, found through the row rather than by position. */
@@ -412,11 +412,11 @@ describe('retiring a key', () => {
 	}
 
 	/**
-	 * ⚠️ E17-S08's second criterion: the key the platform signs with is **not offered at all**, not offered
-	 * and disabled. `retireKeygripKey` refuses it server-side with a 409, because removing it would leave the
-	 * platform signing with a key an admin has just declared untrustworthy — rotation is what moves a
-	 * suspect key down the array, from where this action can take it. A disabled button would teach that rule
-	 * as a dead end; the word "Signing" says which key it is and why.
+	 * ⚠️ The key the platform signs with is **not offered at all**, not offered and disabled.
+	 * `retireKeygripKey` refuses it server-side with a 409, because removing it would leave the platform
+	 * signing with a key an admin has just declared untrustworthy — rotation is what moves a suspect key down
+	 * the array, from where this action can take it. A disabled button would teach that rule as a dead end;
+	 * the word "Signing" says which key it is and why.
 	 */
 	it('offers no retire on the key the platform is signing with', async () => {
 		stubGraphQL({ KeygripStatus: READ })
@@ -480,10 +480,10 @@ describe('retiring a key', () => {
 	})
 
 	/**
-	 * ⚠️ The criterion this whole story turns on. E16-S04 answers **404** for an id nothing matches rather
+	 * ⚠️ The point this whole screen turns on. The service answers **404** for an id nothing matches rather
 	 * than returning the array unchanged, precisely so a retire cannot be closed on a success that never
-	 * happened — and the panel has to show that as a failure. An admin who read a silent success here
-	 * would stop responding to a compromise that is still live.
+	 * happened — and the panel has to show that as a failure. An admin who read a silent success here would
+	 * stop responding to a compromise that is still live.
 	 */
 	it('shows a refused retire as a failure rather than as a silent success', async () => {
 		respond(true)
@@ -528,8 +528,8 @@ describe('retiring a key', () => {
 	 * ⚠️ `false` with no error is the one refusal that carries nothing to render — no message, no status, no
 	 * red anything. The confirmation has to be tied to the answer's *value* and not merely to the absence of
 	 * an error, or this exact reply reads as a success: the admin is told a suspect key is out of the set
-	 * while every process on the fleet still verifies cookies with it. The 404 of E16-S04 covers the unknown
-	 * id; this covers the service saying no without saying so.
+	 * while every process on the fleet still verifies cookies with it. The 404 covers the unknown id; this
+	 * covers the service saying no without saying so.
 	 */
 	it('does not confirm when the mutation answers false', async () => {
 		respond(true)

@@ -291,10 +291,10 @@ describe('the account lookup', () => {
 
 describe('the session table', () => {
 	/**
-	 * ⚠️ Four columns, and the omissions are the contract (BCON-01, E17 §2). No token, no prefix of one,
-	 * and nothing network- or device-derived: there is no address column because there is no address field,
-	 * by the standing decision. The `id` is the session index field — a SHA-256 digest of the prefixed
-	 * refresh token — which is why it can be shown *and* handed back to `revokeSession`.
+	 * ⚠️ Four columns, and the omissions are the contract (BCON-01). No token, no prefix of one, and nothing
+	 * network- or device-derived: there is no address column because there is no address field, by the standing
+	 * decision. The `id` is the session index field — a SHA-256 digest of the prefixed refresh token — which is
+	 * why it can be shown *and* handed back to `revokeSession`.
 	 *
 	 * `mintedAt` is the login the session descends from, not its last rotation: a session refreshing every
 	 * fifteen minutes must not read as freshly created.
@@ -482,8 +482,8 @@ describe('ending one session', () => {
 		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 	})
 
-	// The rate limit is per admin and per account (E17-S03). Its refusal has to be readable, or the
-	// admin retries into it and reads the silence as a broken screen.
+	// The rate limit is per admin and per account. Its refusal has to be readable, or the admin retries into it
+	// and reads the silence as a broken screen.
 	it('reports a refusal, and confirms nothing', async () => {
 		respond(true)
 		stubGraphQL({

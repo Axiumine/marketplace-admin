@@ -13,7 +13,7 @@ const ADMIN = { infoAdminAfterLogin: { _id: '65f0000000000000000000a1', email: '
 const refreshed = (accessToken: string) => ({ data: { refresh: { status: true, accessToken } } })
 
 /**
- * What the backend answers the loser of a multi-tab refresh race (E14-S04): a 409 carrying the one
+ * What the backend answers the loser of a multi-tab refresh race: a 409 carrying the one
  * `extensions.code` on the platform, and no token of any kind — the grace branch mints nothing.
  */
 const raceLost = {
@@ -152,8 +152,8 @@ describe('createGraphQLClient', () => {
 
 		expect(onSessionLost).toHaveBeenCalled()
 		expect(getAccessToken()).toBeNull()
-		// Sent once. The retry loop of E14-S04 is for the lost race and nothing else: re-sending a cookie
-		// the backend has already refused would triple the cost of every genuine expiry.
+		// Sent once. The retry loop is for the lost race and nothing else: re-sending a cookie the backend has
+		// already refused would triple the cost of every genuine expiry.
 		expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(1)
 	})
 
@@ -222,10 +222,10 @@ describe('createGraphQLClient', () => {
 	})
 
 	/*
-	 * E14-S04, the whole point of the grace window. Two tabs reload together, both send the same refresh
-	 * cookie, one loses — and the loser must not be logged out of every session it has. The backend answers
-	 * a code rather than a 498, and the client sends the refresh again with the cookie the winner has by
-	 * then written into the shared jar.
+	 * The whole point of the grace window. Two tabs reload together, both send the same refresh cookie, one
+	 * loses — and the loser must not be logged out of every session it has. The backend answers a code
+	 * rather than a 498, and the client sends the refresh again with the cookie the winner has by then
+	 * written into the shared jar.
 	 */
 	it('retries a refresh that lost a multi-tab race and keeps the session', async () => {
 		const stub = stubGraphQL({
@@ -268,7 +268,7 @@ describe('createGraphQLClient', () => {
 	})
 
 	// And it stops. A backend answering the same code forever is not a race any more, and a client that
-	// keeps asking would hammer the refresh endpoint into its own rate limiter (E14-S08) on every operation.
+	// keeps asking would hammer the refresh endpoint into its own rate limiter on every operation.
 	it('gives up after two retries and ends the session', async () => {
 		const stub = stubGraphQL({
 			InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
