@@ -724,4 +724,19 @@ describe('a resweep from the keygrip panel', () => {
 		})
 		expect(screen.getByText('This account holds no live session.')).toBeInTheDocument()
 	})
+
+	/**
+	 * ⚠️ **`reswept` reads the mutation's own answer, not just its absence of an error.** Before the button
+	 * is ever pressed, `resweep.error` is already `undefined` — a mutation that has not fired yet carries
+	 * no error either — so a check that dropped the `keygripResweep === true` half would claim the sweep
+	 * had already finished the moment the page loaded.
+	 */
+	it('does not claim the sweep already finished before the button is pressed', async () => {
+		stubGraphQL({ KeygripStatus: KEYGRIP, Sessions: SESSIONS, ReuseEvents: EVENTS })
+		await renderRoute(AT_ACCOUNT)
+
+		await loaded()
+
+		expect(screen.queryByText('Every account was signed out')).not.toBeInTheDocument()
+	})
 })

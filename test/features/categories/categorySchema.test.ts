@@ -35,6 +35,18 @@ const messages = (patch: Record<string, unknown> = {}) => {
 	return result.success ? [] : result.error.issues.map((issue) => issue.message)
 }
 
+/**
+ * The zod issue code each `position` rule hands `ctx.addIssue`, asserted on its own: `messages` reads
+ * only `.message`, which is what react-hook-form's resolver shows, so a wrong `code` there is invisible
+ * on screen — but it is not invisible to zod's own error, and `.refine`'s built-in rules elsewhere in
+ * this schema report a `code` too, so `'custom'` here is `superRefine` saying, in zod's own vocabulary,
+ * that this is a hand-written rule and not one of zod's.
+ */
+const codes = (patch: Record<string, unknown> = {}) => {
+	const result = outcome(patch)
+	return result.success ? [] : result.error.issues.map((issue) => issue.code)
+}
+
 const value = (patch: Record<string, unknown> = {}) => {
 	const result = outcome(patch)
 	if (!result.success) throw new Error(result.error.issues.map((issue) => issue.message).join(' / '))
@@ -159,6 +171,10 @@ describe('categorySchema — position', () => {
 	// and not negative, and neither it nor the GraphQL `Int` refuses a value the collection cannot store.
 	it('refuses a position past what the collection can hold', () => {
 		expect(messages({ position: '1000000000' })).toEqual(['The position cannot exceed 999999999'])
+	})
+
+	it.each([[''], ['-1'], ['1000000000']])('reports «%s» as one of superRefine’s own issues, not zod’s', (position) => {
+		expect(codes({ position })).toEqual(['custom'])
 	})
 
 	// Trimmed before it is read, like every other box: ` 10 ` is the number the admin typed.

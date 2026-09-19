@@ -57,13 +57,27 @@ const ariaSort = (dir: GraphQlSortDirection): 'ascending' | 'descending' => (dir
  * its own — `userUpdateStatus` is a bare `Boolean!` — so the table would go on listing an account that has
  * just been suspended. On this screen that is not a stale read but a wrong answer to "did it work".
  *
- * Both typenames, not just the row: a page with no rows carries only `GraphQLUsersActiveTblPage` in its
- * response, so an admin who looked at an empty Suspended list before suspending anybody would still be
- * looking at it afterwards.
+ * ⚠️ The wrapper, not the row, is what makes an *empty* filter invalidate too: a page with no rows still
+ * carries `GraphQLUsersActiveTblPage` in its response, but none of `GraphQLUserActiveTbl` — an admin who
+ * looked at an empty Suspended list before suspending anybody would still be looking at it afterwards if
+ * only the row type were named here.
  */
 const CTX_STATUS: Partial<OperationContext> = Object.freeze({
 	...CTX_ADMIN_RESOURCE,
-	additionalTypenames: ['GraphQLUserActiveTbl', 'GraphQLUsersActiveTblPage']
+	additionalTypenames: [
+		/*
+		 * Stryker disable next-line StringLiteral: `GraphQLUserActiveTbl` never appears on the wire outside
+		 * `usersActiveTbl.items`, and every response to that query — empty or not — carries the wrapper's
+		 * `GraphQLUsersActiveTblPage` typename too (see the note above `collectTypenames` in urql's document
+		 * cache: it walks the whole response, so the wrapper alone already gets every cached instance of this
+		 * query invalidated). No sequence of filters or pages produces a cached `usersActiveTbl` result that
+		 * carries this type without also carrying the wrapper's, so naming it here changes nothing this
+		 * mutation invalidates — it is kept only because it names, in the reader's own words, what a
+		 * suspension actually changed.
+		 */
+		'GraphQLUserActiveTbl',
+		'GraphQLUsersActiveTblPage'
+	]
 })
 
 interface Row {
@@ -205,6 +219,12 @@ export const TblCustomers = ({
 	 * is still mounted.
 	 */
 	const [pending, setPending] = useState<{ _id: string; email: string } | null>(null)
+	/*
+	 * Stryker disable next-line StringLiteral: this box only ever renders while `pending !== null`, and
+	 * `pending` is set to non-null in exactly one place, the Suspend button below, which sets `reason` to
+	 * `''` in the same click handler right beside it. No render can show this hook's own initial value —
+	 * by the time the box exists at all, the click that opened it has already overwritten `reason`.
+	 */
 	const [reason, setReason] = useState('')
 
 	/*
@@ -242,6 +262,14 @@ export const TblCustomers = ({
 
 	const closeForm = () => {
 		setPending(null)
+		/*
+		 * ⚠️ Stryker disable next-line StringLiteral: `pending` and `reason` are only ever set together, in
+		 * exactly two places — here, and the Suspend button below (`setPending({ … }); setReason('')`). The
+		 * box is gated on `pending !== null`, so whatever this call writes is invisible while the form is
+		 * closed, and the only way to make it visible again — clicking Suspend — resets `reason` to `''` in
+		 * the same handler before that render happens. No reachable sequence of clicks lets this literal's
+		 * value reach the screen; it is belt-and-braces for a reopen path that resets its own state anyway.
+		 */
 		setReason('')
 		setReasonError(undefined)
 	}

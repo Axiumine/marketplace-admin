@@ -588,6 +588,37 @@ describe('TblCustomers', () => {
 	})
 
 	/**
+	 * The wrapper typename, proven on its own. `userUpdateStatus` names both `GraphQLUserActiveTbl` and
+	 * `GraphQLUsersActiveTblPage` — and a page with no rows carries only the second. Without it, an admin
+	 * who had the empty Suspended filter cached before suspending somebody on Active would switch back to
+	 * Suspended and see the same stale empty list rather than a fresh read.
+	 */
+	it('invalidates a different filter’s cached list too, even one with no rows to carry the row typename', async () => {
+		const stub = stubGraphQL({
+			...ABOVE,
+			UsersActiveTbl: [page([]), page([customer()]), page([customer()]), page([])],
+			UserUpdateStatus: { data: { userUpdateStatus: true } }
+		})
+		await renderRoute(`${CUSTOMERS}?status=suspended`)
+		await waitFor(() => {
+			expect(callsTo(stub.calls, 'UsersActiveTbl')).toHaveLength(1)
+		})
+
+		await userEvent.selectOptions(screen.getByLabelText('Status'), 'active')
+		const form = await openSuspendForm('ada.stone@example.com')
+		await userEvent.type(within(form).getByLabelText('Reason'), 'Fraud')
+		await submitForm(form)
+		await waitFor(() => {
+			expect(callsTo(stub.calls, 'UsersActiveTbl')).toHaveLength(3)
+		})
+
+		await userEvent.selectOptions(screen.getByLabelText('Status'), 'suspended')
+		await waitFor(() => {
+			expect(callsTo(stub.calls, 'UsersActiveTbl')).toHaveLength(4)
+		})
+	})
+
+	/**
 	 * ⚠️ **Asymmetric on purpose: suspending asks for a reason, enabling asks for nothing.** Lifting a
 	 * suspension ends no session and needs no note — and the platform owner's ruling is that an admin is
 	 * the only one who can lift one at all, so the admin's click is the whole gesture. A second form

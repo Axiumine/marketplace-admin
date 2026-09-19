@@ -225,6 +225,13 @@ describe('customers search params', () => {
 		expect((await searchOf(`${CUSTOMERS}?sortDir=ASC`)).sortDir).toBe('ASC')
 	})
 
+	// The same case the shopOwners route's own empty-direction test pins: `?sortDir=` is neither member
+	// of the enum, so it must be rejected into the default rather than quietly accepted as a third
+	// direction.
+	it('falls back on an empty sort direction', async () => {
+		expect((await searchOf(`${CUSTOMERS}?sortDir=`)).sortDir).toBe('DESC')
+	})
+
 	/**
 	 * ⚠️ **The schema has no `search` and no `sortBy`**, and a URL carrying them changes nothing the screen
 	 * reads. The router leaves parameters no route claims sitting in the location, so the assertion is that
