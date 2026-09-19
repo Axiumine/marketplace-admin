@@ -188,6 +188,26 @@ describe('useSaving', () => {
 		expect(order).toEqual(['a'])
 	})
 
+	// The registry has to *remove* the entry on unmount, not merely mark it — `register`'s guard is what
+	// tells `sections.current.set` from `sections.current.delete` apart. A registry that left a `null`
+	// behind would still iterate the id in `saveAll`, and `null.save()` throws before `press` ever reaches
+	// `setSaving(false)`: the button would stay stuck on "Loading" forever, for a save that in fact went
+	// through.
+	it('finishes the save and re-enables the button once an unmounted section is left behind', async () => {
+		const order: string[] = []
+		render(<Page ids={['a', 'b']} order={order} />)
+
+		await userEvent.click(screen.getByRole('button', { name: 'touch b' }))
+		await userEvent.click(screen.getByRole('button', { name: 'unmount last' }))
+
+		await userEvent.click(screen.getByRole('button', { name: 'touch a' }))
+		await userEvent.click(save())
+
+		expect(order).toEqual(['a'])
+		expect(await screen.findByText('Changes saved.')).toBeInTheDocument()
+		expect(screen.queryByText('Loading')).not.toBeInTheDocument()
+	})
+
 	/*
 	 * A section unregisters the id it is registered under *now*.
 	 *
