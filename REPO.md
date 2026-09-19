@@ -64,11 +64,105 @@ did. All thirteen sub-repos that have a lint config (every one but `marketplace-
 What is out of scope lives in `.prettierignore`, and markdown is in there on purpose: `proseWrap: "never"`
 would flatten every hand-wrapped paragraph in these docs onto one line.
 
-The backend nine never had the flat-config `files`-glob bug described in [`CLAUDE.md`](./CLAUDE.md), because
-`@axiumine/eslint-config-be` scopes everything to `src/**`.
+**Every block in `eslint.config.js` carries a `files` glob.** A flat-config entry without one applies to
+*every* file eslint walks into, including minified Qodana HTML reports — thousands of `no-undef` errors
+in code nobody here wrote. The globs live in `SOURCES` and `CONFIG_ROOT` at the top of the file; add a
+block by reusing them, never by omitting `files`. Ignoring a directory fixes one path; scoping makes the
+next one impossible.
+
+The backend nine never had this bug, because `@axiumine/eslint-config-be` scopes everything to `src/**`.
+
+**Tabs, not spaces** (eslint `indent: ['error','tab']`). Prettier here: no semicolons, single quotes,
+`trailingComma: "none"`, `printWidth: 129`, `useTabs: true`. The backend services and `marketplace-common`
+carry that file byte for byte.
 
 ## Bypasses
 
 `SKIP_QODANA=1` (scan only — the other gates stay) · `git commit --no-verify` / `git push --no-verify` (the
 whole hook). Both are gate removals. See [`CLAUDE.md`](./CLAUDE.md) for when they may be used, which is: when the user
 says so, and not otherwise.
+
+## Why the mutation gate is hook-only
+
+Running `yarn test:mutation` only from `pre-push` does not weaken anything: the threshold stays 100,
+`pre-push` still blocks, and no survivor is ever answered by lowering a number. What changes is **who
+starts the run**. A full pass costs tens of minutes and holds the whole machine at 28 workers while it
+lasts, so an on-demand run is time taken from the person waiting for the work.
+
+A hand-started run is usually **wrong** as well as slow: `npx stryker run` skips what the `test:mutation`
+script exports (`TZ=UTC`), so the suite fails in Stryker's dry run on a timezone-dependent assertion and
+the whole run aborts before a single mutant is tested.
+
+## `schema/*.graphql` is a copy, and copies drift
+
+The platform has **no SDL**. All nine backend services build their schema programmatically with graphql-js.
+The four files under `schema/` are hand-written slices, kept only because graphql-codegen needs a schema to
+type documents against.
+
+They are a copy, and a copy drifts. Before adding or changing any operation, read the resolver in the
+service repo — `BEs/dev/marketplace-dev-*/src/graphQLApi/` (public-authorization uses `graphQLPublic/`
+instead) — and make the slice match. The resolvers are the contract. A slice can happily declare an
+operation no service implements (`updateUtentePwd` is one such name — nothing on the platform answers
+it), or give an argument a different name from the resolver's. Both compile, both pass codegen, and both
+fail only at run time against the real server.
+
+`src/gql/` is generated. Never edit it; run `yarn codegen`.
+
+Adding an operation on a new endpoint is more than a file in `src/api/operations/`: it is a new `schema/`
+slice + a new `codegen.ts` project + a new `CTX_*` + a proxy entry in `vite.config.ts`.
+
+## Layout
+
+```
+schema/                     hand-maintained SDL slices, one per endpoint
+src/
+├── api/
+│   ├── client.ts           the single urql Client + exchange chain
+│   ├── endpoints.ts        ENDPOINT + the frozen CTX_* context objects
+│   ├── errors.ts           status extraction from the platform's error shape
+│   ├── operations/<tier>/  the documents, one directory per access level
+│   └── tokenStore.ts       in-memory access token
+├── auth/                   session store + useLogout
+├── components/layout|ui/   AppShell, SideMenu, and the primitives
+├── features/<area>/        the screens' actual content
+├── pages/                  one component per route, props in, no URL access
+├── gql/                    GENERATED
+└── router.tsx              route tree, search-param schemas, URL → props
+test/                       mirrors src/, plus helpers/ and __snapshots__/
+```
+
+`pages/` read nothing from the URL; `router.tsx` is the only place params and search become props. That is
+what lets a page be rendered in a test without a router assertion in the way.
+
+## Version control — the detail
+
+- **The remote exists and is empty.** `origin` is `https://github.com/Axiumine/marketplace-admin.git`, the
+  GitHub repo is there and **public**, and `git ls-remote --heads origin` returns nothing: not one branch
+  has ever been pushed, so `main` tracks nothing. The first push is therefore a *publication* of the whole
+  history to a public repository, not a routine sync. It is **push-on-request**: never run `git push`
+  unless the user asked for it in that message.
+- **Delete the branch once it is merged.** `git branch -d <slug>`, right after the merge. `-d`, never `-D`:
+  it refuses a branch whose commits are not already reachable, so the safe case is quiet and the unsafe one
+  stops you. Merges land locally, so no forge-side "delete branch on merge" ever fires and `git branch`
+  stays the only view of what is still in flight.
+
+## Testing notes
+
+- **Every component under `src/components/`, `src/pages/` and `src/features/` carries a snapshot**, and
+  `test/**/__snapshots__/*.snap` byte-matches a real render. `vitest run` never updates a snapshot, so a
+  drifted one is a failing test rather than a silent rewrite. Regenerate with `yarn test -u` only after
+  an intended markup change, and read the diff — `-u` accepts a regression just as readily as a fix.
+- **GraphQL is stubbed at `fetch`**, not with a mock urql client (`test/helpers/graphql.ts`). Everything
+  above `fetch` is then real: the cache, the 498 retry, the status extraction, the session teardown. Replies
+  are queued per operation name. An operation nobody configured **throws** — deliberate, an unexpected
+  request is the interesting half of a regression.
+- **`renderRoute(path)`** (`test/helpers/render.tsx`) mounts the real router at a real URL.
+- **jsdom enforces interactive form validation.** A value that fails an `<input type="email">`'s own check
+  never fires submit, so a zod email rule is only reachable with something the HTML validator accepts —
+  `admin@marketplace` (no TLD), not `admin`.
+- **`fireEvent.change`, not `userEvent.type`,** for any field with a `maxLength` or a date input.
+- `Alert` is `role="alert"` only for the error tone; success and info are `role="status"`.
+- Snapshots normalise React's `useId` values (see `vitest.setup.ts`) — do not "fix" a snapshot by writing
+  the raw `_r_N_` ids back in.
+- `TZ=UTC` is exported by the test scripts *and* set in `vitest.config.ts`. Both are needed: Stryker's
+  worker pool ignores the config one.
