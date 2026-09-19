@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { TurnstileProps } from '@/components/ui/Turnstile'
 
+import { trackUnhandledRejections } from '../../helpers/rejections'
+
 const SCRIPT_ID = 'cf-turnstile-script'
 const SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
 const SITE_KEY = '0x4AAAAAAABBBBBBBBCCCCCC'
@@ -234,6 +236,13 @@ describe('rendering the widget', () => {
 	// The script can resolve without defining the global — an ad blocker answering the request with an
 	// empty body does exactly this. It must not throw; the form still submits and the server still decides.
 	it('survives a script that loaded but defined nothing', async () => {
+		// ⚠️ "Survives" is the claim, and nothing on the page can make it. The component starts the widget with
+		// `void start()`, so a version that skipped the `undefined` check would throw reading `.render` inside a
+		// promise nobody awaits: the DOM and `onToken` look exactly as they do below, and the throw surfaces
+		// only as a run-level unhandled rejection beside a passing test — which the mutation gate records as
+		// RuntimeError, a status its score leaves out, rather than as a kill.
+		const rejections = trackUnhandledRejections()
+
 		const onToken = vi.fn()
 		vi.stubGlobal('turnstile', undefined)
 		const Turnstile = await loadTurnstile(SITE_KEY)
@@ -243,6 +252,10 @@ describe('rendering the widget', () => {
 
 		expect(onToken).not.toHaveBeenCalled()
 		expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+		await rejections.settle()
+		rejections.stop()
+		expect(rejections.reasons).toEqual([])
 	})
 
 	// The container the widget renders into, before Cloudflare's script has had a chance to run — the
