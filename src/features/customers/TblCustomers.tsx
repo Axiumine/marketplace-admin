@@ -66,7 +66,7 @@ const CTX_STATUS: Partial<OperationContext> = Object.freeze({
 	...CTX_ADMIN_RESOURCE,
 	additionalTypenames: [
 		/*
-		 * Stryker disable next-line StringLiteral: `GraphQLUserActiveTbl` never appears on the wire outside
+		 * ⚠️ Kept for the reader, not for the cache. `GraphQLUserActiveTbl` never appears on the wire outside
 		 * `usersActiveTbl.items`, and every response to that query — empty or not — carries the wrapper's
 		 * `GraphQLUsersActiveTblPage` typename too (see the note above `collectTypenames` in urql's document
 		 * cache: it walks the whole response, so the wrapper alone already gets every cached instance of this
@@ -74,7 +74,12 @@ const CTX_STATUS: Partial<OperationContext> = Object.freeze({
 		 * carries this type without also carrying the wrapper's, so naming it here changes nothing this
 		 * mutation invalidates — it is kept only because it names, in the reader's own words, what a
 		 * suspension actually changed.
+		 *
+		 * ⚠️ The directive below has to stay a single `//` line. Stryker matches its directive regex against the
+		 * comment body and allows one leading whitespace character, so a directive written inside a block comment is
+		 * read as prose and silently ignored.
 		 */
+		// Stryker disable next-line StringLiteral: equivalent — the wrapper typename beside it already invalidates every cached instance.
 		'GraphQLUserActiveTbl',
 		'GraphQLUsersActiveTblPage'
 	]
@@ -220,11 +225,16 @@ export const TblCustomers = ({
 	 */
 	const [pending, setPending] = useState<{ _id: string; email: string } | null>(null)
 	/*
-	 * Stryker disable next-line StringLiteral: this box only ever renders while `pending !== null`, and
+	 * ⚠️ The initial value is unobservable. This box only ever renders while `pending !== null`, and
 	 * `pending` is set to non-null in exactly one place, the Suspend button below, which sets `reason` to
 	 * `''` in the same click handler right beside it. No render can show this hook's own initial value —
 	 * by the time the box exists at all, the click that opened it has already overwritten `reason`.
+	 *
+	 * ⚠️ The directive below has to stay a single `//` line. Stryker matches its directive regex against the
+	 * comment body and allows one leading whitespace character, so a directive written inside a block comment is
+	 * read as prose and silently ignored.
 	 */
+	// Stryker disable next-line StringLiteral: equivalent — the Suspend click overwrites `reason` before the box first renders.
 	const [reason, setReason] = useState('')
 
 	/*
@@ -263,13 +273,18 @@ export const TblCustomers = ({
 	const closeForm = () => {
 		setPending(null)
 		/*
-		 * ⚠️ Stryker disable next-line StringLiteral: `pending` and `reason` are only ever set together, in
+		 * ⚠️ Belt and braces, and unobservable. `pending` and `reason` are only ever set together, in
 		 * exactly two places — here, and the Suspend button below (`setPending({ … }); setReason('')`). The
 		 * box is gated on `pending !== null`, so whatever this call writes is invisible while the form is
 		 * closed, and the only way to make it visible again — clicking Suspend — resets `reason` to `''` in
 		 * the same handler before that render happens. No reachable sequence of clicks lets this literal's
 		 * value reach the screen; it is belt-and-braces for a reopen path that resets its own state anyway.
+		 *
+		 * ⚠️ The directive below has to stay a single `//` line. Stryker matches its directive regex against the
+		 * comment body and allows one leading whitespace character, so a directive written inside a block comment is
+		 * read as prose and silently ignored.
 		 */
+		// Stryker disable next-line StringLiteral: equivalent — the form is closed, and reopening it resets `reason` itself.
 		setReason('')
 		setReasonError(undefined)
 	}
