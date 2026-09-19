@@ -644,6 +644,23 @@ describe('ShopOwnerPersonalData — editing', () => {
 		])
 	})
 
+	// The same counter as the note's, on the box `dependencies: { disabled: ['disabledReason'] }` exists
+	// for — seeded from the stored reason rather than from zero, for the reason written on the note's own
+	// version of this test.
+	it('counts the characters left in the suspension reason, starting from the stored reason', async () => {
+		stubGraphQL(detail({ disabled: true, disabledBy: ADMIN, disabledReason: 'Suspected chargeback ring.' }))
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		await open('Suspension reason')
+
+		expect(box('Account status').getByText('974 characters remaining')).toBeInTheDocument()
+
+		write('Suspension reason', 'Fraud')
+
+		expect(box('Account status').getByText('995 characters remaining')).toBeInTheDocument()
+	})
+
 	// `onboardingStep` is the one argument of the four that is nullable, and `null` genuinely means
 	// "unset it" — the resolver `$unset`s the key rather than writing an empty string.
 	it('sends a cleared onboarding step as null', async () => {
@@ -1590,6 +1607,46 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 				}
 			})
 		])
+	})
+
+	/*
+	 * ADR-044's rule again, and this panel's own schema is the one that has to carry it: `blocking an
+	 * account it has not onboarded is still a suspension of the same document, refused by the same
+	 * `dependencies: { disabled: ['disabledReason'] }` the complete account answers to. `shopOwnerDetailSchema`
+	 * is a different object — see the comment above this describe block — so this schema needs its own
+	 * `.refine`, and this is what pins that it has one.
+	 */
+	it('refuses to block without a reason', async () => {
+		const stub = stubGraphQL({ ...detailPending(), ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } } })
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Disabled')
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Disabled' }))
+		await open('Suspension reason')
+		await userEvent.click(save())
+
+		expect(await page().findByText(REASON_REQUIRED)).toBeInTheDocument()
+		expect(within(await screen.findByRole('alert')).getByText(REASON_REQUIRED)).toBeInTheDocument()
+		expect(writes(stub)).toEqual([])
+	})
+
+	// Seeded empty on an account nobody has suspended yet, and counting down from the same cap the
+	// complete account's box does — `disabledReason` is `null` here, not a stored string, which is the
+	// case the `??` fallback in this panel's own `defaultValues` exists for.
+	it('seeds the suspension reason box empty and counts down from the cap', async () => {
+		stubGraphQL(detailPending())
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Suspension reason')
+
+		expect(screen.getByLabelText('Suspension reason')).toHaveValue('')
+		expect(box('Account status').getByText('1000 characters remaining')).toBeInTheDocument()
+
+		write('Suspension reason', 'Fraud')
+
+		expect(box('Account status').getByText('995 characters remaining')).toBeInTheDocument()
 	})
 
 	it('sends the login email on its own', async () => {
