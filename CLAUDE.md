@@ -23,6 +23,8 @@ calls it and at no other time: not to check a change, not on one file, not to co
 Do not invoke `stryker` directly either; the threshold stays 100 regardless. To reproduce a survivor,
 apply the mutant by hand in the source and run `yarn test` instead — seconds, and it names the tests that
 should have failed. Why a hand-started full run is also usually wrong: [`REPO.md`](./REPO.md).
+⚠️ Since ADR-055 the script has a second caller, `.github/workflows/gates.yml`, which runs it on
+every pull request — two callers, both automated, and a hand is neither.
 
 ⚠️ **Don't trust `schema/*.graphql`.** The platform has no SDL; these four files are hand-written slices
 that a service's real resolver can silently disagree with — both still compile and pass codegen. Before
