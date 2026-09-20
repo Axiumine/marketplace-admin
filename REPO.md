@@ -45,7 +45,7 @@ backend ones. A backend service's token would file these reports under that serv
 
 ## Node selection
 
-Ahead of its six gates the pre-push hook selects node itself. It reads `engines.node` from `package.json`
+Ahead of its seven gates the pre-push hook selects node itself. It reads `engines.node` from `package.json`
 — never a hard-coded version — and sources nvm to switch if the current node does not satisfy it.
 
 This is necessary because every gate shells out to yarn and yarn's `engines` check is a hard failure: on
