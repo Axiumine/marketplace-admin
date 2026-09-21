@@ -1,5 +1,5 @@
 import type { GraphQlSortDirection } from '@gql/adminResource/graphql'
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { createColumnHelper, flexRender, tableFeatures, useTable } from '@tanstack/react-table'
 import type { OperationContext } from '@urql/core'
 import { useState } from 'react'
 import { useMutation, useQuery } from 'urql'
@@ -182,7 +182,11 @@ export const outcomeMessage = (email: string, disabled: boolean) =>
 		? `${email} is suspended, and every session they held has ended. The account is now under the Suspended filter.`
 		: `${email} can sign in again.`
 
-const column = createColumnHelper<Row>()
+// Empty on purpose, as on the shop-owners table: in v9 sorting, filtering and pagination are features
+// a table registers, and this one registers none because the server does all three.
+const features = tableFeatures({})
+
+const column = createColumnHelper<typeof features, Row>()
 
 /**
  * The customers table.
@@ -329,7 +333,7 @@ export const TblCustomers = ({
 	// while the next one is in flight — so the result is what decides whether there is anything to say.
 	const done = statusResult.data?.userUpdateStatus === true ? intent : null
 
-	const columns = [
+	const columns = column.columns([
 		// No link, because there is no customer detail page to link to: the collection has one admin
 		// lever and it is the button in the last column. A link here would have to lead somewhere.
 		column.accessor('email', { header: 'Email' }),
@@ -398,12 +402,12 @@ export const TblCustomers = ({
 				)
 			}
 		})
-	]
+	])
 
-	// As on the shop-owners table: `getCoreRowModel` is the only row model registered, so nothing here can
-	// re-sort or re-filter the page the server handed back, and `manualPagination` is what stops the page
-	// count being derived from the length of that page.
-	const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel(), manualPagination: true })
+	// As on the shop-owners table: with no feature registered the table only models the rows it was
+	// handed, so nothing here can re-sort or re-filter the page the server returned, and there is no
+	// page count for it to derive either. The core row model needs no registering in v9.
+	const table = useTable({ features, data: rows, columns })
 
 	return (
 		<div className="flex flex-col gap-4">
@@ -522,7 +526,7 @@ export const TblCustomers = ({
 					<tbody>
 						{table.getRowModel().rows.map((row) => (
 							<tr key={row.id} className="border-b border-palette-bg3/10">
-								{row.getVisibleCells().map((cell) => (
+								{row.getAllCells().map((cell) => (
 									<td key={cell.id} className="p-2">
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
 									</td>

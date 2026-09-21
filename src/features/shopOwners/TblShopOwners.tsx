@@ -1,6 +1,6 @@
 import type { GraphQlShopOwnersTblSortField, GraphQlSortDirection } from '@gql/adminResource/graphql'
 import { Link } from '@tanstack/react-router'
-import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { createColumnHelper, flexRender, tableFeatures, useTable } from '@tanstack/react-table'
 import { useEffect, useState } from 'react'
 import { useQuery } from 'urql'
 
@@ -107,7 +107,13 @@ type SortableColumn = keyof typeof SORT_FIELD
 const sortFieldOf = (columnId: string): GraphQlShopOwnersTblSortField | undefined =>
 	SORT_FIELD[columnId as SortableColumn] as GraphQlShopOwnersTblSortField | undefined
 
-const column = createColumnHelper<Row>()
+// Every table behaviour is opt-in in v9, and this table wants none of them: paging, sorting and
+// searching are the server's job, so the empty feature set is the whole configuration. It is a type
+// as much as a value — the column helper and the table are both parameterised on it, so a column
+// option or a row method belonging to an unregistered feature does not typecheck.
+const features = tableFeatures({})
+
+const column = createColumnHelper<typeof features, Row>()
 
 /**
  * The next sort state for a header click: a new column starts ascending, the current column flips.
@@ -200,7 +206,7 @@ export const TblShopOwners = ({
 		reason: item.disabledReason ?? null
 	}))
 
-	const columns = [
+	const columns = column.columns([
 		// The row's link, and it lives on the email cell rather than on the surname: the address is the
 		// one column that is filled in on every row, so a pending registration is still reachable. On the
 		// surname it would be an em dash for exactly the accounts an admin needs to open.
@@ -243,22 +249,19 @@ export const TblShopOwners = ({
 				)
 			}
 		})
-	]
+	])
 
-	// The React Compiler skips auto-memoizing this component because `useReactTable` hands back functions
-	// it cannot prove stable — see the `react-hooks/incompatible-library` override in eslint.config.js
-	// for why that is accepted here rather than worked around.
-	const table = useReactTable({
+	// The React Compiler skips auto-memoizing this component because `useTable` hands back functions it
+	// cannot prove stable — see the `react-hooks/incompatible-library` override in eslint.config.js for
+	// why that is accepted here rather than worked around.
+	//
+	// `rows` is already the one page the server was asked for, and with `features` empty there is no
+	// sorting, filtering or pagination in the table at all — nothing to keep manual. The core row model
+	// is built in, so the v8 `getCoreRowModel()` option is gone with it.
+	const table = useTable({
+		features,
 		data: rows,
-		columns,
-		getCoreRowModel: getCoreRowModel(),
-		// Paging, sorting and searching are all the server's job — `rows` is already the one page that was
-		// asked for. `getCoreRowModel` is the only row model registered, which is what actually keeps the
-		// table from re-sorting or re-filtering the page it was handed; `manualSorting` and
-		// `manualFiltering` would only be read by the sorted and filtered row models, and there are none.
-		// `manualPagination` is not decoration in the same way: it is what stops `getPageCount()` from
-		// being derived from the length of the current page.
-		manualPagination: true
+		columns
 	})
 
 	return (
@@ -336,7 +339,7 @@ export const TblShopOwners = ({
 					<tbody>
 						{table.getRowModel().rows.map((row) => (
 							<tr key={row.id} className="border-b border-palette-bg3/10">
-								{row.getVisibleCells().map((cell) => (
+								{row.getAllCells().map((cell) => (
 									<td key={cell.id} className="p-2">
 										{flexRender(cell.column.columnDef.cell, cell.getContext())}
 									</td>
