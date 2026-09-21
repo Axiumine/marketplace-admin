@@ -79,7 +79,7 @@ export default [
 	},
 	{
 		// Two libraries hand back functions the React Compiler cannot prove stable, so it declines to
-		// auto-memoize the component and the rule says so: `useReactTable` in the table, and react-hook-
+		// auto-memoize the component and the rule says so: `useTable` in the table, and react-hook-
 		// form's `watch()` in the add form, which is read there because `AddressField` is controlled and
 		// needs the current address text to geocode it.
 		//
