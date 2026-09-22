@@ -328,7 +328,12 @@ describe('SaveChanges', () => {
 		await userEvent.click(screen.getByRole('button', { name: 'touch a' }))
 		await userEvent.click(save())
 
-		expect(screen.getByRole('status')).toHaveTextContent('Changes saved.')
+		// `findBy`, not `getBy`, because the click is not what produces the confirmation: the button's
+		// handler fires `press()` without awaiting it, so `await userEvent.click` returns once the press
+		// has *started*. The toast appears one state update later, after `saveAll()` settles. Reading the
+		// DOM synchronously here passed on an idle machine and lost the race on a loaded one, blocking a
+		// push with a coverage failure that had nothing wrong with it.
+		expect(await screen.findByRole('status')).toHaveTextContent('Changes saved.')
 		expect(save()).toBeDisabled()
 	})
 
