@@ -437,6 +437,49 @@ describe('TblShopOwners', () => {
 		})
 	})
 
+	/*
+	 * ⚠️ B26. `searchInput`/`debouncedSearch` used to be seeded from `query.search` only once, at mount.
+	 * Back restores the URL to what it was before the admin typed, but the stale local `debouncedSearch`
+	 * still held what they typed — so the push effect saw the two disagree and immediately re-pushed the
+	 * old term as a *third* history entry, undoing the Back the admin had just done and leaving Forward
+	 * pointed at nothing useful.
+	 */
+	it('does not undo a Back navigation by re-pushing the search the admin had typed', async () => {
+		stubGraphQL({ ShopOwnersActiveTbl: page([rivers]) })
+		const { router } = await renderRoute(`${MANAGE}?search=rivers`)
+
+		await userEvent.type(screen.getByLabelText('Search shopOwner'), 'x')
+		await waitFor(
+			() => {
+				expect(router.state.location.search).toMatchObject({ search: 'riversx' })
+			},
+			// Generous on purpose: this waits out a real `SEARCH_DEBOUNCE_MS` timer, and the default 1000ms
+			// budget leaves little room on a machine running the rest of the suite in parallel.
+			{ timeout: 5000 }
+		)
+		expect(router.history.length).toBe(2)
+
+		router.history.back()
+
+		await waitFor(
+			() => {
+				expect(router.state.location.search).toMatchObject({ search: 'rivers' })
+			},
+			{ timeout: 5000 }
+		)
+		// The box's own state and the router's are two different updates — asserted separately, and both
+		// through `waitFor`, so this does not race which of the two settles first.
+		await waitFor(
+			() => {
+				expect(screen.getByLabelText('Search shopOwner')).toHaveValue('rivers')
+			},
+			{ timeout: 5000 }
+		)
+		// The URL settled on what Back asked for and stayed there — no third entry pushed behind it.
+		expect(router.history.length).toBe(2)
+		expect(router.state.location.search).toMatchObject({ search: 'rivers' })
+	})
+
 	it('sorts by the column that was clicked, ascending', async () => {
 		stubGraphQL({ ShopOwnersActiveTbl: page([rivers]) })
 		const { router } = await renderRoute(MANAGE)
