@@ -323,4 +323,28 @@ describe('createGraphQLClient', () => {
 		expect(onSessionLost).not.toHaveBeenCalled()
 		expect(getAccessToken()).toBe('tok-1')
 	})
+
+	/*
+	 * ⚠️ B28. The same policy, but for the refresh itself rather than for the query that triggered it —
+	 * a transport failure never reaches the server, so there is nothing here that says the session is
+	 * over. The old code broke the retry loop on *any* non-race failure, transport included, and ended
+	 * the session unconditionally; a dropped connection mid-reload then forced a logout an admin who was
+	 * still signed in never asked for.
+	 */
+	it('keeps the session when the refresh itself cannot reach the server', async () => {
+		stubGraphQL({
+			InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+			Refresh: { networkError: 'offline' }
+		})
+		setAccessToken('tok-1')
+
+		const { client, onSessionLost } = setup()
+		const result = await info(client)
+
+		expect(onSessionLost).not.toHaveBeenCalled()
+		expect(getAccessToken()).toBe('tok-1')
+		// The queued operation still gets an answer — it retries with the token it already had, which the
+		// stub answers with the same 498 it started with, since nothing minted a new one.
+		expect(result.error).toBeDefined()
+	})
 })

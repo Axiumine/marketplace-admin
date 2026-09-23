@@ -2,7 +2,7 @@ import { cacheExchange, Client, fetchExchange, mapExchange } from '@urql/core'
 import { authExchange } from '@urql/exchange-auth'
 
 import { CTX_ADMIN_AUTHORIZATION, ENDPOINT, requiresAuth } from '@/api/endpoints'
-import { isAuthExpired, isRefreshRaceRetry, isSessionGone } from '@/api/errors'
+import { isAuthExpired, isRefreshRaceRetry, isSessionGone, statusOf } from '@/api/errors'
 import { RefreshDocument } from '@/api/operations/adminAuthorization/refresh'
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/tokenStore'
 
@@ -104,6 +104,18 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 							setAccessToken(refresh.accessToken)
 							return
 						}
+
+						/*
+						 * ⚠️ A bare transport failure — offline, DNS, a dropped connection mid-reload — never
+						 * reached the server, so there is nothing here to say the session is over. The same
+						 * policy `mapExchange` applies to every other operation ("a dropped connection is not a
+						 * dead session"), mirrored here through the same status-based check: `statusOf` answers
+						 * `undefined` only when the error carries no response at all, never for a real refusal —
+						 * a 401, a 409 race, a 498. Leave the token as it is and let the queued operation this
+						 * refresh was for surface its own failure; a later operation gets its own chance to
+						 * refresh once the connection is back.
+						 */
+						if (result.error !== undefined && statusOf(result.error) === undefined) return
 
 						// Every other failure is terminal: a second attempt would present the same cookie to a
 						// backend that has already refused it.
