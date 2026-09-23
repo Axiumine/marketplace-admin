@@ -112,7 +112,7 @@ export const ChangePasswordForm = () => {
 			{succeeded ? <Toast tone="success">Password updated</Toast> : null}
 
 			<Button type="submit" loading={state.fetching}>
-				Cambia password
+				Change password
 			</Button>
 		</form>
 	)
