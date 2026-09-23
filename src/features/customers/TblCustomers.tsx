@@ -315,8 +315,15 @@ export const TblCustomers = ({
 	 * Takes the row rather than reading `pending` off the closure, so there is no `pending === null` guard
 	 * to write: the only caller is inside the branch that renders the form, where the type is already
 	 * narrowed. A guard for a state the button cannot be clicked in is a line no test can reach.
+	 *
+	 * ⚠️ **Awaited, and `closeForm` gated on the answer.** The box holds up to `MAX_DISABLED_REASON`
+	 * characters an admin just typed; closing the form unconditionally — the way a fire-and-forget
+	 * `void executeStatus(...)` invites — throws that text away the instant the click handler returns,
+	 * before the mutation has said anything at all. A refusal (a duplicate reason validator, a dropped
+	 * connection) would then leave nothing to recover it from but the generic error toast. Only a write
+	 * that actually landed earns the reset.
 	 */
-	const submitSuspension = (target: { _id: string; email: string }) => {
+	const submitSuspension = async (target: { _id: string; email: string }): Promise<void> => {
 		const problem = reasonProblem(reason)
 
 		if (problem !== undefined) {
@@ -325,8 +332,9 @@ export const TblCustomers = ({
 		}
 
 		setIntent({ email: target.email, disabled: true })
-		void executeStatus({ _id: target._id, disabled: true, disabledReason: reason.trim() }, CTX_STATUS)
-		closeForm()
+		const result = await executeStatus({ _id: target._id, disabled: true, disabledReason: reason.trim() }, CTX_STATUS)
+
+		if (result.data?.userUpdateStatus === true) closeForm()
 	}
 
 	// The message belongs to a write that landed. `intent` outlives its own mutation — it is still set
@@ -471,7 +479,7 @@ export const TblCustomers = ({
 							variant="danger"
 							loading={statusResult.fetching}
 							onClick={() => {
-								submitSuspension(pending)
+								void submitSuspension(pending)
 							}}
 						>
 							Suspend

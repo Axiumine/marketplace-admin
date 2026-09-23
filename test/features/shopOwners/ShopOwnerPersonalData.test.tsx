@@ -274,18 +274,13 @@ describe('ShopOwnerPersonalData', () => {
 		expect(rowValue('Preferences', 'Onboarding step')).toBe('3')
 	})
 
-	// A reset hash is secret-adjacent: enough of it to correlate with a log line, not enough to replay
-	// the reset link it belongs to.
-	it('truncates the recovery hash', async () => {
-		stubGraphQL(
-			detail({
-				resetPwd: { resetDateReq: '2026-05-01T07:00:00.000Z', resetHash: 'abcdefghijklmnopqrstuvwxyz0123456789' }
-			})
-		)
+	// `resetHash` is the live, unencrypted reset token — deliberately absent from the type, never sent
+	// or rendered. Only the non-secret `resetDateReq` reaches this screen.
+	it('shows the reset request date', async () => {
+		stubGraphQL(detail({ resetPwd: { resetDateReq: '2026-05-01T07:00:00.000Z' } }))
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mark')
-		expect(rowValue('Password', 'Recovery hash')).toBe('abcdefghijklmnopqrst...')
 		expect(rowValue('Password', 'Reset request')).toBe('1 May 2026 at 07:00:00')
 	})
 
@@ -312,7 +307,6 @@ describe('ShopOwnerPersonalData', () => {
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mark')
-		expect(rowValue('Password', 'Recovery hash')).toBe('---')
 		expect(rowValue('Password', 'Reset request')).toBe('---')
 	})
 
@@ -709,6 +703,40 @@ describe('ShopOwnerPersonalData — editing', () => {
 			'ShopOwnerUpdateStatus',
 			'ShopOwnerUpdatePreferences'
 		])
+	})
+
+	/*
+	 * ⚠️ The deadlock B10 exists to fix. `shopOwnerUpdate` answers 500 on a `$set` that matches the
+	 * document and modifies nothing — so once personalData has been written, sending it again is not
+	 * merely wasteful, it is a save the backend refuses. A `write()` that only clears a group's dirty
+	 * flag when *every* group in the same call succeeded would resend the byte-identical personalData
+	 * `$set` on every later attempt, forever, because the group that already succeeded never goes clean.
+	 */
+	it('does not resend a group that already succeeded once a later group is retried', async () => {
+		const stub = stubGraphQL({
+			...detail(),
+			ShopOwnerUpdate: { data: { shopOwnerUpdate: true } },
+			// The email write is refused once — a bare `false`, no error — and then goes through.
+			ShopOwnerUpdateEmail: [{ data: { shopOwnerUpdateEmail: false } }, { data: { shopOwnerUpdateEmail: true } }]
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		await open('First name')
+		write('First name', 'Marco')
+		await open('Login email')
+		write('Login email', 'new@rivers.test')
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdate', 'ShopOwnerUpdateEmail'])
+
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		// The personalData write is not in this second batch: it settled on the first attempt, and only
+		// the email group — the one that actually failed — is retried.
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdate', 'ShopOwnerUpdateEmail', 'ShopOwnerUpdateEmail'])
 	})
 
 	// Nothing is written until Save is pressed — a row left open with a typed value is not a write.
@@ -1774,6 +1802,31 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 			'ShopOwnerUpdatePreferences',
 			'ShopOwnerUpdateNote'
 		])
+	})
+
+	// The same deadlock as on the complete account's card, and the same fix: a group that already
+	// succeeded must not be resent just because a later group in the same save failed.
+	it('does not resend a group that already succeeded once a later group is retried', async () => {
+		const stub = stubGraphQL({
+			...detailPending(),
+			ShopOwnerUpdateEmail: { data: { shopOwnerUpdateEmail: true } },
+			ShopOwnerUpdateStatus: [{ data: { shopOwnerUpdateStatus: false } }, { data: { shopOwnerUpdateStatus: true } }]
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Login email')
+		write('Login email', 'seller@rivers.test')
+		await suspend('Registered with a stolen company number.')
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus'])
+
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus', 'ShopOwnerUpdateStatus'])
 	})
 
 	// The panel's own schema still has rules, and the login email is the field that carries them: it is

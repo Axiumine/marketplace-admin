@@ -858,20 +858,6 @@ exports[`ShopOwnerDetailPage — rendering > renders 1`] = `
               ---
             </span>
           </div>
-          <div
-            class="flex justify-between gap-4 border-b border-palette-bg1 py-1 text-sm last:border-b-0"
-          >
-            <span
-              class="text-tip"
-            >
-              Recovery hash
-            </span>
-            <span
-              class="text-right"
-            >
-              ---
-            </span>
-          </div>
         </section>
       </div>
     </section>

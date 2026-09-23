@@ -892,12 +892,13 @@ type GraphQLShopOwnerContacts {
 }
 
 """
-Present only while a password reset is pending. The migration declares both members required under a
-strict validator, so the pair is written and cleared as a whole — never one without the other.
+Present only while a password reset is pending. `resetHash` is deliberately absent, not merely
+unselected: it is the live, unencrypted password-reset bearer token, and exposing it here would let any
+admin read a shop owner's live reset token and take the account over with no audit trail. `resetDateReq`
+alone is enough to answer "is a reset pending, and since when".
 """
 type GraphQLResetPwd {
 	resetDateReq: DateTime!
-	resetHash: String!
 }
 
 """

@@ -29,16 +29,7 @@ import { Toast } from '@/components/ui/Toast'
 import { ToastValidation } from '@/components/ui/ToastValidation'
 import { addressError, composedAddress, mapPoint } from '@/lib/address'
 import { writeAddress } from '@/lib/addressForm'
-import {
-	emptyInNull,
-	formatAddress,
-	formatDate,
-	handleNull,
-	handleNullBoolYN,
-	handleNullDate,
-	handleNullHash,
-	toDateInput
-} from '@/lib/format'
+import { emptyInNull, formatAddress, formatDate, handleNull, handleNullBoolYN, handleNullDate, toDateInput } from '@/lib/format'
 import { isAdult, maxBirthDate, MIN_AGE } from '@/lib/isAdult'
 import type { FoundAddress } from '@/lib/nominatim'
 
@@ -367,6 +358,7 @@ const FormPersonalData = ({
 		setValue,
 		trigger,
 		reset,
+		resetField,
 		formState: { errors, dirtyFields, isDirty }
 	} = useForm<DetailValues>({
 		resolver: zodResolver(shopOwnerDetailSchema),
@@ -409,6 +401,21 @@ const FormPersonalData = ({
 	 * "MA". Sending the raw form state would write them past a validator that had just approved the
 	 * cleaned-up pair.
 	 */
+	/**
+	 * Marks one group's fields clean without touching any other group's value or dirty state.
+	 *
+	 * ⚠️ Not `reset(values)` on a group-by-group basis: `reset` replaces every field's baseline at once,
+	 * so calling it here for the group that just succeeded would also quietly clean up a group that has
+	 * not been sent yet (or that just failed) in the same `write()` — clearing a dirty flag `write` never
+	 * asked the server about. `resetField` moves only the named fields' baseline to the value that was
+	 * just written, which is what makes each group's success independent of the others'.
+	 */
+	const settle = (values: DetailValues, fields: readonly (keyof DetailValues)[]) => {
+		fields.forEach((field) => {
+			resetField(field, { keepDirty: false, defaultValue: values[field] })
+		})
+	}
+
 	const write = async (values: DetailValues): Promise<boolean> => {
 		if (dirty(FIELDS_PERSONAL_DATA)) {
 			const result = await runPersonalData(
@@ -440,12 +447,20 @@ const FormPersonalData = ({
 			)
 
 			if (result.data?.shopOwnerUpdate !== true) return failed(result.error)
+
+			// ⚠️ Settled the moment this write is confirmed, not at the bottom of `write`. A later group
+			// (the email, the status, the preferences, the note) can still refuse — and `shopOwnerUpdate`
+			// answers 500 on a `$set` that matches the document and modifies nothing, which is exactly the
+			// byte-identical retry an unsettled dirty flag would send on the next Save.
+			settle(values, FIELDS_PERSONAL_DATA)
 		}
 
 		if (dirtyFields.emailLogin === true) {
 			const result = await runEmail({ _id: shopOwner._id, email: values.emailLogin }, CTX_SAVE_SHOP_OWNER)
 
 			if (result.data?.shopOwnerUpdateEmail !== true) return failed(result.error)
+
+			settle(values, ['emailLogin'])
 		}
 
 		if (dirty(FIELDS_STATUS)) {
@@ -465,6 +480,8 @@ const FormPersonalData = ({
 			)
 
 			if (result.data?.shopOwnerUpdateStatus !== true) return failed(result.error)
+
+			settle(values, FIELDS_STATUS)
 		}
 
 		if (dirty(FIELDS_PREFERENCES)) {
@@ -479,6 +496,8 @@ const FormPersonalData = ({
 			)
 
 			if (result.data?.shopOwnerUpdatePreferences !== true) return failed(result.error)
+
+			settle(values, FIELDS_PREFERENCES)
 		}
 
 		// `values.notes` and not `emptyInNull`: this mutation takes `String!`, and the empty string is the
@@ -487,6 +506,8 @@ const FormPersonalData = ({
 			const result = await runNote({ _id: shopOwner._id, notes: values.notes }, CTX_SAVE_SHOP_OWNER)
 
 			if (result.data?.shopOwnerUpdateNote !== true) return failed(result.error)
+
+			settle(values, ['notes'])
 		}
 
 		// The written values become the new baseline, so nothing is dirty any more and the Save button
@@ -731,7 +752,6 @@ const FormPersonalData = ({
 
 					<Infobox title="Password">
 						<InfoRow label="Reset request" value={handleNullDate(resetPwd?.resetDateReq)} />
-						<InfoRow label="Recovery hash" value={handleNullHash(resetPwd?.resetHash)} />
 					</Infobox>
 				</div>
 			</section>
@@ -802,6 +822,7 @@ export const FormAccountPending = ({
 		control,
 		handleSubmit,
 		reset,
+		resetField,
 		formState: { errors, dirtyFields, isDirty }
 	} = useForm<PendingValues>({
 		resolver: zodResolver(shopOwnerPendingSchema),
@@ -825,11 +846,20 @@ export const FormAccountPending = ({
 		return false
 	}
 
+	/** See the identical helper on `FormPersonalData` — same reason, same shape, a different field set. */
+	const settle = (values: PendingValues, fields: readonly (keyof PendingValues)[]) => {
+		fields.forEach((field) => {
+			resetField(field, { keepDirty: false, defaultValue: values[field] })
+		})
+	}
+
 	const write = async (values: PendingValues): Promise<boolean> => {
 		if (dirtyFields.emailLogin === true) {
 			const result = await runEmail({ _id: shopOwner._id, email: values.emailLogin }, CTX_SAVE_SHOP_OWNER)
 
 			if (result.data?.shopOwnerUpdateEmail !== true) return failed(result.error)
+
+			settle(values, ['emailLogin'])
 		}
 
 		if (FIELDS_STATUS.some((field) => dirtyFields[field] === true)) {
@@ -849,6 +879,8 @@ export const FormAccountPending = ({
 			)
 
 			if (result.data?.shopOwnerUpdateStatus !== true) return failed(result.error)
+
+			settle(values, FIELDS_STATUS)
 		}
 
 		if (FIELDS_PENDING_PREFERENCES.some((field) => dirtyFields[field] === true)) {
@@ -863,12 +895,16 @@ export const FormAccountPending = ({
 			)
 
 			if (result.data?.shopOwnerUpdatePreferences !== true) return failed(result.error)
+
+			settle(values, FIELDS_PENDING_PREFERENCES)
 		}
 
 		if (dirtyFields.notes === true) {
 			const result = await runNote({ _id: shopOwner._id, notes: values.notes }, CTX_SAVE_SHOP_OWNER)
 
 			if (result.data?.shopOwnerUpdateNote !== true) return failed(result.error)
+
+			settle(values, ['notes'])
 		}
 
 		reset(values)
@@ -986,7 +1022,6 @@ export const FormAccountPending = ({
 
 					<Infobox title="Password">
 						<InfoRow label="Reset request" value={handleNullDate(resetPwd?.resetDateReq)} />
-						<InfoRow label="Recovery hash" value={handleNullHash(resetPwd?.resetHash)} />
 					</Infobox>
 				</div>
 			</section>

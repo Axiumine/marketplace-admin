@@ -18,7 +18,7 @@ const fillIn = async (current: string, newPwd: string, repeat: string) => {
 }
 
 const submit = async () => {
-	await userEvent.click(screen.getByRole('button', { name: 'Cambia password' }))
+	await userEvent.click(screen.getByRole('button', { name: 'Change password' }))
 }
 
 describe('SettingsPage', () => {

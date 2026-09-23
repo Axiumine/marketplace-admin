@@ -89,12 +89,6 @@ export const handleNull = (val: string | number | null | undefined): string => (
 export const handleNullDate = (val: string | null | undefined): string => (val == null ? NO_VALUE : formatDateTime(val))
 
 /**
- * A reset hash is a secret-adjacent value, so only its first 20 characters are shown. Enough to
- * correlate with a log line, not enough to replay a reset link.
- */
-export const handleNullHash = (val: string | null | undefined): string => (val == null ? NO_VALUE : `${val.substring(0, 20)}...`)
-
-/**
  * Null and false both render "No". The fields this formats are absent-or-true on the backend, so a
  * missing value means the same thing as an explicit `false`; showing the placeholder instead would
  * turn "not set" into something an admin reads as broken data.

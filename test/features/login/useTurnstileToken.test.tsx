@@ -101,4 +101,58 @@ describe('useTurnstileToken', () => {
 		expect(result.current.token).toBeNull()
 		expect(result.current.read()).toBeNull()
 	})
+
+	/*
+	 * ⚠️ B2. `resetKey` starts at 0 and is what a form passes as `<Turnstile key={resetKey} …>` — bumping
+	 * it is the only way to make React tear the widget down and remount it, which is the only way to make
+	 * Cloudflare mint a fresh token after one has already been spent on a failed submit.
+	 */
+	it('starts the reset key at zero', () => {
+		const { result } = renderHook(() => useTurnstileToken())
+
+		expect(result.current.resetKey).toBe(0)
+	})
+
+	it('bumps the reset key by exactly one per reset', () => {
+		const { result } = renderHook(() => useTurnstileToken())
+
+		act(() => {
+			result.current.reset()
+		})
+		expect(result.current.resetKey).toBe(1)
+
+		act(() => {
+			result.current.reset()
+		})
+		expect(result.current.resetKey).toBe(2)
+	})
+
+	// The whole point: the token a failed submit already spent must not be read again by the retry that
+	// follows it.
+	it('withdraws the token on reset', () => {
+		const { result } = renderHook(() => useTurnstileToken())
+
+		act(() => {
+			result.current.onToken('a-turnstile-token')
+		})
+		act(() => {
+			result.current.reset()
+		})
+
+		expect(result.current.token).toBeNull()
+		expect(result.current.read()).toBeNull()
+	})
+
+	it('keeps one identity for reset across renders, and across a reset itself', () => {
+		const { result, rerender } = renderHook(() => useTurnstileToken())
+		const first = result.current.reset
+
+		rerender()
+		expect(result.current.reset).toBe(first)
+
+		act(() => {
+			result.current.reset()
+		})
+		expect(result.current.reset).toBe(first)
+	})
 })

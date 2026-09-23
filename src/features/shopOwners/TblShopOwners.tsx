@@ -1,7 +1,7 @@
 import type { GraphQlShopOwnersTblSortField, GraphQlSortDirection } from '@gql/adminResource/graphql'
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper, flexRender, tableFeatures, useTable } from '@tanstack/react-table'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from 'urql'
 
 import { CTX_ADMIN_RESOURCE } from '@/api/endpoints'
@@ -161,12 +161,48 @@ export const TblShopOwners = ({
 	const [searchInput, setSearchInput] = useState(query.search)
 	const debouncedSearch = useDebouncedValue(searchInput, SEARCH_DEBOUNCE_MS)
 
-	// Pushing the debounced value up rather than querying on it directly keeps a single source of truth:
-	// the URL. Resetting to page 1 matters — a narrower search almost always has fewer pages than the
-	// one the admin is standing on, and page 7 of 2 renders empty.
+	/**
+	 * The search value the box and the URL last agreed on — moved by whichever side changes it, so the
+	 * two effects below can tell "the admin typed something new" apart from "the URL moved on its own"
+	 * (a Back/Forward navigation, a bookmark) without comparing a `debouncedSearch` that has not caught
+	 * up yet against a `query.search` that just did.
+	 */
+	const synced = useRef(query.search)
+
+	/*
+	 * Pushes the admin's own edit, once the debounce has settled — the single source of truth stays the
+	 * URL rather than this local state. Resetting to page 1 matters — a narrower search almost always
+	 * has fewer pages than the one the admin is standing on, and page 7 of 2 renders empty.
+	 *
+	 * ⚠️ **Declared before the sync effect below, and that order is load-bearing.** `onQueryChange` is a
+	 * fresh function every render the route re-executes for — including a Back/Forward navigation — so
+	 * this effect re-runs on exactly the renders where the sync effect is also about to move
+	 * `synced.current`. Running first, it still reads the value the two agreed on *before* that
+	 * happens. Reversed, it would read a `synced.current` the other effect had already moved to the new
+	 * `query.search`, find `debouncedSearch` — still whatever the admin had typed before the navigation
+	 * — disagreeing with it, and push the stale term right back: the same bug this pair exists to fix,
+	 * reached through the sync effect instead of around it.
+	 */
 	useEffect(() => {
-		if (debouncedSearch !== query.search) onQueryChange({ search: debouncedSearch, page: 1 })
-	}, [debouncedSearch, query.search, onQueryChange])
+		if (debouncedSearch === synced.current) return
+
+		synced.current = debouncedSearch
+		onQueryChange({ search: debouncedSearch, page: 1 })
+	}, [debouncedSearch, onQueryChange])
+
+	/*
+	 * Re-syncs the box — and, through it, the debounce — to a `query.search` that moved for a reason
+	 * that was not the effect above: a Back/Forward navigation, a bookmark, a link from elsewhere on the
+	 * page. Without this, `searchInput`/`debouncedSearch` stay at whatever the admin last typed, the
+	 * effect above sees that disagree with the new `query.search` and immediately re-pushes the old term
+	 * as a new history entry — silently undoing Back and polluting forward history.
+	 */
+	useEffect(() => {
+		if (query.search === synced.current) return
+
+		synced.current = query.search
+		setSearchInput(query.search)
+	}, [query.search])
 
 	const [result] = useQuery({
 		query: ShopOwnersActiveTblDocument,
