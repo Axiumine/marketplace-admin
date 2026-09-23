@@ -711,6 +711,40 @@ describe('ShopOwnerPersonalData — editing', () => {
 		])
 	})
 
+	/*
+	 * ⚠️ The deadlock B10 exists to fix. `shopOwnerUpdate` answers 500 on a `$set` that matches the
+	 * document and modifies nothing — so once personalData has been written, sending it again is not
+	 * merely wasteful, it is a save the backend refuses. A `write()` that only clears a group's dirty
+	 * flag when *every* group in the same call succeeded would resend the byte-identical personalData
+	 * `$set` on every later attempt, forever, because the group that already succeeded never goes clean.
+	 */
+	it('does not resend a group that already succeeded once a later group is retried', async () => {
+		const stub = stubGraphQL({
+			...detail(),
+			ShopOwnerUpdate: { data: { shopOwnerUpdate: true } },
+			// The email write is refused once — a bare `false`, no error — and then goes through.
+			ShopOwnerUpdateEmail: [{ data: { shopOwnerUpdateEmail: false } }, { data: { shopOwnerUpdateEmail: true } }]
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		await open('First name')
+		write('First name', 'Marco')
+		await open('Login email')
+		write('Login email', 'new@rivers.test')
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdate', 'ShopOwnerUpdateEmail'])
+
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		// The personalData write is not in this second batch: it settled on the first attempt, and only
+		// the email group — the one that actually failed — is retried.
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdate', 'ShopOwnerUpdateEmail', 'ShopOwnerUpdateEmail'])
+	})
+
 	// Nothing is written until Save is pressed — a row left open with a typed value is not a write.
 	it('writes nothing until Save is pressed', async () => {
 		const stub = stubGraphQL(detail())
@@ -1774,6 +1808,31 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 			'ShopOwnerUpdatePreferences',
 			'ShopOwnerUpdateNote'
 		])
+	})
+
+	// The same deadlock as on the complete account's card, and the same fix: a group that already
+	// succeeded must not be resent just because a later group in the same save failed.
+	it('does not resend a group that already succeeded once a later group is retried', async () => {
+		const stub = stubGraphQL({
+			...detailPending(),
+			ShopOwnerUpdateEmail: { data: { shopOwnerUpdateEmail: true } },
+			ShopOwnerUpdateStatus: [{ data: { shopOwnerUpdateStatus: false } }, { data: { shopOwnerUpdateStatus: true } }]
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('new.seller@example.com')
+		await open('Login email')
+		write('Login email', 'seller@rivers.test')
+		await suspend('Registered with a stolen company number.')
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus'])
+
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus', 'ShopOwnerUpdateStatus'])
 	})
 
 	// The panel's own schema still has rules, and the login email is the field that carries them: it is
