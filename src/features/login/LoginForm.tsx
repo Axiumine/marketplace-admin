@@ -73,7 +73,15 @@ export const LoginForm = () => {
 		if (accessToken !== undefined && accessToken !== '') {
 			setAccessToken(accessToken)
 			await navigate({ to: '/loading' })
+			return
 		}
+
+		// The token this attempt sent — right or wrong credentials — is already spent at Cloudflare by the
+		// time the server even looks at the password: `guardPublicLogin` verifies it before anything else
+		// runs. Left in place, every retry would be refused as a duplicate token regardless of what the
+		// admin typed. `resetKey` remounts `<Turnstile>` below, which is the only way to make Cloudflare
+		// mint a new one.
+		turnstile.reset()
 	})
 
 	// An empty token with no error is the one case the backend cannot express: the mutation is typed
@@ -119,7 +127,7 @@ export const LoginForm = () => {
 				Remember me on this device
 			</label>
 
-			<Turnstile onToken={turnstile.onToken} />
+			<Turnstile key={turnstile.resetKey} onToken={turnstile.onToken} />
 
 			{loginState.error === undefined ? null : <Toast tone="error">{messageOf(loginState.error)}</Toast>}
 			{failed ? <Toast tone="error">Invalid credentials</Toast> : null}
