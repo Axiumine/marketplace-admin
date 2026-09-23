@@ -4,6 +4,7 @@ import { authExchange } from '@urql/exchange-auth'
 import { CTX_ADMIN_AUTHORIZATION, ENDPOINT, requiresAuth } from '@/api/endpoints'
 import { isAuthExpired, isRefreshRaceRetry, isSessionGone, statusOf } from '@/api/errors'
 import { RefreshDocument } from '@/api/operations/adminAuthorization/refresh'
+import { createRefreshBreaker } from '@/api/refreshBreaker'
 import { clearAccessToken, getAccessToken, setAccessToken } from '@/api/tokenStore'
 
 /**
@@ -19,6 +20,9 @@ export interface CreateGraphQLClientOptions {
 	 * API layer stays independent of TanStack Router, and so a test can observe it directly.
 	 */
 	onSessionLost: () => void
+
+	/** The refresh breaker's clock. Defaults to `Date.now`; a test passes its own instead. */
+	now?: () => number
 }
 
 /**
@@ -34,8 +38,20 @@ export interface CreateGraphQLClientOptions {
  * `fetchOptions.credentials: 'include'` is what carries the refresh cookie. It works because the app
  * and the services share one origin; see the comment in vite.config.ts.
  */
-export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOptions): Client =>
-	new Client({
+export const createGraphQLClient = ({ onSessionLost, now = Date.now }: CreateGraphQLClientOptions): Client => {
+	/*
+	 * One breaker per `Client`, not a module-level one: `authExchange`'s initializer runs once per
+	 * client, so this closure already gives every browser tab, and every urql client this repo ever
+	 * constructs, its own cooldown — never one client's outage silencing another's retries.
+	 */
+	const refreshBreaker = createRefreshBreaker(now)
+
+	// No `typeof window` guard: this bundle is a Vite SPA with no SSR entry point, so `window` always
+	// exists by the time a `Client` is constructed — an untestable branch this repo's 100%-branch gate
+	// does not allow. A repo built for SSR (ADR-019) needs the guard; this one does not.
+	window.addEventListener('online', () => refreshBreaker.reset())
+
+	return new Client({
 		url: ENDPOINT.adminResource,
 		fetchOptions: { credentials: 'include' },
 		/**
@@ -96,11 +112,22 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 				 * race any more, and a logout is the honest answer.
 				 */
 				async refreshAuth() {
+					/*
+					 * ⚠️ B28 fixed the single dropped connection; this is the sustained outage it left open.
+					 * With no memory of past failures, every operation that hits an expired token calls this
+					 * function again, and each one dials straight back out — one refresh attempt per
+					 * operation, no backoff between them. While the breaker is open, skip the network call
+					 * entirely and keep the session exactly as B28 already does for a lone transport failure:
+					 * the operation that triggered this call gets its own failure back, as a network error.
+					 */
+					if (refreshBreaker.isOpen()) return
+
 					for (let attempt = 0; attempt <= REFRESH_RACE_RETRIES; attempt++) {
 						const result = await utils.mutate(RefreshDocument, {}, CTX_ADMIN_AUTHORIZATION)
 						const refresh = result.data?.refresh
 
 						if (refresh !== undefined && refresh.status && refresh.accessToken !== '') {
+							refreshBreaker.reset()
 							setAccessToken(refresh.accessToken)
 							return
 						}
@@ -113,9 +140,13 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 						 * `undefined` only when the error carries no response at all, never for a real refusal —
 						 * a 401, a 409 race, a 498. Leave the token as it is and let the queued operation this
 						 * refresh was for surface its own failure; a later operation gets its own chance to
-						 * refresh once the connection is back.
+						 * refresh once the connection is back — or, during a run of these, once the breaker's
+						 * cooldown elapses.
 						 */
-						if (result.error !== undefined && statusOf(result.error) === undefined) return
+						if (result.error !== undefined && statusOf(result.error) === undefined) {
+							refreshBreaker.recordTransportFailure()
+							return
+						}
 
 						// Every other failure is terminal: a second attempt would present the same cookie to a
 						// backend that has already refused it.
@@ -151,3 +182,4 @@ export const createGraphQLClient = ({ onSessionLost }: CreateGraphQLClientOption
 			fetchExchange
 		]
 	})
+}

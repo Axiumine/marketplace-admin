@@ -21,9 +21,9 @@ const raceLost = {
 	status: 409
 }
 
-const setup = () => {
+const setup = (now?: () => number) => {
 	const onSessionLost = vi.fn()
-	return { client: createGraphQLClient({ onSessionLost }), onSessionLost }
+	return { client: createGraphQLClient(now === undefined ? { onSessionLost } : { onSessionLost, now }), onSessionLost }
 }
 
 const info = (client: ReturnType<typeof setup>['client']) =>
@@ -346,5 +346,134 @@ describe('createGraphQLClient', () => {
 		// The queued operation still gets an answer — it retries with the token it already had, which the
 		// stub answers with the same 498 it started with, since nothing minted a new one.
 		expect(result.error).toBeDefined()
+	})
+
+	/*
+	 * The backoff itself. During a sustained outage every operation that hits a 401/auth error used to
+	 * fire its own refresh attempt with nothing between them; these cover the cooldown that now sits
+	 * between one transport failure and the next attempt.
+	 */
+	describe('refresh backoff', () => {
+		it('opens a cooldown after a transport failure and makes no network call while it is open', async () => {
+			let time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: { networkError: 'offline' }
+			})
+			setAccessToken('tok-1')
+
+			const { client, onSessionLost } = setup(() => time)
+
+			// First operation: the transport failure opens a 1s cooldown and leaves the session as is.
+			await info(client)
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(1)
+			expect(onSessionLost).not.toHaveBeenCalled()
+			expect(getAccessToken()).toBe('tok-1')
+
+			// A second, later operation still inside the window: refreshAuth must not touch the network at
+			// all — not one more call to Refresh — even though this operation's own 498 still asks for one.
+			time += 999
+			const result = await info(client)
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(1)
+			expect(result.error).toBeDefined()
+			expect(onSessionLost).not.toHaveBeenCalled()
+		})
+
+		it('calls Refresh again once the cooldown has elapsed', async () => {
+			let time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: [{ networkError: 'offline' }, refreshed('tok-2')]
+			})
+			setAccessToken('tok-1')
+
+			const { client } = setup(() => time)
+
+			await info(client) // opens the 1s cooldown
+			time += 1_000 // the window is `now() < openUntil`, so exactly the boundary already reads as closed
+			await info(client)
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(2)
+			expect(getAccessToken()).toBe('tok-2')
+		})
+
+		it('resets the cooldown to 1s after a successful refresh, instead of continuing the backoff', async () => {
+			let time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: [{ networkError: 'offline' }, refreshed('tok-2'), { networkError: 'offline' }]
+			})
+			setAccessToken('tok-1')
+
+			const { client } = setup(() => time)
+
+			await info(client) // 1st transport failure: opens a 1s cooldown
+			time += 1_000
+			await info(client) // cooldown elapsed: Refresh succeeds and resets the breaker
+			expect(getAccessToken()).toBe('tok-2')
+
+			await info(client) // 2nd transport failure, the first one since the reset: reopens at 1s, not 2s
+
+			// If the reset above had not happened, this run would be at n=2 and would still be inside a 2s
+			// window here; only a window that reopened at 1s has already closed by this point.
+			time += 1_000
+			await info(client)
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(4)
+		})
+
+		it("resets the cooldown on the browser's online event", async () => {
+			const time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: [{ networkError: 'offline' }, refreshed('tok-2')]
+			})
+			setAccessToken('tok-1')
+
+			const { client } = setup(() => time)
+
+			await info(client) // opens the cooldown; `time` never advances past it on its own
+			window.dispatchEvent(new Event('online'))
+			await info(client) // same instant: only the reset, not elapsed time, lets this one call Refresh
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(2)
+			expect(getAccessToken()).toBe('tok-2')
+		})
+
+		it('does not open a cooldown when the refresh reports terminal failure', async () => {
+			const time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: { data: { refresh: { status: false, accessToken: '' } } }
+			})
+			setAccessToken('tok-1')
+
+			const { client, onSessionLost } = setup(() => time)
+
+			await info(client) // terminal: ends the session, but must not touch the breaker
+			await info(client) // same instant — a cooldown here would be a transport failure that never happened
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(2)
+			expect(onSessionLost).toHaveBeenCalledTimes(2)
+		})
+
+		it('does not open a cooldown for a lost refresh race', async () => {
+			const time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: [raceLost, refreshed('tok-2'), refreshed('tok-3')]
+			})
+			setAccessToken('tok-1')
+
+			const { client } = setup(() => time)
+
+			await info(client) // wins the race on retry — no transport failure anywhere in this call
+			expect(getAccessToken()).toBe('tok-2')
+
+			await info(client) // same instant: a cooldown here would gate this second refresh instead of calling it
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(3)
+			expect(getAccessToken()).toBe('tok-3')
+		})
 	})
 })
