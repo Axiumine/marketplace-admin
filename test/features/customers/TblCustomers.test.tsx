@@ -705,6 +705,29 @@ describe('TblCustomers', () => {
 		expect(screen.queryByText(outcomeMessage('ada.stone@example.com', true))).not.toBeInTheDocument()
 	})
 
+	/*
+	 * ⚠️ The bug this guards against: closing the form unconditionally throws away up to
+	 * `MAX_DISABLED_REASON` characters the admin just typed, the instant the click handler returns —
+	 * before the mutation has said anything. A refusal must leave the form open with the reason still in
+	 * the box, not just a generic toast and a blank page to retype into.
+	 */
+	it('keeps the form open with the reason intact when the write is refused', async () => {
+		stubGraphQL({
+			...ABOVE,
+			UsersActiveTbl: page([customer()]),
+			UserUpdateStatus: { errors: [graphQLError('Oops', 'user not found', 404)], status: 404 }
+		})
+		await renderRoute(CUSTOMERS)
+
+		const form = await openSuspendForm('ada.stone@example.com')
+		await userEvent.type(within(form).getByLabelText('Reason'), 'Fraud')
+		await submitForm(form)
+
+		await screen.findByRole('alert')
+		expect(screen.getByRole('group', { name: 'Suspend ada.stone@example.com' })).toBeInTheDocument()
+		expect(screen.getByLabelText('Reason')).toHaveValue('Fraud')
+	})
+
 	/**
 	 * Asserted on the **Active** filter, deliberately: the column reads the row's own flag rather than
 	 * inferring the state from the URL, so a closed account arriving on a cached page reads as closed
