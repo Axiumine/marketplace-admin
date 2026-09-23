@@ -112,21 +112,6 @@ describe('handleNullDate', () => {
 	})
 })
 
-describe('handleNullHash', () => {
-	it('renders NO_VALUE for null and for undefined', () => {
-		expect(format.handleNullHash(null)).toBe(format.NO_VALUE)
-		expect(format.handleNullHash(undefined)).toBe(format.NO_VALUE)
-	})
-
-	it('truncates a reset hash to its first 20 characters so it cannot be replayed', () => {
-		expect(format.handleNullHash('0123456789abcdefghijKLMNOPQRSTUV')).toBe('0123456789abcdefghij...')
-	})
-
-	it('does not pad a hash shorter than the cut', () => {
-		expect(format.handleNullHash('short')).toBe('short...')
-	})
-})
-
 describe('handleNullBoolYN', () => {
 	it('renders only `true` as Yes', () => {
 		expect(format.handleNullBoolYN(true)).toBe('Yes')

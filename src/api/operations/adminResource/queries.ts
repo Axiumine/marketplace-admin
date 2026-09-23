@@ -165,7 +165,6 @@ export const ShopOwnerByIdDocument = graphql(`
 			}
 			resetPwd {
 				resetDateReq
-				resetHash
 			}
 		}
 	}

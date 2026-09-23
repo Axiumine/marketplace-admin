@@ -274,18 +274,13 @@ describe('ShopOwnerPersonalData', () => {
 		expect(rowValue('Preferences', 'Onboarding step')).toBe('3')
 	})
 
-	// A reset hash is secret-adjacent: enough of it to correlate with a log line, not enough to replay
-	// the reset link it belongs to.
-	it('truncates the recovery hash', async () => {
-		stubGraphQL(
-			detail({
-				resetPwd: { resetDateReq: '2026-05-01T07:00:00.000Z', resetHash: 'abcdefghijklmnopqrstuvwxyz0123456789' }
-			})
-		)
+	// `resetHash` is the live, unencrypted reset token — deliberately absent from the type, never sent
+	// or rendered. Only the non-secret `resetDateReq` reaches this screen.
+	it('shows the reset request date', async () => {
+		stubGraphQL(detail({ resetPwd: { resetDateReq: '2026-05-01T07:00:00.000Z' } }))
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mark')
-		expect(rowValue('Password', 'Recovery hash')).toBe('abcdefghijklmnopqrst...')
 		expect(rowValue('Password', 'Reset request')).toBe('1 May 2026 at 07:00:00')
 	})
 
@@ -312,7 +307,6 @@ describe('ShopOwnerPersonalData', () => {
 		await renderRoute(DETAIL)
 
 		await screen.findByText('Mark')
-		expect(rowValue('Password', 'Recovery hash')).toBe('---')
 		expect(rowValue('Password', 'Reset request')).toBe('---')
 	})
 

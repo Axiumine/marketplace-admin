@@ -29,16 +29,7 @@ import { Toast } from '@/components/ui/Toast'
 import { ToastValidation } from '@/components/ui/ToastValidation'
 import { addressError, composedAddress, mapPoint } from '@/lib/address'
 import { writeAddress } from '@/lib/addressForm'
-import {
-	emptyInNull,
-	formatAddress,
-	formatDate,
-	handleNull,
-	handleNullBoolYN,
-	handleNullDate,
-	handleNullHash,
-	toDateInput
-} from '@/lib/format'
+import { emptyInNull, formatAddress, formatDate, handleNull, handleNullBoolYN, handleNullDate, toDateInput } from '@/lib/format'
 import { isAdult, maxBirthDate, MIN_AGE } from '@/lib/isAdult'
 import type { FoundAddress } from '@/lib/nominatim'
 
@@ -761,7 +752,6 @@ const FormPersonalData = ({
 
 					<Infobox title="Password">
 						<InfoRow label="Reset request" value={handleNullDate(resetPwd?.resetDateReq)} />
-						<InfoRow label="Recovery hash" value={handleNullHash(resetPwd?.resetHash)} />
 					</Infobox>
 				</div>
 			</section>
@@ -1032,7 +1022,6 @@ export const FormAccountPending = ({
 
 					<Infobox title="Password">
 						<InfoRow label="Reset request" value={handleNullDate(resetPwd?.resetDateReq)} />
-						<InfoRow label="Recovery hash" value={handleNullHash(resetPwd?.resetHash)} />
 					</Infobox>
 				</div>
 			</section>
