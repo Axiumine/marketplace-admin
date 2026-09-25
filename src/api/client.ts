@@ -23,6 +23,14 @@ export interface CreateGraphQLClientOptions {
 
 	/** The refresh breaker's clock. Defaults to `Date.now`; a test passes its own instead. */
 	now?: () => number
+
+	/**
+	 * Tears down the client's `online` listener when aborted. Production callers pass nothing: the
+	 * client lives as long as the page, and the listener should too. A test that builds a client per
+	 * test passes a per-test controller's signal and aborts it in teardown, or the shared jsdom
+	 * `window` accumulates one listener per client the suite ever constructs.
+	 */
+	signal?: AbortSignal
 }
 
 /**
@@ -38,7 +46,7 @@ export interface CreateGraphQLClientOptions {
  * `fetchOptions.credentials: 'include'` is what carries the refresh cookie. It works because the app
  * and the services share one origin; see the comment in vite.config.ts.
  */
-export const createGraphQLClient = ({ onSessionLost, now = Date.now }: CreateGraphQLClientOptions): Client => {
+export const createGraphQLClient = ({ onSessionLost, now = Date.now, signal }: CreateGraphQLClientOptions): Client => {
 	/*
 	 * One breaker per `Client`, not a module-level one: `authExchange`'s initializer runs once per
 	 * client, so this closure already gives every browser tab, and every urql client this repo ever
@@ -49,7 +57,19 @@ export const createGraphQLClient = ({ onSessionLost, now = Date.now }: CreateGra
 	// No `typeof window` guard: this bundle is a Vite SPA with no SSR entry point, so `window` always
 	// exists by the time a `Client` is constructed — an untestable branch this repo's 100%-branch gate
 	// does not allow. A repo built for SSR (ADR-019) needs the guard; this one does not.
-	window.addEventListener('online', () => refreshBreaker.reset())
+	//
+	// The `signal.aborted` guard is explicit rather than left to `addEventListener` itself: per spec an
+	// already-aborted signal is supposed to register nothing on its own, but nothing here depends on
+	// that — an aborted signal never needs a listener it would just remove again, so this is the same
+	// outcome either way. Omitting the option entirely when there is no `signal` is what
+	// `exactOptionalPropertyTypes` demands — `AddEventListenerOptions['signal']` has no `undefined` in
+	// its type, so `{ signal }` does not typecheck when `signal` is absent. A per-test controller
+	// aborted in teardown stops the listener from outliving the client that registered it, instead of
+	// accumulating on the shared jsdom `window`; production passes nothing, so the client lives as long
+	// as the page, as before.
+	if (signal?.aborted !== true) {
+		window.addEventListener('online', () => refreshBreaker.reset(), signal === undefined ? undefined : { signal })
+	}
 
 	return new Client({
 		url: ENDPOINT.adminResource,

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createGraphQLClient } from '@/api/client'
 import { CTX_ADMIN_RESOURCE, CTX_PUBLIC_AUTHORIZATION, ENDPOINT } from '@/api/endpoints'
@@ -21,9 +21,16 @@ const raceLost = {
 	status: 409
 }
 
+// Every client built here gets its own controller, aborted once the test ends — this suite constructs
+// a `Client` per test, and without this its `online` listeners would accumulate on the shared jsdom
+// `window` for every test this file runs.
 const setup = (now?: () => number) => {
+	const controller = new AbortController()
+	afterEach(() => controller.abort())
+
 	const onSessionLost = vi.fn()
-	return { client: createGraphQLClient(now === undefined ? { onSessionLost } : { onSessionLost, now }), onSessionLost }
+	const options = now === undefined ? { onSessionLost } : { onSessionLost, now }
+	return { client: createGraphQLClient({ ...options, signal: controller.signal }), onSessionLost }
 }
 
 const info = (client: ReturnType<typeof setup>['client']) =>
@@ -438,6 +445,72 @@ describe('createGraphQLClient', () => {
 
 			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(2)
 			expect(getAccessToken()).toBe('tok-2')
+		})
+
+		// Same behaviour, but for a caller that passes no `signal` at all — production's shape, where the
+		// client lives as long as the page. Built without `setup`'s controller on purpose: there is nothing
+		// to abort, and that omission is exactly what this test exercises.
+		it('resets the cooldown on the online event when no signal is given', async () => {
+			const time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: [{ networkError: 'offline' }, refreshed('tok-2')]
+			})
+			setAccessToken('tok-1')
+
+			const client = createGraphQLClient({ onSessionLost: vi.fn(), now: () => time })
+
+			await info(client) // opens the cooldown
+			window.dispatchEvent(new Event('online'))
+			await info(client) // same instant: only the reset lets this one call Refresh
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(2)
+			expect(getAccessToken()).toBe('tok-2')
+		})
+
+		// The fix itself: once the caller aborts its signal, the listener this client registered is gone,
+		// and an `online` event reaching the shared jsdom `window` after that must not touch this client's
+		// breaker — exactly the leak a test helper that rebuilds a client per test would otherwise cause.
+		it('stops resetting the cooldown once its signal is aborted', async () => {
+			const time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: { networkError: 'offline' }
+			})
+			setAccessToken('tok-1')
+
+			const controller = new AbortController()
+			const client = createGraphQLClient({ onSessionLost: vi.fn(), now: () => time, signal: controller.signal })
+
+			await info(client) // opens the cooldown
+			controller.abort()
+			window.dispatchEvent(new Event('online')) // the listener is gone: this must not reset the breaker
+			const result = await info(client) // still inside the cooldown that opened above
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(1)
+			expect(result.error).toBeDefined()
+		})
+
+		// The other half of the fix: a signal aborted before the client is even built must register no
+		// listener in the first place, not register one and remove it a tick later.
+		it('registers no online listener when the signal is already aborted', async () => {
+			const time = 1_000_000
+			const stub = stubGraphQL({
+				InfoAdminAfterLogin: { errors: [graphQLError('Invalid token', undefined, 498)], status: 498 },
+				Refresh: { networkError: 'offline' }
+			})
+			setAccessToken('tok-1')
+
+			const controller = new AbortController()
+			controller.abort()
+			const client = createGraphQLClient({ onSessionLost: vi.fn(), now: () => time, signal: controller.signal })
+
+			await info(client) // opens the cooldown
+			window.dispatchEvent(new Event('online')) // no listener was ever added: this does nothing
+			const result = await info(client) // still inside the cooldown that opened above
+
+			expect(stub.calls.filter((call) => call.operationName === 'Refresh')).toHaveLength(1)
+			expect(result.error).toBeDefined()
 		})
 
 		it('does not open a cooldown when the refresh reports terminal failure', async () => {

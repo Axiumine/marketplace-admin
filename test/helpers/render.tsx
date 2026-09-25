@@ -4,7 +4,7 @@ import type { RenderResult } from '@testing-library/react'
 import { render, waitFor } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { Provider as UrqlProvider } from 'urql'
-import { vi } from 'vitest'
+import { afterEach, vi } from 'vitest'
 
 import { createGraphQLClient } from '@/api/client'
 import { setAccessToken } from '@/api/tokenStore'
@@ -27,10 +27,18 @@ export interface RenderOptions {
 
 const DEFAULTS: Required<RenderOptions> = { token: 'tok-1', session: ADMIN }
 
-/** A client wired to a spy, so a test can assert the session was dropped rather than infer it. */
+/**
+ * A client wired to a spy, so a test can assert the session was dropped rather than infer it.
+ *
+ * Each call builds its own `AbortController` and aborts it once the current test ends, so the client's
+ * `online` listener does not outlive the test that registered it on the shared jsdom `window`.
+ */
 export const clientWithSpy = () => {
+	const controller = new AbortController()
+	afterEach(() => controller.abort())
+
 	const onSessionLost = vi.fn()
-	return { client: createGraphQLClient({ onSessionLost }), onSessionLost }
+	return { client: createGraphQLClient({ onSessionLost, signal: controller.signal }), onSessionLost }
 }
 
 /**
