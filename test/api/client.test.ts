@@ -468,6 +468,28 @@ describe('createGraphQLClient', () => {
 			expect(getAccessToken()).toBe('tok-2')
 		})
 
+		/*
+		 * `signal === undefined ? undefined : { signal }` and a bare `{ signal }` behave identically to
+		 * `addEventListener` at runtime — a `signal: undefined` option is the same no-op as no options object
+		 * — so nothing short of a spy on the call itself tells a caller-less client apart from one that always
+		 * wraps. This is exactly why the ternary exists rather than always writing `{ signal }`: the object
+		 * form is what `exactOptionalPropertyTypes` refuses to typecheck when `signal` is absent (see the
+		 * comment above the call in src/api/client.ts).
+		 */
+		it('passes no options object to addEventListener when there is no signal to carry', () => {
+			const spy = vi.spyOn(window, 'addEventListener')
+
+			createGraphQLClient({ onSessionLost: vi.fn() })
+
+			const controller = new AbortController()
+			createGraphQLClient({ onSessionLost: vi.fn(), signal: controller.signal })
+
+			expect(spy.mock.calls.filter(([type]) => type === 'online')).toEqual([
+				['online', expect.any(Function), undefined],
+				['online', expect.any(Function), { signal: controller.signal }]
+			])
+		})
+
 		// The fix itself: once the caller aborts its signal, the listener this client registered is gone,
 		// and an `online` event reaching the shared jsdom `window` after that must not touch this client's
 		// breaker — exactly the leak a test helper that rebuilds a client per test would otherwise cause.

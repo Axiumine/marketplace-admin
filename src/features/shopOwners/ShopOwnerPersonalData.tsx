@@ -507,6 +507,14 @@ const FormPersonalData = ({
 
 			if (result.data?.shopOwnerUpdateNote !== true) return failed(result.error)
 
+			/*
+			 * `notes` is the last group `write` ever touches — nothing below this block can still fail and
+			 * short-circuit the way emailLogin/status/preferences can for the groups after them. Whatever
+			 * array `settle` is called with here, the very next statement is the unconditional `reset(values)`
+			 * a few lines down, which replaces the whole form's defaults and dirty state regardless of what
+			 * this call just did. There is no reachable input on which the two differ.
+			 */
+			// Stryker disable next-line ArrayDeclaration,StringLiteral: equivalent — see the note above.
 			settle(values, ['notes'])
 		}
 
@@ -904,6 +912,10 @@ export const FormAccountPending = ({
 
 			if (result.data?.shopOwnerUpdateNote !== true) return failed(result.error)
 
+			// See the identical `settle(values, ['notes'])` on `FormPersonalData` — same reason, same shape:
+			// notes is the last group here too, so the unconditional `reset(values)` right below always
+			// runs next and no input can reach a difference between this array and any other.
+			// Stryker disable next-line ArrayDeclaration,StringLiteral: equivalent — see the note above.
 			settle(values, ['notes'])
 		}
 
