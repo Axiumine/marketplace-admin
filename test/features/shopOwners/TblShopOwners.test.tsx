@@ -1,8 +1,8 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
-import { nextSort, statusOf } from '@/features/shopOwners/TblShopOwners'
+import { nextSort, SEARCH_DEBOUNCE_MS, statusOf } from '@/features/shopOwners/TblShopOwners'
 
 import { graphQLError, stubGraphQL } from '../../helpers/graphql'
 import { renderRoute } from '../../helpers/render'
@@ -478,6 +478,59 @@ describe('TblShopOwners', () => {
 		// The URL settled on what Back asked for and stayed there — no third entry pushed behind it.
 		expect(router.history.length).toBe(2)
 		expect(router.state.location.search).toMatchObject({ search: 'rivers' })
+	})
+
+	/*
+	 * The guard the sync-from-URL effect opens with (`query.search === synced.current`) only ever reads
+	 * true when the URL is echoing back the admin's own edit — the round trip this component's own push
+	 * effect just started. Every other way `query.search` can move (Back, Forward, a bookmark) reaches
+	 * this effect with the two disagreeing, which is exactly what the test above already covers.
+	 *
+	 * This one covers the true branch instead: it types a second character while the first edit's own
+	 * round trip is still in flight, so the echo lands on a `query.search` that already equals what the
+	 * push effect just wrote to `synced.current` — the one moment the guard is the only thing standing
+	 * between the box and being reset out from under a keystroke the admin has not sent anywhere yet.
+	 */
+	it('does not let its own edit echoing back overwrite a keystroke typed while it was in flight', async () => {
+		stubGraphQL({ ShopOwnersActiveTbl: page([rivers]) })
+		const { router } = await renderRoute(`${MANAGE}?search=rivers`)
+		const input = screen.getByLabelText('Search shopOwner')
+
+		vi.useFakeTimers()
+		try {
+			// Fires the mount-time debounce timer for real before the fake clock takes over — it is seeded
+			// with the initial value and firing it here is a no-op, but left pending it could otherwise land
+			// mid-sequence below and regress `debouncedSearch` back to the seeded value.
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(SEARCH_DEBOUNCE_MS)
+			})
+
+			act(() => {
+				fireEvent.change(input, { target: { value: 'riversx' } })
+			})
+			act(() => {
+				// The debounce elapses synchronously here: the push effect runs, sets `synced.current` to
+				// 'riversx' and starts navigating there — still in flight, nothing has round-tripped through
+				// the router yet, so nothing has read `query.search` again since it last changed.
+				vi.advanceTimersByTime(SEARCH_DEBOUNCE_MS)
+				// One more keystroke, in the same synchronous turn — before the navigation above gets a
+				// chance to resolve and this component sees `query.search` become 'riversx' too.
+				fireEvent.change(input, { target: { value: 'riversxy' } })
+			})
+		} finally {
+			vi.useRealTimers()
+		}
+
+		await waitFor(() => {
+			expect(router.state.location.search).toMatchObject({ search: 'riversx' })
+		})
+		// The router settling is not the same moment as the sync-from-URL effect it triggers actually
+		// committing — an empty `act` flushes that render rather than racing it, the same way the two
+		// separate `waitFor`s just above do it for the Back-navigation case.
+		await act(async () => {})
+		// The echo of the admin's own edit must not stomp what they typed after sending it — only a
+		// search value that moved for some other reason resyncs the box.
+		expect(input).toHaveValue('riversxy')
 	})
 
 	it('sorts by the column that was clicked, ascending', async () => {

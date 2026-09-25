@@ -730,6 +730,9 @@ describe('ShopOwnerPersonalData — editing', () => {
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
 		expect(writeNames(stub)).toEqual(['ShopOwnerUpdate', 'ShopOwnerUpdateEmail'])
+		// personalData settled on this same attempt — its row shows the value just written, Marco, and
+		// not the pre-edit Mark a `resetField` call with no `defaultValue` would fall back to.
+		expect(screen.getByLabelText('First name')).toHaveValue('Marco')
 
 		await userEvent.click(save())
 
@@ -737,6 +740,34 @@ describe('ShopOwnerPersonalData — editing', () => {
 		// The personalData write is not in this second batch: it settled on the first attempt, and only
 		// the email group — the one that actually failed — is retried.
 		expect(writeNames(stub)).toEqual(['ShopOwnerUpdate', 'ShopOwnerUpdateEmail', 'ShopOwnerUpdateEmail'])
+	})
+
+	// The mirror of the test above, with the email settling first and a later group — status — the one
+	// that fails: without the right field name in `settle`'s array, emailLogin never goes clean and the
+	// retry would resend a mutation that already succeeded.
+	it('does not resend the login email once a later group is retried', async () => {
+		const stub = stubGraphQL({
+			...detail(),
+			ShopOwnerUpdateEmail: { data: { shopOwnerUpdateEmail: true } },
+			ShopOwnerUpdateStatus: [{ data: { shopOwnerUpdateStatus: false } }, { data: { shopOwnerUpdateStatus: true } }]
+		})
+		await renderRoute(DETAIL)
+
+		await screen.findByText('Mark')
+		await open('Login email')
+		write('Login email', 'new@rivers.test')
+		await suspend()
+		await userEvent.click(save())
+
+		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus'])
+
+		await userEvent.click(save())
+
+		await screen.findByText('Changes saved.')
+		// The email write is not in this second batch: it settled on the first attempt, and only the
+		// status group — the one that actually failed — is retried.
+		expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus', 'ShopOwnerUpdateStatus'])
 	})
 
 	// Nothing is written until Save is pressed — a row left open with a typed value is not a write.
@@ -1822,6 +1853,9 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 
 		expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
 		expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus'])
+		// The email settled on this same attempt — its row shows what was just written, and not the
+		// pre-edit address a `resetField` call with no `defaultValue` would fall back to.
+		expect(screen.getByLabelText('Login email')).toHaveValue('seller@rivers.test')
 
 		await userEvent.click(save())
 
