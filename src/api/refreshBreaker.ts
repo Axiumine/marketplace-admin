@@ -17,42 +17,42 @@ const MAX_COOLDOWN_MS = 30_000
 const BASE_COOLDOWN_MS = 1_000
 
 export interface RefreshBreaker {
-	/**
-	 * True while the cooldown opened by a transport failure is still running. `refreshAuth` reads this
-	 * before making any network call — a call made while this is true is exactly the bug being fixed.
-	 */
-	isOpen: () => boolean
+  /**
+   * True while the cooldown opened by a transport failure is still running. `refreshAuth` reads this
+   * before making any network call — a call made while this is true is exactly the bug being fixed.
+   */
+  isOpen: () => boolean
 
-	/**
-	 * Call once per refresh attempt that got no response at all. Opens a cooldown window of
-	 * `min(30_000, 1_000 * 2^(n-1))` ms, `n` being the number of such failures in a row since the last
-	 * `reset`.
-	 */
-	recordTransportFailure: () => void
+  /**
+   * Call once per refresh attempt that got no response at all. Opens a cooldown window of
+   * `min(30_000, 1_000 * 2^(n-1))` ms, `n` being the number of such failures in a row since the last
+   * `reset`.
+   */
+  recordTransportFailure: () => void
 
-	/** Call on a refresh that mints a token, and on the browser's `online` event. */
-	reset: () => void
+  /** Call on a refresh that mints a token, and on the browser's `online` event. */
+  reset: () => void
 }
 
 /**
  * @param now - Defaults to `Date.now`; a test passes its own clock instead of waiting on real timers.
  */
 export const createRefreshBreaker = (now: () => number = Date.now): RefreshBreaker => {
-	let consecutiveTransportFailures = 0
-	let openUntil = 0
+  let consecutiveTransportFailures = 0
+  let openUntil = 0
 
-	return {
-		isOpen: () => now() < openUntil,
+  return {
+    isOpen: () => now() < openUntil,
 
-		recordTransportFailure: () => {
-			consecutiveTransportFailures += 1
-			const cooldownMs = Math.min(MAX_COOLDOWN_MS, BASE_COOLDOWN_MS * 2 ** (consecutiveTransportFailures - 1))
-			openUntil = now() + cooldownMs
-		},
+    recordTransportFailure: () => {
+      consecutiveTransportFailures += 1
+      const cooldownMs = Math.min(MAX_COOLDOWN_MS, BASE_COOLDOWN_MS * 2 ** (consecutiveTransportFailures - 1))
+      openUntil = now() + cooldownMs
+    },
 
-		reset: () => {
-			consecutiveTransportFailures = 0
-			openUntil = 0
-		}
-	}
+    reset: () => {
+      consecutiveTransportFailures = 0
+      openUntil = 0
+    }
+  }
 }

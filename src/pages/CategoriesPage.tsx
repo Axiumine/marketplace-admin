@@ -14,20 +14,20 @@ import { SaveChanges, useDiscardWarning, useSaving } from '@/features/saving'
  * site's URLs are built from. It is not a settings page.
  */
 export const CategoriesPage = () => {
-	const { register, saveAll, changed, version } = useSaving()
+  const { register, saveAll, changed, version } = useSaving()
 
-	useDiscardWarning(changed)
+  useDiscardWarning(changed)
 
-	return (
-		<>
-			<PageHeader title="Categories" />
+  return (
+    <>
+      <PageHeader title="Categories" />
 
-			{/* Keyed on the save counter, for the reason the shopOwner detail page spells out: `EditableRow`
+      {/* Keyed on the save counter, for the reason the shopOwner detail page spells out: `EditableRow`
 			    has no close of its own, so a successful save puts the whole list back the way it loaded — every
 			    open row closed, every form re-seeded from the values the save has just invalidated. */}
-			<Categories key={`categories-${version}`} registerSection={register} />
+      <Categories key={`categories-${version}`} registerSection={register} />
 
-			<SaveChanges changed={changed} saveAll={saveAll} />
-		</>
-	)
+      <SaveChanges changed={changed} saveAll={saveAll} />
+    </>
+  )
 }

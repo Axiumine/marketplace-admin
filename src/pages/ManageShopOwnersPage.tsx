@@ -8,18 +8,18 @@ import { TblShopOwners } from '@/features/shopOwners/TblShopOwners'
  * is what makes "page 3, sorted by city, searching «rivers»" a link an admin can bookmark or send.
  */
 export const ManageShopOwnersPage = ({
-	query,
-	onQueryChange
+  query,
+  onQueryChange
 }: {
-	query: ShopOwnersQuery
-	onQueryChange: (next: Partial<ShopOwnersQuery>) => void
+  query: ShopOwnersQuery
+  onQueryChange: (next: Partial<ShopOwnersQuery>) => void
 }) => (
-	<>
-		<PageHeader
-			title="Manage shop owners"
-			crumbs={[{ name: 'ShopOwners', to: '/shopOwners' }, { name: 'Manage' }]}
-			actions={<MenuShopOwners />}
-		/>
-		<TblShopOwners query={query} onQueryChange={onQueryChange} />
-	</>
+  <>
+    <PageHeader
+      title="Manage shop owners"
+      crumbs={[{ name: 'ShopOwners', to: '/shopOwners' }, { name: 'Manage' }]}
+      actions={<MenuShopOwners />}
+    />
+    <TblShopOwners query={query} onQueryChange={onQueryChange} />
+  </>
 )

@@ -20,14 +20,14 @@ import { Spinner } from '@/components/ui/Spinner'
  * is the design, not a bug to reconcile.
  */
 export const StatsCustomers = () => {
-	const [result] = useQuery({ query: UsersStatsDocument, context: CTX_ADMIN_RESOURCE })
+  const [result] = useQuery({ query: UsersStatsDocument, context: CTX_ADMIN_RESOURCE })
 
-	if (result.fetching) return <Spinner label="Loading statistics" />
-	if (result.error !== undefined) return <Alert tone="error">{messageOf(result.error)}</Alert>
+  if (result.fetching) return <Spinner label="Loading statistics" />
+  if (result.error !== undefined) return <Alert tone="error">{messageOf(result.error)}</Alert>
 
-	return (
-		<Infobox title="Customers">
-			<InfoRow label="Total" value={String(result.data?.usersStats ?? 0)} />
-		</Infobox>
-	)
+  return (
+    <Infobox title="Customers">
+      <InfoRow label="Total" value={String(result.data?.usersStats ?? 0)} />
+    </Infobox>
+  )
 }

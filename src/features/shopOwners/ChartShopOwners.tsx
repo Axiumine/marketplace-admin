@@ -26,9 +26,9 @@ import { bars, bounds, seriesTotal } from '@/lib/chart'
  * default and a select whose first option is not its value reads as already changed.
  */
 const PERIODS: { value: GraphQlShopOwnersPeriod; label: string }[] = [
-	{ value: 'ALL', label: 'From the first sign-up to today' },
-	{ value: 'THREE_MONTHS', label: 'Last 3 months' },
-	{ value: 'ONE_MONTH', label: 'Last month' }
+  { value: 'ALL', label: 'From the first sign-up to today' },
+  { value: 'THREE_MONTHS', label: 'Last 3 months' },
+  { value: 'ONE_MONTH', label: 'Last month' }
 ]
 
 /*
@@ -40,85 +40,85 @@ const WIDTH = 600
 const HEIGHT = 160
 
 export const ChartShopOwners = () => {
-	const [period, setPeriod] = useState<GraphQlShopOwnersPeriod>('ALL')
-	const [result] = useQuery({
-		query: ShopOwnersPerPeriodDocument,
-		variables: { period },
-		context: CTX_ADMIN_RESOURCE
-	})
+  const [period, setPeriod] = useState<GraphQlShopOwnersPeriod>('ALL')
+  const [result] = useQuery({
+    query: ShopOwnersPerPeriodDocument,
+    variables: { period },
+    context: CTX_ADMIN_RESOURCE
+  })
 
-	/*
-	 * One guard on the whole series rather than a fallback per field, and that is not a tidying. A
-	 * default bucket width — `series?.granularity ?? 'DAY'` — would be a value nothing can ever
-	 * observe: with no series there are no points either, so `bars` maps over an empty array and never
-	 * reads the granularity. No assertion could tell that default from any other, which makes it a
-	 * branch no test can hold in place. Either the server answered and both fields are real, or there
-	 * is no chart to draw.
-	 */
-	const series = result.data?.shopOwnersPerPeriod
-	const rects = series ? bars(series.points, series.granularity, WIDTH, HEIGHT) : []
-	// Summed off the bars, not off `points`: a `Bar` is a `SeriesPoint`, so this is the same number
-	// without a second copy of the guard above.
-	const total = seriesTotal(rects)
+  /*
+   * One guard on the whole series rather than a fallback per field, and that is not a tidying. A
+   * default bucket width — `series?.granularity ?? 'DAY'` — would be a value nothing can ever
+   * observe: with no series there are no points either, so `bars` maps over an empty array and never
+   * reads the granularity. No assertion could tell that default from any other, which makes it a
+   * branch no test can hold in place. Either the server answered and both fields are real, or there
+   * is no chart to draw.
+   */
+  const series = result.data?.shopOwnersPerPeriod
+  const rects = series ? bars(series.points, series.granularity, WIDTH, HEIGHT) : []
+  // Summed off the bars, not off `points`: a `Bar` is a `SeriesPoint`, so this is the same number
+  // without a second copy of the guard above.
+  const total = seriesTotal(rects)
 
-	const selector = (
-		<SelectField
-			label="Period"
-			value={period}
-			onChange={(e) => setPeriod(e.target.value as GraphQlShopOwnersPeriod)}
-			className="min-w-52"
-		>
-			{PERIODS.map((p) => (
-				<option key={p.value} value={p.value}>
-					{p.label}
-				</option>
-			))}
-		</SelectField>
-	)
+  const selector = (
+    <SelectField
+      label="Period"
+      value={period}
+      onChange={(e) => setPeriod(e.target.value as GraphQlShopOwnersPeriod)}
+      className="min-w-52"
+    >
+      {PERIODS.map((p) => (
+        <option key={p.value} value={p.value}>
+          {p.label}
+        </option>
+      ))}
+    </SelectField>
+  )
 
-	return (
-		<Infobox title="Registrations over time" actions={selector}>
-			{result.fetching ? <Spinner label="Loading chart" /> : null}
-			{result.error === undefined ? null : <Alert tone="error">{messageOf(result.error)}</Alert>}
+  return (
+    <Infobox title="Registrations over time" actions={selector}>
+      {result.fetching ? <Spinner label="Loading chart" /> : null}
+      {result.error === undefined ? null : <Alert tone="error">{messageOf(result.error)}</Alert>}
 
-			{/* Neither branch above short-circuits the chart: urql keeps the previous `data` while a range
+      {/* Neither branch above short-circuits the chart: urql keeps the previous `data` while a range
 			    change is in flight, so returning early on `fetching` would blank the whole card on every
 			    change of the select and make the select feel like it reset something. */}
-			{rects.length === 0 ? (
-				<p className="py-8 text-center text-sm text-tip">No sign-ups in the selected period.</p>
-			) : (
-				<>
-					<svg
-						viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-						className="h-40 w-full"
-						role="img"
-						aria-label={`Registrations per period: ${total} in ${rects.length} intervals`}
-						preserveAspectRatio="none"
-					>
-						{rects.map((b) => (
-							/* One rect per bucket, and a `<title>` inside it — the SVG equivalent of a `title`
+      {rects.length === 0 ? (
+        <p className="py-8 text-center text-sm text-tip">No sign-ups in the selected period.</p>
+      ) : (
+        <>
+          <svg
+            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+            className="h-40 w-full"
+            role="img"
+            aria-label={`Registrations per period: ${total} in ${rects.length} intervals`}
+            preserveAspectRatio="none"
+          >
+            {rects.map((b) => (
+              /* One rect per bucket, and a `<title>` inside it — the SVG equivalent of a `title`
 							   attribute, which is what gives every bar a hover readout without a tooltip
 							   library and without a second copy of the numbers in the DOM. */
-							<rect key={b.date} x={b.x} y={b.y} width={b.width} height={b.height} className="fill-third">
-								<title>{`${b.label}: ${b.total}`}</title>
-							</rect>
-						))}
-					</svg>
+              <rect key={b.date} x={b.x} y={b.y} width={b.width} height={b.height} className="fill-third">
+                <title>{`${b.label}: ${b.total}`}</title>
+              </rect>
+            ))}
+          </svg>
 
-					{/* First and last only. Ninety-three daily labels do not fit, and thinning them to every
+          {/* First and last only. Ninety-three daily labels do not fit, and thinning them to every
 					    n-th is a rule that changes what it hides as soon as the range does — the endpoints are
 					    what the axis is actually claiming. */}
-					<div className="flex justify-between pt-1 text-xs text-tip">
-						{bounds(rects).map((e) => (
-							<span key={e}>{e}</span>
-						))}
-					</div>
+          <div className="flex justify-between pt-1 text-xs text-tip">
+            {bounds(rects).map((e) => (
+              <span key={e}>{e}</span>
+            ))}
+          </div>
 
-					<p className="pt-2 text-sm">
-						Total in period: <span className="font-semibold">{total}</span>
-					</p>
-				</>
-			)}
-		</Infobox>
-	)
+          <p className="pt-2 text-sm">
+            Total in period: <span className="font-semibold">{total}</span>
+          </p>
+        </>
+      )}
+    </Infobox>
+  )
 }

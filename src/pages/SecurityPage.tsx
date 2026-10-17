@@ -19,11 +19,11 @@ import { SessionConsole } from '@/features/security/SessionConsole'
  * linkable from a ticket, and what keeps this page free of any URL reading of its own.
  */
 export const SecurityPage = ({ query, onQueryChange }: { query: SessionQuery; onQueryChange: (next: SessionQuery) => void }) => (
-	<>
-		<PageHeader title="Security" />
-		<h2 className="mb-4 text-lg font-bold">Sessions</h2>
-		<SessionConsole query={query} onQueryChange={onQueryChange} />
-		<h2 className="mt-8 mb-4 text-lg font-bold">Cookie-signing keys</h2>
-		<KeygripPanel />
-	</>
+  <>
+    <PageHeader title="Security" />
+    <h2 className="mb-4 text-lg font-bold">Sessions</h2>
+    <SessionConsole query={query} onQueryChange={onQueryChange} />
+    <h2 className="mt-8 mb-4 text-lg font-bold">Cookie-signing keys</h2>
+    <KeygripPanel />
+  </>
 )

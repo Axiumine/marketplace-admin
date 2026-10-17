@@ -24,28 +24,28 @@ import { defineConfig, loadEnv } from 'vite'
  * prefixed: prefixing it would inline it into the client bundle, where it means nothing.
  */
 export default defineConfig(({ mode }) => {
-	const env = loadEnv(mode, process.cwd(), '')
+  const env = loadEnv(mode, process.cwd(), '')
 
-	return {
-		plugins: [react(), tailwindcss()],
-		resolve: {
-			alias: {
-				'@': fileURLToPath(new URL('./src', import.meta.url)),
-				'@gql': fileURLToPath(new URL('./src/gql', import.meta.url))
-			}
-		},
-		server: {
-			host: '127.0.0.1',
-			port: Number(env.PORT ?? 3043),
-			proxy: {
-				'/public-authorization': 'http://127.0.0.1:4028',
-				'/admin-authenticated-authorization': 'http://127.0.0.1:4025',
-				'/admin-authenticated-resource': 'http://127.0.0.1:4024',
-				'/logout': 'http://127.0.0.1:4030'
-			}
-		},
-		build: {
-			sourcemap: true
-		}
-	}
+  return {
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': fileURLToPath(new URL('./src', import.meta.url)),
+        '@gql': fileURLToPath(new URL('./src/gql', import.meta.url))
+      }
+    },
+    server: {
+      host: '127.0.0.1',
+      port: Number(env.PORT ?? 3043),
+      proxy: {
+        '/public-authorization': 'http://127.0.0.1:4028',
+        '/admin-authenticated-authorization': 'http://127.0.0.1:4025',
+        '/admin-authenticated-resource': 'http://127.0.0.1:4024',
+        '/logout': 'http://127.0.0.1:4030'
+      }
+    },
+    build: {
+      sourcemap: true
+    }
+  }
 })

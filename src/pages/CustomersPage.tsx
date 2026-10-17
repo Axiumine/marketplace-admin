@@ -21,22 +21,22 @@ import { TblCustomers } from '@/features/customers/TblCustomers'
  * It owns nothing: the query state comes from the URL and goes back to it.
  */
 export const CustomersPage = ({
-	query,
-	onQueryChange
+  query,
+  onQueryChange
 }: {
-	query: CustomersQuery
-	onQueryChange: (next: Partial<CustomersQuery>) => void
+  query: CustomersQuery
+  onQueryChange: (next: Partial<CustomersQuery>) => void
 }) => (
-	<>
-		<PageHeader title="Customers" crumbs={[{ name: 'Customers' }]} />
-		<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-			<StatsCustomers />
-		</div>
-		<div className="mt-4">
-			<ChartCustomers />
-		</div>
-		<div className="mt-4">
-			<TblCustomers query={query} onQueryChange={onQueryChange} />
-		</div>
-	</>
+  <>
+    <PageHeader title="Customers" crumbs={[{ name: 'Customers' }]} />
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <StatsCustomers />
+    </div>
+    <div className="mt-4">
+      <ChartCustomers />
+    </div>
+    <div className="mt-4">
+      <TblCustomers query={query} onQueryChange={onQueryChange} />
+    </div>
+  </>
 )

@@ -8,9 +8,9 @@ import { graphql } from '@gql/adminResource'
  * it against — accepting one would be a way for any admin to rewrite any other admin's password.
  */
 export const AdminUpdatePwdDocument = graphql(`
-	mutation AdminUpdatePwd($passwordOld: String!, $passwordNew: String!) {
-		adminUpdatePwd(passwordOld: $passwordOld, passwordNew: $passwordNew)
-	}
+  mutation AdminUpdatePwd($passwordOld: String!, $passwordNew: String!) {
+    adminUpdatePwd(passwordOld: $passwordOld, passwordNew: $passwordNew)
+  }
 `)
 
 /**
@@ -26,9 +26,9 @@ export const AdminUpdatePwdDocument = graphql(`
  * asymmetry the backend was just brought out of.
  */
 export const ShopOwnerAddDocument = graphql(`
-	mutation ShopOwnerAdd($login: GraphQLInputLogin!, $personalData: GraphQLInputShopOwnerPersonalData!) {
-		shopOwnerAdd(login: $login, personalData: $personalData)
-	}
+  mutation ShopOwnerAdd($login: GraphQLInputLogin!, $personalData: GraphQLInputShopOwnerPersonalData!) {
+    shopOwnerAdd(login: $login, personalData: $personalData)
+  }
 `)
 
 /**
@@ -47,15 +47,15 @@ export const ShopOwnerAddDocument = graphql(`
  * mentions none. Without it the detail page keeps rendering the values it had before the save.
  */
 export const ShopOwnerUpdateDocument = graphql(`
-	mutation ShopOwnerUpdate($_id: ID!, $personalData: GraphQLInputShopOwnerPersonalData!) {
-		shopOwnerUpdate(_id: $_id, personalData: $personalData)
-	}
+  mutation ShopOwnerUpdate($_id: ID!, $personalData: GraphQLInputShopOwnerPersonalData!) {
+    shopOwnerUpdate(_id: $_id, personalData: $personalData)
+  }
 `)
 
 export const ShopOwnerUpdateEmailDocument = graphql(`
-	mutation ShopOwnerUpdateEmail($_id: ID!, $email: String!) {
-		shopOwnerUpdateEmail(_id: $_id, email: $email)
-	}
+  mutation ShopOwnerUpdateEmail($_id: ID!, $email: String!) {
+    shopOwnerUpdateEmail(_id: $_id, email: $email)
+  }
 `)
 
 /**
@@ -68,20 +68,20 @@ export const ShopOwnerUpdateEmailDocument = graphql(`
  * the admin who set it, and a reason sent beside `disabled: false` is refused.
  */
 export const ShopOwnerUpdateStatusDocument = graphql(`
-	mutation ShopOwnerUpdateStatus($_id: ID!, $disabled: Boolean!, $waitApprov: Boolean!, $disabledReason: String) {
-		shopOwnerUpdateStatus(_id: $_id, disabled: $disabled, waitApprov: $waitApprov, disabledReason: $disabledReason)
-	}
+  mutation ShopOwnerUpdateStatus($_id: ID!, $disabled: Boolean!, $waitApprov: Boolean!, $disabledReason: String) {
+    shopOwnerUpdateStatus(_id: $_id, disabled: $disabled, waitApprov: $waitApprov, disabledReason: $disabledReason)
+  }
 `)
 
 export const ShopOwnerUpdatePreferencesDocument = graphql(`
-	mutation ShopOwnerUpdatePreferences($_id: ID!, $rememberMe: Boolean!, $onboardingDone: Boolean!, $onboardingStep: String) {
-		shopOwnerUpdatePreferences(
-			_id: $_id
-			rememberMe: $rememberMe
-			onboardingDone: $onboardingDone
-			onboardingStep: $onboardingStep
-		)
-	}
+  mutation ShopOwnerUpdatePreferences($_id: ID!, $rememberMe: Boolean!, $onboardingDone: Boolean!, $onboardingStep: String) {
+    shopOwnerUpdatePreferences(
+      _id: $_id
+      rememberMe: $rememberMe
+      onboardingDone: $onboardingDone
+      onboardingStep: $onboardingStep
+    )
+  }
 `)
 
 /**
@@ -92,9 +92,9 @@ export const ShopOwnerUpdatePreferencesDocument = graphql(`
  * by not firing this mutation at all.
  */
 export const ShopOwnerUpdateNoteDocument = graphql(`
-	mutation ShopOwnerUpdateNote($_id: ID!, $notes: String!) {
-		shopOwnerUpdateNote(_id: $_id, notes: $notes)
-	}
+  mutation ShopOwnerUpdateNote($_id: ID!, $notes: String!) {
+    shopOwnerUpdateNote(_id: $_id, notes: $notes)
+  }
 `)
 
 /**
@@ -110,21 +110,21 @@ export const ShopOwnerUpdateNoteDocument = graphql(`
  * All three answer a bare `Boolean`, so every call site names `additionalTypenames` itself.
  */
 export const CompanyAddDocument = graphql(`
-	mutation CompanyAdd($idShopOwner: ID!, $company: GraphQLInputCompany!) {
-		companyAdd(idShopOwner: $idShopOwner, company: $company)
-	}
+  mutation CompanyAdd($idShopOwner: ID!, $company: GraphQLInputCompany!) {
+    companyAdd(idShopOwner: $idShopOwner, company: $company)
+  }
 `)
 
 export const CompanyUpdateDocument = graphql(`
-	mutation CompanyUpdate($_id: ID!, $company: GraphQLInputCompany!) {
-		companyUpdate(_id: $_id, company: $company)
-	}
+  mutation CompanyUpdate($_id: ID!, $company: GraphQLInputCompany!) {
+    companyUpdate(_id: $_id, company: $company)
+  }
 `)
 
 export const CompanyDelDocument = graphql(`
-	mutation CompanyDel($_id: ID!) {
-		companyDel(_id: $_id)
-	}
+  mutation CompanyDel($_id: ID!) {
+    companyDel(_id: $_id)
+  }
 `)
 
 /**
@@ -143,21 +143,21 @@ export const CompanyDelDocument = graphql(`
  * `additionalTypenames` itself.
  */
 export const ItemCategoryAddDocument = graphql(`
-	mutation ItemCategoryAdd($itemCategory: GraphQLInputItemCategory!) {
-		itemCategoryAdd(itemCategory: $itemCategory)
-	}
+  mutation ItemCategoryAdd($itemCategory: GraphQLInputItemCategory!) {
+    itemCategoryAdd(itemCategory: $itemCategory)
+  }
 `)
 
 export const ItemCategoryUpdateDocument = graphql(`
-	mutation ItemCategoryUpdate($_id: ID!, $itemCategory: GraphQLInputItemCategory!) {
-		itemCategoryUpdate(_id: $_id, itemCategory: $itemCategory)
-	}
+  mutation ItemCategoryUpdate($_id: ID!, $itemCategory: GraphQLInputItemCategory!) {
+    itemCategoryUpdate(_id: $_id, itemCategory: $itemCategory)
+  }
 `)
 
 export const ItemCategoryDelDocument = graphql(`
-	mutation ItemCategoryDel($_id: ID!) {
-		itemCategoryDel(_id: $_id)
-	}
+  mutation ItemCategoryDel($_id: ID!) {
+    itemCategoryDel(_id: $_id)
+  }
 `)
 
 /**
@@ -172,9 +172,9 @@ export const ItemCategoryDelDocument = graphql(`
  * what the panel beside the button is rendering and what a rotation changes every field of.
  */
 export const KeygripRotateDocument = graphql(`
-	mutation KeygripRotate {
-		keygripRotate
-	}
+  mutation KeygripRotate {
+    keygripRotate
+  }
 `)
 
 /**
@@ -196,9 +196,9 @@ export const KeygripRotateDocument = graphql(`
  * `Boolean!`, so the call site names `additionalTypenames` itself.
  */
 export const KeygripRetireDocument = graphql(`
-	mutation KeygripRetire($id: String!) {
-		keygripRetire(id: $id)
-	}
+  mutation KeygripRetire($id: String!) {
+    keygripRetire(id: $id)
+  }
 `)
 
 /**
@@ -221,9 +221,9 @@ export const KeygripRetireDocument = graphql(`
  * empties is the session console beside it and not the key set above it.
  */
 export const KeygripResweepDocument = graphql(`
-	mutation KeygripResweep {
-		keygripResweep
-	}
+  mutation KeygripResweep {
+    keygripResweep
+  }
 `)
 
 /**
@@ -243,9 +243,9 @@ export const KeygripResweepDocument = graphql(`
  * `Boolean!`, so the call site names `additionalTypenames` itself.
  */
 export const RevokeSessionDocument = graphql(`
-	mutation RevokeSession($tier: GraphQLTier!, $accountId: String!, $id: String!) {
-		revokeSession(tier: $tier, accountId: $accountId, id: $id)
-	}
+  mutation RevokeSession($tier: GraphQLTier!, $accountId: String!, $id: String!) {
+    revokeSession(tier: $tier, accountId: $accountId, id: $id)
+  }
 `)
 
 /**
@@ -259,9 +259,9 @@ export const RevokeSessionDocument = graphql(`
  * announcing rather than collapsing into "done". `Int!`, which names no typename either — same rule.
  */
 export const RevokeAllSessionsDocument = graphql(`
-	mutation RevokeAllSessions($tier: GraphQLTier!, $accountId: String!) {
-		revokeAllSessions(tier: $tier, accountId: $accountId)
-	}
+  mutation RevokeAllSessions($tier: GraphQLTier!, $accountId: String!) {
+    revokeAllSessions(tier: $tier, accountId: $accountId)
+  }
 `)
 
 /**
@@ -283,7 +283,7 @@ export const RevokeAllSessionsDocument = graphql(`
  * with the flag.
  */
 export const UserUpdateStatusDocument = graphql(`
-	mutation UserUpdateStatus($_id: ID!, $disabled: Boolean!, $disabledReason: String) {
-		userUpdateStatus(_id: $_id, disabled: $disabled, disabledReason: $disabledReason)
-	}
+  mutation UserUpdateStatus($_id: ID!, $disabled: Boolean!, $disabledReason: String) {
+    userUpdateStatus(_id: $_id, disabled: $disabled, disabledReason: $disabledReason)
+  }
 `)

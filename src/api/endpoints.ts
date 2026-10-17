@@ -14,10 +14,10 @@ import { env } from '@/env'
  * object on every render, which turns a static query into an infinite refetch loop.
  */
 export const ENDPOINT = {
-	publicAuthorization: env.publicAuthorization,
-	adminAuthorization: env.adminAuthorization,
-	adminResource: env.adminResource,
-	logout: env.logout
+  publicAuthorization: env.publicAuthorization,
+  adminAuthorization: env.adminAuthorization,
+  adminResource: env.adminResource,
+  logout: env.logout
 } as const
 
 export const CTX_PUBLIC_AUTHORIZATION: Partial<OperationContext> = Object.freeze({ url: ENDPOINT.publicAuthorization })

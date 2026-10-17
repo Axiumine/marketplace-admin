@@ -3,9 +3,9 @@ import type { InputHTMLAttributes, Ref } from 'react'
 import { useId } from 'react'
 
 interface CheckboxFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
-	label: string
-	/** react-hook-form's `register()` ref. A plain prop, as React 19 allows — see `TextField`. */
-	ref?: Ref<HTMLInputElement> | undefined
+  label: string
+  /** react-hook-form's `register()` ref. A plain prop, as React 19 allows — see `TextField`. */
+  ref?: Ref<HTMLInputElement> | undefined
 }
 
 /**
@@ -17,15 +17,15 @@ interface CheckboxFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>,
  * two-state field that cannot be filled in wrongly.
  */
 export const CheckboxField = ({ label, id, ref, ...rest }: CheckboxFieldProps) => {
-	const generatedId = useId()
-	const inputId = id ?? generatedId
+  const generatedId = useId()
+  const inputId = id ?? generatedId
 
-	return (
-		<div className="flex items-center gap-2">
-			<input id={inputId} type="checkbox" ref={ref} className="h-4 w-4 rounded-box border border-tip accent-third" {...rest} />
-			<Label.Root htmlFor={inputId} className="text-sm font-semibold">
-				{label}
-			</Label.Root>
-		</div>
-	)
+  return (
+    <div className="flex items-center gap-2">
+      <input id={inputId} type="checkbox" ref={ref} className="h-4 w-4 rounded-box border border-tip accent-third" {...rest} />
+      <Label.Root htmlFor={inputId} className="text-sm font-semibold">
+        {label}
+      </Label.Root>
+    </div>
+  )
 }

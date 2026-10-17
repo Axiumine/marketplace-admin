@@ -11,19 +11,19 @@
  * whichever test runs next.
  */
 export const trackUnhandledRejections = () => {
-	const reasons: unknown[] = []
-	const onRejection = (reason: unknown) => {
-		reasons.push(reason)
-	}
+  const reasons: unknown[] = []
+  const onRejection = (reason: unknown) => {
+    reasons.push(reason)
+  }
 
-	process.on('unhandledRejection', onRejection)
+  process.on('unhandledRejection', onRejection)
 
-	return {
-		reasons,
-		/** Lets a rejection already in flight land before the caller reads `reasons`. */
-		settle: () => new Promise((resolve) => setTimeout(resolve, 0)),
-		stop: () => {
-			process.off('unhandledRejection', onRejection)
-		}
-	}
+  return {
+    reasons,
+    /** Lets a rejection already in flight land before the caller reads `reasons`. */
+    settle: () => new Promise((resolve) => setTimeout(resolve, 0)),
+    stop: () => {
+      process.off('unhandledRejection', onRejection)
+    }
+  }
 }

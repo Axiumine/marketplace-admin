@@ -13,13 +13,13 @@ import { LoginForm } from '@/features/login/LoginForm'
  * `admin` collection exists.
  */
 export const LoginPage = () => (
-	<div className="flex h-full items-center justify-center bg-palette-bg1 p-6">
-		<div className="w-full max-w-sm rounded-box border-4 border-third bg-white p-6 shadow">
-			<h1 className="mb-4 text-2xl font-bold">Marketplace — admin panel</h1>
-			<LoginForm />
-			<p className="mt-6 text-xs text-tip">
-				Password forgotten? Standalone recovery is not available for admin accounts: contact the administrator of the platform.
-			</p>
-		</div>
-	</div>
+  <div className="flex h-full items-center justify-center bg-palette-bg1 p-6">
+    <div className="w-full max-w-sm rounded-box border-4 border-third bg-white p-6 shadow">
+      <h1 className="mb-4 text-2xl font-bold">Marketplace — admin panel</h1>
+      <LoginForm />
+      <p className="mt-6 text-xs text-tip">
+        Password forgotten? Standalone recovery is not available for admin accounts: contact the administrator of the platform.
+      </p>
+    </div>
+  </div>
 )

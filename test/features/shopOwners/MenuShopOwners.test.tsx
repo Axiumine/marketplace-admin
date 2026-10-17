@@ -10,10 +10,10 @@ import { renderRoute } from '../../helpers/render'
  * reads neither, and a reply nobody needs would only be one more fixture to keep in sync.
  */
 describe('MenuShopOwners', () => {
-	it('renders', async () => {
-		stubGraphQL({ ShopOwnersStats: { pending: true }, ShopOwnersPerPeriod: { pending: true } })
-		await renderRoute('/shopOwners')
+  it('renders', async () => {
+    stubGraphQL({ ShopOwnersStats: { pending: true }, ShopOwnersPerPeriod: { pending: true } })
+    await renderRoute('/shopOwners')
 
-		expect(screen.getByRole('navigation', { name: 'Sections shopOwners' })).toMatchSnapshot()
-	})
+    expect(screen.getByRole('navigation', { name: 'Sections shopOwners' })).toMatchSnapshot()
+  })
 })
