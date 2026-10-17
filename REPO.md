@@ -73,8 +73,8 @@ next one impossible.
 
 The backend nine never had this bug, because `@axiumine/eslint-config-be` scopes everything to `src/**`.
 
-**Tabs, not spaces** (eslint `indent: ['error','tab']`). Prettier here: no semicolons, single quotes,
-`trailingComma: "none"`, `printWidth: 129`, `useTabs: true`. The backend services and `marketplace-common`
+**Two spaces, not tabs** (eslint `indent: ['error', 2]`; ADR-058 supersedes ADR-024 in part). Prettier here: no semicolons, single quotes,
+`trailingComma: "none"`, `printWidth: 129`, `useTabs: false`, `tabWidth: 2`. The other prettier-gated repos
 carry that file byte for byte.
 
 ## Bypasses

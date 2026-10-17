@@ -43,7 +43,7 @@ slice match it. `src/gql/` is generated — never edit it, run `yarn codegen`. F
   mutation's response mentions, and these answer a bare `Boolean`.
 - **Never send an id to `adminUpdatePwd`.** It takes none — the account is whichever the Redis session
   names; the platform has no role field, so a client-supplied id would let one admin set another's password.
-- **Tabs, not spaces** (eslint `indent: ['error','tab']`; prettier `printWidth: 129`, no semicolons, single
+- **Two spaces, not tabs** (eslint `indent: ['error', 2]`; prettier `useTabs: false`, `tabWidth: 2`, `printWidth: 129`, no semicolons, single
   quotes). Full config and the flat-config `files`-glob trap: [`REPO.md`](./REPO.md).
 - **Never read, echo or commit a secret file.** `.env` is git-ignored and pre-commit refuses it; `env` (no
   dot) is the committed template. To inspect `.env`, print key names only: `grep -oE '^[A-Za-z_0-9]+' .env`.
