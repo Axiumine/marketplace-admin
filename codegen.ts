@@ -33,47 +33,47 @@ const presetConfig = { fragmentMasking: false }
  * `DateTime` as a full timestamp, `Date` as `YYYY-MM-DD`.
  */
 const config = {
-	enumsAsTypes: true,
-	skipTypename: true,
-	useTypeImports: true,
-	scalars: { DateTime: 'string', Date: 'string' }
+  enumsAsTypes: true,
+  skipTypename: true,
+  useTypeImports: true,
+  scalars: { DateTime: 'string', Date: 'string' }
 }
 
 const codegenConfig: CodegenConfig = {
-	// Tabs, to match every other file in this repo and the eslint `indent` rule the generated output
-	// is exempt from but the config file is not.
-	config: { useTypeImports: true },
-	ignoreNoDocuments: true,
-	generates: {
-		'src/gql/publicAuthorization/': {
-			schema: 'schema/public-authorization.graphql',
-			documents: 'src/api/operations/publicAuthorization/**/*.ts',
-			preset,
-			presetConfig,
-			config
-		},
-		'src/gql/adminAuthorization/': {
-			schema: 'schema/admin-authenticated-authorization.graphql',
-			documents: 'src/api/operations/adminAuthorization/**/*.ts',
-			preset,
-			presetConfig,
-			config
-		},
-		'src/gql/logout/': {
-			schema: 'schema/logout.graphql',
-			documents: 'src/api/operations/logout/**/*.ts',
-			preset,
-			presetConfig,
-			config
-		},
-		'src/gql/adminResource/': {
-			schema: 'schema/admin-authenticated-resource.graphql',
-			documents: 'src/api/operations/adminResource/**/*.ts',
-			preset,
-			presetConfig,
-			config
-		}
-	}
+  // Tabs, to match every other file in this repo and the eslint `indent` rule the generated output
+  // is exempt from but the config file is not.
+  config: { useTypeImports: true },
+  ignoreNoDocuments: true,
+  generates: {
+    'src/gql/publicAuthorization/': {
+      schema: 'schema/public-authorization.graphql',
+      documents: 'src/api/operations/publicAuthorization/**/*.ts',
+      preset,
+      presetConfig,
+      config
+    },
+    'src/gql/adminAuthorization/': {
+      schema: 'schema/admin-authenticated-authorization.graphql',
+      documents: 'src/api/operations/adminAuthorization/**/*.ts',
+      preset,
+      presetConfig,
+      config
+    },
+    'src/gql/logout/': {
+      schema: 'schema/logout.graphql',
+      documents: 'src/api/operations/logout/**/*.ts',
+      preset,
+      presetConfig,
+      config
+    },
+    'src/gql/adminResource/': {
+      schema: 'schema/admin-authenticated-resource.graphql',
+      documents: 'src/api/operations/adminResource/**/*.ts',
+      preset,
+      presetConfig,
+      config
+    }
+  }
 }
 
 export default codegenConfig

@@ -28,10 +28,10 @@ export type AccountStatus = 'active' | 'suspended' | 'closed' | 'closedSuspended
  * variables.
  */
 export const ACCOUNT_FILTER = {
-	active: { label: 'Active', disabled: false, deleted: false },
-	suspended: { label: 'Suspended', disabled: true, deleted: false },
-	closed: { label: 'Closed', disabled: false, deleted: true },
-	closedSuspended: { label: 'Closed & suspended', disabled: true, deleted: true }
+  active: { label: 'Active', disabled: false, deleted: false },
+  suspended: { label: 'Suspended', disabled: true, deleted: false },
+  closed: { label: 'Closed', disabled: false, deleted: true },
+  closedSuspended: { label: 'Closed & suspended', disabled: true, deleted: true }
 } as const satisfies Record<AccountStatus, { label: string; disabled: boolean; deleted: boolean }>
 
 /**
@@ -53,7 +53,7 @@ export const ACCOUNT_STATUSES = Object.keys(ACCOUNT_FILTER) as [AccountStatus, .
  * closed. The labels come from `ACCOUNT_FILTER`, so a row can never say a word no filter offers.
  */
 export const closedOrSuspendedLabel = ({ disabled, deleted }: { disabled: boolean; deleted: boolean }): string | undefined => {
-	if (deleted) return disabled ? ACCOUNT_FILTER.closedSuspended.label : ACCOUNT_FILTER.closed.label
+  if (deleted) return disabled ? ACCOUNT_FILTER.closedSuspended.label : ACCOUNT_FILTER.closed.label
 
-	return disabled ? ACCOUNT_FILTER.suspended.label : undefined
+  return disabled ? ACCOUNT_FILTER.suspended.label : undefined
 }

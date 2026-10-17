@@ -9,9 +9,9 @@ import { renderWithClient } from '../../helpers/render'
  * mounted directly rather than through the router — see `renderWithClient` in `test/helpers/render.tsx`.
  */
 describe('ChangePasswordForm', () => {
-	it('renders', () => {
-		const { container } = renderWithClient(<ChangePasswordForm />)
+  it('renders', () => {
+    const { container } = renderWithClient(<ChangePasswordForm />)
 
-		expect(container.firstChild).toMatchSnapshot()
-	})
+    expect(container.firstChild).toMatchSnapshot()
+  })
 })

@@ -14,19 +14,19 @@ import { renderRoute } from '../helpers/render'
 const TODAY = '2026-08-02T12:00:00Z'
 
 afterEach(() => {
-	vi.useRealTimers()
+  vi.useRealTimers()
 })
 
 describe('AddShopOwnerPage', () => {
-	it('renders', async () => {
-		// Only `Date`. `setTimeout` stays real, or the router's awaits never advance.
-		vi.useFakeTimers({ toFake: ['Date'] })
-		vi.setSystemTime(new Date(TODAY))
+  it('renders', async () => {
+    // Only `Date`. `setTimeout` stays real, or the router's awaits never advance.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(TODAY))
 
-		stubGraphQL({})
-		await renderRoute('/p/shopOwners/add-shopOwner')
+    stubGraphQL({})
+    await renderRoute('/p/shopOwners/add-shopOwner')
 
-		expect(screen.getByRole('heading', { name: 'Add shopOwner' })).toBeInTheDocument()
-		expect(screen.getByRole('main')).toMatchSnapshot()
-	})
+    expect(screen.getByRole('heading', { name: 'Add shopOwner' })).toBeInTheDocument()
+    expect(screen.getByRole('main')).toMatchSnapshot()
+  })
 })

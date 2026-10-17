@@ -9,13 +9,13 @@ import { StatsShopOwners } from '@/features/shopOwners/StatsShopOwners'
  * lose nothing by being narrow. Two different shapes of thing, two rows.
  */
 export const ShopOwnersPage = () => (
-	<>
-		<PageHeader title="ShopOwners" crumbs={[{ name: 'ShopOwners' }]} actions={<MenuShopOwners />} />
-		<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-			<StatsShopOwners />
-		</div>
-		<div className="mt-4">
-			<ChartShopOwners />
-		</div>
-	</>
+  <>
+    <PageHeader title="ShopOwners" crumbs={[{ name: 'ShopOwners' }]} actions={<MenuShopOwners />} />
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <StatsShopOwners />
+    </div>
+    <div className="mt-4">
+      <ChartShopOwners />
+    </div>
+  </>
 )

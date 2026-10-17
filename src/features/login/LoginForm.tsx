@@ -25,9 +25,9 @@ import { useTurnstileToken } from './useTurnstileToken'
  * cost a round-trip.
  */
 const loginSchema = z.object({
-	email: z.email('Enter a valid email address'),
-	password: z.string().min(1, 'Enter the password'),
-	rememberMe: z.boolean()
+  email: z.email('Enter a valid email address'),
+  password: z.string().min(1, 'Enter the password'),
+  rememberMe: z.boolean()
 })
 
 type LoginValues = z.infer<typeof loginSchema>
@@ -50,91 +50,91 @@ type LoginValues = z.infer<typeof loginSchema>
  * which is the correct request for a deployment whose server holds no secret key either.
  */
 export const LoginForm = () => {
-	const navigate = useNavigate()
-	const turnstile = useTurnstileToken()
-	const [loginState, executeLogin] = useMutation(LoginAdminDocument)
+  const navigate = useNavigate()
+  const turnstile = useTurnstileToken()
+  const [loginState, executeLogin] = useMutation(LoginAdminDocument)
 
-	// No `defaultValues`: all three fields are registered, uncontrolled inputs, so react-hook-form reads
-	// their initial state off the DOM — `''` for the two text boxes and `false` for an unchecked box,
-	// which is what the table would have said. Stating it twice only creates somewhere for the two to
-	// disagree.
-	const {
-		register,
-		handleSubmit,
-		formState: { errors }
-	} = useForm<LoginValues>({ resolver: zodResolver(loginSchema) })
+  // No `defaultValues`: all three fields are registered, uncontrolled inputs, so react-hook-form reads
+  // their initial state off the DOM — `''` for the two text boxes and `false` for an unchecked box,
+  // which is what the table would have said. Stating it twice only creates somewhere for the two to
+  // disagree.
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginValues>({ resolver: zodResolver(loginSchema) })
 
-	// `turnstile.read()` rather than the state value: a widget that solves itself between the click and
-	// this line would otherwise be missed, and an expired token would be sent anyway.
-	const onSubmit = handleSubmit(async (values) => {
-		const result = await executeLogin({ ...values, turnstileToken: turnstile.read() }, CTX_PUBLIC_AUTHORIZATION)
-		const accessToken = result.data?.loginAdmin.accessToken
+  // `turnstile.read()` rather than the state value: a widget that solves itself between the click and
+  // this line would otherwise be missed, and an expired token would be sent anyway.
+  const onSubmit = handleSubmit(async (values) => {
+    const result = await executeLogin({ ...values, turnstileToken: turnstile.read() }, CTX_PUBLIC_AUTHORIZATION)
+    const accessToken = result.data?.loginAdmin.accessToken
 
-		if (accessToken !== undefined && accessToken !== '') {
-			setAccessToken(accessToken)
-			await navigate({ to: '/loading' })
-			return
-		}
+    if (accessToken !== undefined && accessToken !== '') {
+      setAccessToken(accessToken)
+      await navigate({ to: '/loading' })
+      return
+    }
 
-		// The token this attempt sent — right or wrong credentials — is already spent at Cloudflare by the
-		// time the server even looks at the password: `guardPublicLogin` verifies it before anything else
-		// runs. Left in place, every retry would be refused as a duplicate token regardless of what the
-		// admin typed. `resetKey` remounts `<Turnstile>` below, which is the only way to make Cloudflare
-		// mint a new one.
-		turnstile.reset()
-	})
+    // The token this attempt sent — right or wrong credentials — is already spent at Cloudflare by the
+    // time the server even looks at the password: `guardPublicLogin` verifies it before anything else
+    // runs. Left in place, every retry would be refused as a duplicate token regardless of what the
+    // admin typed. `resetKey` remounts `<Turnstile>` below, which is the only way to make Cloudflare
+    // mint a new one.
+    turnstile.reset()
+  })
 
-	// An empty token with no error is the one case the backend cannot express: the mutation is typed
-	// non-null, so a blank string means the service answered without minting a session. Reported as a
-	// failed login: the alternative is a button that does nothing and says nothing.
-	//
-	// No `!fetching` or "has run at all" guard in front of it: urql resets a mutation's result to
-	// `undefined` when it is executed again, so `data` is only ever the answer to a request that has
-	// come back. Both guards would be true whenever the comparison is.
-	const failed = loginState.data?.loginAdmin.accessToken === ''
+  // An empty token with no error is the one case the backend cannot express: the mutation is typed
+  // non-null, so a blank string means the service answered without minting a session. Reported as a
+  // failed login: the alternative is a button that does nothing and says nothing.
+  //
+  // No `!fetching` or "has run at all" guard in front of it: urql resets a mutation's result to
+  // `undefined` when it is executed again, so `data` is only ever the answer to a request that has
+  // come back. Both guards would be true whenever the comparison is.
+  const failed = loginState.data?.loginAdmin.accessToken === ''
 
-	return (
-		<form
-			className="flex w-full max-w-sm flex-col gap-4"
-			onSubmit={(event) => {
-				void onSubmit(event)
-			}}
-		>
-			<div>
-				<h2 className="text-xl font-bold">Login</h2>
-				<p className="text-sm text-tip">Enter your credentials to sign in.</p>
-			</div>
+  return (
+    <form
+      className="flex w-full max-w-sm flex-col gap-4"
+      onSubmit={(event) => {
+        void onSubmit(event)
+      }}
+    >
+      <div>
+        <h2 className="text-xl font-bold">Login</h2>
+        <p className="text-sm text-tip">Enter your credentials to sign in.</p>
+      </div>
 
-			<TextField
-				label="Email"
-				type="email"
-				autoComplete="username"
-				maxLength={50}
-				error={errors.email?.message}
-				{...register('email')}
-			/>
+      <TextField
+        label="Email"
+        type="email"
+        autoComplete="username"
+        maxLength={50}
+        error={errors.email?.message}
+        {...register('email')}
+      />
 
-			<PasswordField
-				label="Password"
-				autoComplete="current-password"
-				maxLength={72}
-				error={errors.password?.message}
-				{...register('password')}
-			/>
+      <PasswordField
+        label="Password"
+        autoComplete="current-password"
+        maxLength={72}
+        error={errors.password?.message}
+        {...register('password')}
+      />
 
-			<label className="flex items-center gap-2 text-sm">
-				<input type="checkbox" {...register('rememberMe')} />
-				Remember me on this device
-			</label>
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" {...register('rememberMe')} />
+        Remember me on this device
+      </label>
 
-			<Turnstile key={turnstile.resetKey} onToken={turnstile.onToken} />
+      <Turnstile key={turnstile.resetKey} onToken={turnstile.onToken} />
 
-			{loginState.error === undefined ? null : <Toast tone="error">{messageOf(loginState.error)}</Toast>}
-			{failed ? <Toast tone="error">Invalid credentials</Toast> : null}
+      {loginState.error === undefined ? null : <Toast tone="error">{messageOf(loginState.error)}</Toast>}
+      {failed ? <Toast tone="error">Invalid credentials</Toast> : null}
 
-			<Button type="submit" loading={loginState.fetching}>
-				Sign in
-			</Button>
-		</form>
-	)
+      <Button type="submit" loading={loginState.fetching}>
+        Sign in
+      </Button>
+    </form>
+  )
 }

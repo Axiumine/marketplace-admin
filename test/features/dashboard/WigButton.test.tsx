@@ -9,10 +9,10 @@ import { renderRoute } from '../../helpers/render'
  * route it actually sits on rather than mounted by hand.
  */
 describe('WigButton', () => {
-	it('renders', async () => {
-		stubGraphQL({})
-		await renderRoute('/home')
+  it('renders', async () => {
+    stubGraphQL({})
+    await renderRoute('/home')
 
-		expect(screen.getByRole('link', { name: /ShopOwners\s*Manage shop owners/ })).toMatchSnapshot()
-	})
+    expect(screen.getByRole('link', { name: /ShopOwners\s*Manage shop owners/ })).toMatchSnapshot()
+  })
 })

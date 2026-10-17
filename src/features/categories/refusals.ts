@@ -27,36 +27,36 @@ import { messageOf } from '@/api/errors'
  * other six share no substring.
  */
 const REFUSALS: readonly { readonly match: string; readonly message: string }[] = [
-	{
-		match: 'slug already used',
-		message:
-			'Slug: already used by another category. A slug is unique across the whole taxonomy, not within a parent — a subcategory cannot reuse a top-level one.'
-	},
-	{
-		match: 'two levels deep',
-		message:
-			'Parent: that category is itself a subcategory. The taxonomy is two levels deep, so only a top-level category can be a parent.'
-	},
-	{
-		match: 'this category has subcategories',
-		message:
-			'Parent: this category has subcategories of its own. Move or remove them first — filing it under a parent would push every one of them to a third level.'
-	},
-	{ match: 'cannot be its own parent', message: 'Parent: a category cannot be its own parent.' },
-	{
-		match: 'parent category not found',
-		message: 'Parent: that category no longer exists. Reload the page to see the taxonomy as it stands.'
-	},
-	{
-		match: 'still has subcategories',
-		message: 'The category still has subcategories. Retire those first — deleting a parent does not delete what is under it.'
-	},
-	{
-		match: 'still holds items',
-		message:
-			'Items are still filed under this category. Their shop owners have to move them first — deleting a category never withdraws the items under it.'
-	},
-	{ match: 'category not found', message: 'That category no longer exists. Reload the page to see the taxonomy as it stands.' }
+  {
+    match: 'slug already used',
+    message:
+      'Slug: already used by another category. A slug is unique across the whole taxonomy, not within a parent — a subcategory cannot reuse a top-level one.'
+  },
+  {
+    match: 'two levels deep',
+    message:
+      'Parent: that category is itself a subcategory. The taxonomy is two levels deep, so only a top-level category can be a parent.'
+  },
+  {
+    match: 'this category has subcategories',
+    message:
+      'Parent: this category has subcategories of its own. Move or remove them first — filing it under a parent would push every one of them to a third level.'
+  },
+  { match: 'cannot be its own parent', message: 'Parent: a category cannot be its own parent.' },
+  {
+    match: 'parent category not found',
+    message: 'Parent: that category no longer exists. Reload the page to see the taxonomy as it stands.'
+  },
+  {
+    match: 'still has subcategories',
+    message: 'The category still has subcategories. Retire those first — deleting a parent does not delete what is under it.'
+  },
+  {
+    match: 'still holds items',
+    message:
+      'Items are still filed under this category. Their shop owners have to move them first — deleting a category never withdraws the items under it.'
+  },
+  { match: 'category not found', message: 'That category no longer exists. Reload the page to see the taxonomy as it stands.' }
 ]
 
 /**
@@ -66,9 +66,9 @@ const REFUSALS: readonly { readonly match: string; readonly message: string }[] 
  * the one case the service has no sentence for.
  */
 export const refusalOf = (error: CombinedError | undefined, fallback: string): string => {
-	if (error === undefined) return fallback
+  if (error === undefined) return fallback
 
-	const message = messageOf(error)
+  const message = messageOf(error)
 
-	return REFUSALS.find((refusal) => message.includes(refusal.match))?.message ?? message
+  return REFUSALS.find((refusal) => message.includes(refusal.match))?.message ?? message
 }

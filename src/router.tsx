@@ -41,262 +41,262 @@ export const DEFAULT_PAGE_SIZE = 20
  * app and in the tests alike, so the factory stays private to this module.
  */
 const createAppRouteTree = () => {
-	/**
-	 * The shopOwners table state, as URL search params.
-	 *
-	 * Every field `.catch()`es to a default, which is what makes a hand-edited or truncated URL land on
-	 * a usable page instead of a validation crash — `?page=abc` is a typo, not an error worth a screen.
-	 * The two sort enums are the backend's own vocabulary, so an unknown column never reaches the query.
-	 *
-	 * `status` is the same four-state filter the customers route carries, from the same tuple, and it
-	 * defaults to `active` because that is the state `shopOwnersActiveTbl`'s own argument defaults answer
-	 * with (ADR-049).
-	 */
-	const shopOwnersSearchSchema = z.object({
-		page: z.coerce.number().int().min(1).catch(1),
-		pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
-		search: z.string().catch(''),
-		status: z.enum(ACCOUNT_STATUSES).catch('active'),
-		sortBy: z.enum(['LAST_NAME', 'FIRST_NAME', 'REGISTERED_AT', 'CITY']).catch('LAST_NAME'),
-		sortDir: z.enum(['ASC', 'DESC']).catch('ASC')
-	})
+  /**
+   * The shopOwners table state, as URL search params.
+   *
+   * Every field `.catch()`es to a default, which is what makes a hand-edited or truncated URL land on
+   * a usable page instead of a validation crash — `?page=abc` is a typo, not an error worth a screen.
+   * The two sort enums are the backend's own vocabulary, so an unknown column never reaches the query.
+   *
+   * `status` is the same four-state filter the customers route carries, from the same tuple, and it
+   * defaults to `active` because that is the state `shopOwnersActiveTbl`'s own argument defaults answer
+   * with (ADR-049).
+   */
+  const shopOwnersSearchSchema = z.object({
+    page: z.coerce.number().int().min(1).catch(1),
+    pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
+    search: z.string().catch(''),
+    status: z.enum(ACCOUNT_STATUSES).catch('active'),
+    sortBy: z.enum(['LAST_NAME', 'FIRST_NAME', 'REGISTERED_AT', 'CITY']).catch('LAST_NAME'),
+    sortDir: z.enum(['ASC', 'DESC']).catch('ASC')
+  })
 
-	/**
-	 * The customers table state, as URL search params.
-	 *
-	 * ⚠️ **No `search` and no `sortBy`**, and neither is an omission: on `user` every field a search could
-	 * match is encrypted and the sort enum has exactly one member. A URL that carried either would be a URL
-	 * promising an ordering or a filter the service cannot answer.
-	 *
-	 * `status` is the screen's own vocabulary rather than the backend's, because the backend has no
-	 * "either" state — `disabled` and `deleted` are two required booleans there, and this is the one name
-	 * for each of the four pairs the admin picks between. `active` is what an arriving admin sees, which
-	 * is the answer `usersActiveTbl`'s own defaults give.
-	 *
-	 * ⚠️ Read off `ACCOUNT_STATUSES` rather than written out, so the URL can never accept a name no
-	 * dropdown offers and can never refuse one it does — a fifth state is one entry in `accountStatus.ts`.
-	 */
-	const customersSearchSchema = z.object({
-		page: z.coerce.number().int().min(1).catch(1),
-		pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
-		status: z.enum(ACCOUNT_STATUSES).catch('active'),
-		sortDir: z.enum(['ASC', 'DESC']).catch('DESC')
-	})
+  /**
+   * The customers table state, as URL search params.
+   *
+   * ⚠️ **No `search` and no `sortBy`**, and neither is an omission: on `user` every field a search could
+   * match is encrypted and the sort enum has exactly one member. A URL that carried either would be a URL
+   * promising an ordering or a filter the service cannot answer.
+   *
+   * `status` is the screen's own vocabulary rather than the backend's, because the backend has no
+   * "either" state — `disabled` and `deleted` are two required booleans there, and this is the one name
+   * for each of the four pairs the admin picks between. `active` is what an arriving admin sees, which
+   * is the answer `usersActiveTbl`'s own defaults give.
+   *
+   * ⚠️ Read off `ACCOUNT_STATUSES` rather than written out, so the URL can never accept a name no
+   * dropdown offers and can never refuse one it does — a fifth state is one entry in `accountStatus.ts`.
+   */
+  const customersSearchSchema = z.object({
+    page: z.coerce.number().int().min(1).catch(1),
+    pageSize: z.coerce.number().int().min(5).max(100).catch(DEFAULT_PAGE_SIZE),
+    status: z.enum(ACCOUNT_STATUSES).catch('active'),
+    sortDir: z.enum(['ASC', 'DESC']).catch('DESC')
+  })
 
-	/**
-	 * Which account the session console is looking at, as URL search params.
-	 *
-	 * ⚠️ `accountId` defaults to the **empty string**, and the console reads that as "ask nothing yet". An
-	 * id is a lookup key over a Redis keyspace, so a partial or absent one is a perfectly valid query that
-	 * answers "no sessions" — which reads exactly like a clean account. Opening the page on that answer for
-	 * nobody at all is the one wrong thing this screen could do.
-	 *
-	 * The tier is the backend's own vocabulary, `.catch()`ing to `shopOwner` because that is the tier an
-	 * admin is looking at when they have a ticket. A fifth tier is a fifth collection and a fifth service
-	 * pair (ADR-002); it is added here as well as to `GraphQLTier` on the service.
-	 */
-	const securitySearchSchema = z.object({
-		tier: z.enum(['admin', 'shopOwner', 'user']).catch('shopOwner'),
-		accountId: z.string().catch('')
-	})
+  /**
+   * Which account the session console is looking at, as URL search params.
+   *
+   * ⚠️ `accountId` defaults to the **empty string**, and the console reads that as "ask nothing yet". An
+   * id is a lookup key over a Redis keyspace, so a partial or absent one is a perfectly valid query that
+   * answers "no sessions" — which reads exactly like a clean account. Opening the page on that answer for
+   * nobody at all is the one wrong thing this screen could do.
+   *
+   * The tier is the backend's own vocabulary, `.catch()`ing to `shopOwner` because that is the tier an
+   * admin is looking at when they have a ticket. A fifth tier is a fifth collection and a fifth service
+   * pair (ADR-002); it is added here as well as to `GraphQLTier` on the service.
+   */
+  const securitySearchSchema = z.object({
+    tier: z.enum(['admin', 'shopOwner', 'user']).catch('shopOwner'),
+    accountId: z.string().catch('')
+  })
 
-	const loadingSearchSchema = z.object({
-		/** Where to go once the session is restored. Validated at use — see `safeRedirect` in LoadingPage. */
-		redirect: z.string().optional().catch(undefined)
-	})
+  const loadingSearchSchema = z.object({
+    /** Where to go once the session is restored. Validated at use — see `safeRedirect` in LoadingPage. */
+    redirect: z.string().optional().catch(undefined)
+  })
 
-	/**
-	 * `validateSearch` is given as a function taking `Record<string, unknown>`, not as the zod schema
-	 * itself, and that is a type decision rather than a style one.
-	 *
-	 * TanStack Router works out which search params a `<Link>` is *required* to supply from the input
-	 * type of `validateSearch`. Handing it the schema makes every key required at every call site — even
-	 * though each one `.catch()`es to a default and the route is perfectly happy with none of them — so
-	 * `<Link to="/p/shopOwners/manage-shopOwners">` would not compile without spelling out all
-	 * five.
-	 *
-	 * The `& SearchSchemaInput` marker is how the router is told to read the parameter type as the
-	 * *input* side and the return type as the output side, rather than inferring one from the other. The
-	 * input is an index signature — "any query string is acceptable", which is exactly what the
-	 * `.catch()` chain guarantees — while the parsed output type stays fully specific.
-	 */
-	const validateShopOwnersSearch = (
-		search: Record<string, unknown> & SearchSchemaInput
-	): z.infer<typeof shopOwnersSearchSchema> => shopOwnersSearchSchema.parse(search)
+  /**
+   * `validateSearch` is given as a function taking `Record<string, unknown>`, not as the zod schema
+   * itself, and that is a type decision rather than a style one.
+   *
+   * TanStack Router works out which search params a `<Link>` is *required* to supply from the input
+   * type of `validateSearch`. Handing it the schema makes every key required at every call site — even
+   * though each one `.catch()`es to a default and the route is perfectly happy with none of them — so
+   * `<Link to="/p/shopOwners/manage-shopOwners">` would not compile without spelling out all
+   * five.
+   *
+   * The `& SearchSchemaInput` marker is how the router is told to read the parameter type as the
+   * *input* side and the return type as the output side, rather than inferring one from the other. The
+   * input is an index signature — "any query string is acceptable", which is exactly what the
+   * `.catch()` chain guarantees — while the parsed output type stays fully specific.
+   */
+  const validateShopOwnersSearch = (
+    search: Record<string, unknown> & SearchSchemaInput
+  ): z.infer<typeof shopOwnersSearchSchema> => shopOwnersSearchSchema.parse(search)
 
-	const validateCustomersSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof customersSearchSchema> =>
-		customersSearchSchema.parse(search)
+  const validateCustomersSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof customersSearchSchema> =>
+    customersSearchSchema.parse(search)
 
-	const validateLoadingSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof loadingSearchSchema> =>
-		loadingSearchSchema.parse(search)
+  const validateLoadingSearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof loadingSearchSchema> =>
+    loadingSearchSchema.parse(search)
 
-	const validateSecuritySearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof securitySearchSchema> =>
-		securitySearchSchema.parse(search)
+  const validateSecuritySearch = (search: Record<string, unknown> & SearchSchemaInput): z.infer<typeof securitySearchSchema> =>
+    securitySearchSchema.parse(search)
 
-	// No `component`: a route without one renders an `<Outlet/>`, which is all the root has to do.
-	const rootRoute = createRootRoute()
+  // No `component`: a route without one renders an `<Outlet/>`, which is all the root has to do.
+  const rootRoute = createRootRoute()
 
-	const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: LoginPage })
+  const loginRoute = createRoute({ getParentRoute: () => rootRoute, path: '/', component: LoginPage })
 
-	const loadingRoute = createRoute({
-		getParentRoute: () => rootRoute,
-		path: '/loading',
-		validateSearch: validateLoadingSearch,
-		component: LoadingRoute
-	})
+  const loadingRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/loading',
+    validateSearch: validateLoadingSearch,
+    component: LoadingRoute
+  })
 
-	/**
-	 * The authenticated frame. Pathless (`id`, not `path`), so `/home` stays `/home` while still
-	 * rendering inside the sidebar layout, and so the guard below covers every page under it without
-	 * repetition.
-	 *
-	 * The guard is a redirect to `/loading`, not to `/`. An empty session means one of two things — never
-	 * signed in, or signed in and reloaded — and only `/loading` can tell them apart, because only a
-	 * round-trip to the backend can say whether the httpOnly refresh cookie is still good.
-	 */
-	const appRoute = createRoute({
-		getParentRoute: () => rootRoute,
-		id: 'app',
-		component: AppShell,
-		beforeLoad: ({ location }) => {
-			if (getSession() === null) throw redirect({ to: '/loading', search: { redirect: location.href } })
-		}
-	})
+  /**
+   * The authenticated frame. Pathless (`id`, not `path`), so `/home` stays `/home` while still
+   * rendering inside the sidebar layout, and so the guard below covers every page under it without
+   * repetition.
+   *
+   * The guard is a redirect to `/loading`, not to `/`. An empty session means one of two things — never
+   * signed in, or signed in and reloaded — and only `/loading` can tell them apart, because only a
+   * round-trip to the backend can say whether the httpOnly refresh cookie is still good.
+   */
+  const appRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: 'app',
+    component: AppShell,
+    beforeLoad: ({ location }) => {
+      if (getSession() === null) throw redirect({ to: '/loading', search: { redirect: location.href } })
+    }
+  })
 
-	const homeRoute = createRoute({ getParentRoute: () => appRoute, path: '/home', component: HomePage })
+  const homeRoute = createRoute({ getParentRoute: () => appRoute, path: '/home', component: HomePage })
 
-	const settingsRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/settings',
-		component: SettingsPage
-	})
+  const settingsRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/settings',
+    component: SettingsPage
+  })
 
-	const securityRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/security',
-		validateSearch: validateSecuritySearch,
-		component: SecurityRoute
-	})
+  const securityRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/security',
+    validateSearch: validateSecuritySearch,
+    component: SecurityRoute
+  })
 
-	const shopOwnersRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/shopOwners',
-		component: ShopOwnersPage
-	})
+  const shopOwnersRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/shopOwners',
+    component: ShopOwnersPage
+  })
 
-	// A section of its own at the top level, not a page under `/p/shopOwners/…`: a customer belongs to the
-	// platform rather than to a shop, and there is no shop-owner page they are reached from.
-	const customersRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/customers',
-		validateSearch: validateCustomersSearch,
-		component: CustomersRoute
-	})
+  // A section of its own at the top level, not a page under `/p/shopOwners/…`: a customer belongs to the
+  // platform rather than to a shop, and there is no shop-owner page they are reached from.
+  const customersRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/customers',
+    validateSearch: validateCustomersSearch,
+    component: CustomersRoute
+  })
 
-	// No search params: the taxonomy is two levels deep and unpaged, so there is no page, no sort and no
-	// filter for a URL to carry — the whole list is what the screen edits.
-	const categoriesRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/categories',
-		component: CategoriesPage
-	})
+  // No search params: the taxonomy is two levels deep and unpaged, so there is no page, no sort and no
+  // filter for a URL to carry — the whole list is what the screen edits.
+  const categoriesRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/categories',
+    component: CategoriesPage
+  })
 
-	const manageShopOwnersRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/p/shopOwners/manage-shopOwners',
-		validateSearch: validateShopOwnersSearch,
-		component: ManageShopOwnersRoute
-	})
+  const manageShopOwnersRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/p/shopOwners/manage-shopOwners',
+    validateSearch: validateShopOwnersSearch,
+    component: ManageShopOwnersRoute
+  })
 
-	const addShopOwnerRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/p/shopOwners/add-shopOwner',
-		component: AddShopOwnerPage
-	})
+  const addShopOwnerRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/p/shopOwners/add-shopOwner',
+    component: AddShopOwnerPage
+  })
 
-	const shopOwnerDetailRoute = createRoute({
-		getParentRoute: () => appRoute,
-		path: '/p/shopOwners/id/$_id',
-		component: ShopOwnerDetailRoute
-	})
+  const shopOwnerDetailRoute = createRoute({
+    getParentRoute: () => appRoute,
+    path: '/p/shopOwners/id/$_id',
+    component: ShopOwnerDetailRoute
+  })
 
-	/*
-	 * The five components below are function declarations, not arrow constants, so they can be named in
-	 * the route definitions above while reading their own route's hooks below. They are the only place
-	 * the URL is turned into props; the pages themselves stay pure and render from props alone.
-	 */
+  /*
+   * The five components below are function declarations, not arrow constants, so they can be named in
+   * the route definitions above while reading their own route's hooks below. They are the only place
+   * the URL is turned into props; the pages themselves stay pure and render from props alone.
+   */
 
-	function LoadingRoute() {
-		const { redirect: target } = loadingRoute.useSearch()
-		return <LoadingPage redirect={target} />
-	}
+  function LoadingRoute() {
+    const { redirect: target } = loadingRoute.useSearch()
+    return <LoadingPage redirect={target} />
+  }
 
-	function ManageShopOwnersRoute() {
-		const query = manageShopOwnersRoute.useSearch()
-		const navigate = manageShopOwnersRoute.useNavigate()
+  function ManageShopOwnersRoute() {
+    const query = manageShopOwnersRoute.useSearch()
+    const navigate = manageShopOwnersRoute.useNavigate()
 
-		// Not memoised. `TblShopOwners` does list this callback among the dependencies of the effect
-		// that pushes the debounced search up, so a fresh identity per render re-runs that effect — but
-		// the effect's own guard (`debouncedSearch !== query.search`) is false on every run after the
-		// first, so it re-runs and does nothing. A `useCallback` would trade that for a dependency array
-		// whose only entry is stable for the life of the router, which is no trade at all.
-		const onQueryChange = (next: Partial<ShopOwnersQuery>) => {
-			void navigate({ search: (prev) => ({ ...prev, ...next }) })
-		}
+    // Not memoised. `TblShopOwners` does list this callback among the dependencies of the effect
+    // that pushes the debounced search up, so a fresh identity per render re-runs that effect — but
+    // the effect's own guard (`debouncedSearch !== query.search`) is false on every run after the
+    // first, so it re-runs and does nothing. A `useCallback` would trade that for a dependency array
+    // whose only entry is stable for the life of the router, which is no trade at all.
+    const onQueryChange = (next: Partial<ShopOwnersQuery>) => {
+      void navigate({ search: (prev) => ({ ...prev, ...next }) })
+    }
 
-		return <ManageShopOwnersPage query={query} onQueryChange={onQueryChange} />
-	}
+    return <ManageShopOwnersPage query={query} onQueryChange={onQueryChange} />
+  }
 
-	function CustomersRoute() {
-		const query = customersRoute.useSearch()
-		const navigate = customersRoute.useNavigate()
+  function CustomersRoute() {
+    const query = customersRoute.useSearch()
+    const navigate = customersRoute.useNavigate()
 
-		const onQueryChange = (next: Partial<CustomersQuery>) => {
-			void navigate({ search: (prev) => ({ ...prev, ...next }) })
-		}
+    const onQueryChange = (next: Partial<CustomersQuery>) => {
+      void navigate({ search: (prev) => ({ ...prev, ...next }) })
+    }
 
-		return <CustomersPage query={query} onQueryChange={onQueryChange} />
-	}
+    return <CustomersPage query={query} onQueryChange={onQueryChange} />
+  }
 
-	/*
-	 * A replacement rather than a merge: the console's form submits both fields at once, and carrying an
-	 * old `accountId` forward under a newly chosen tier would look up an id in a keyspace it does not
-	 * belong to — a confident "no sessions" for an account that has several.
-	 */
-	function SecurityRoute() {
-		const query = securityRoute.useSearch()
-		const navigate = securityRoute.useNavigate()
+  /*
+   * A replacement rather than a merge: the console's form submits both fields at once, and carrying an
+   * old `accountId` forward under a newly chosen tier would look up an id in a keyspace it does not
+   * belong to — a confident "no sessions" for an account that has several.
+   */
+  function SecurityRoute() {
+    const query = securityRoute.useSearch()
+    const navigate = securityRoute.useNavigate()
 
-		return (
-			<SecurityPage
-				query={query}
-				onQueryChange={(next) => {
-					void navigate({ search: () => next })
-				}}
-			/>
-		)
-	}
+    return (
+      <SecurityPage
+        query={query}
+        onQueryChange={(next) => {
+          void navigate({ search: () => next })
+        }}
+      />
+    )
+  }
 
-	function ShopOwnerDetailRoute() {
-		const { _id } = shopOwnerDetailRoute.useParams()
-		return <ShopOwnerDetailPage idShopOwner={_id} />
-	}
+  function ShopOwnerDetailRoute() {
+    const { _id } = shopOwnerDetailRoute.useParams()
+    return <ShopOwnerDetailPage idShopOwner={_id} />
+  }
 
-	return rootRoute.addChildren([
-		loginRoute,
-		loadingRoute,
-		appRoute.addChildren([
-			homeRoute,
-			settingsRoute,
-			securityRoute,
-			shopOwnersRoute,
-			customersRoute,
-			categoriesRoute,
-			manageShopOwnersRoute,
-			addShopOwnerRoute,
-			shopOwnerDetailRoute
-		])
-	])
+  return rootRoute.addChildren([
+    loginRoute,
+    loadingRoute,
+    appRoute.addChildren([
+      homeRoute,
+      settingsRoute,
+      securityRoute,
+      shopOwnersRoute,
+      customersRoute,
+      categoriesRoute,
+      manageShopOwnersRoute,
+      addShopOwnerRoute,
+      shopOwnerDetailRoute
+    ])
+  ])
 }
 
 /**
@@ -307,10 +307,10 @@ const createAppRouteTree = () => {
  * untested. Left out, the router picks the browser history, which is what production wants.
  */
 export const createAppRouter = (history: RouterHistory = createBrowserHistory()) =>
-	createRouter({ routeTree: createAppRouteTree(), history })
+  createRouter({ routeTree: createAppRouteTree(), history })
 
 declare module '@tanstack/react-router' {
-	interface Register {
-		router: ReturnType<typeof createAppRouter>
-	}
+  interface Register {
+    router: ReturnType<typeof createAppRouter>
+  }
 }

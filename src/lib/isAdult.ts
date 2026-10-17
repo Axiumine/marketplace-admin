@@ -16,12 +16,12 @@ export const MIN_AGE = 18
  * `today`. `setUTCDate(0)` steps back to the last day of the intended month instead.
  */
 export const maxBirthDate = (today: Date): string => {
-	const month = today.getMonth()
-	const limit = new Date(Date.UTC(today.getFullYear() - MIN_AGE, month, today.getDate()))
+  const month = today.getMonth()
+  const limit = new Date(Date.UTC(today.getFullYear() - MIN_AGE, month, today.getDate()))
 
-	if (limit.getUTCMonth() !== month) limit.setUTCDate(0)
+  if (limit.getUTCMonth() !== month) limit.setUTCDate(0)
 
-	return limit.toISOString().slice(0, 10)
+  return limit.toISOString().slice(0, 10)
 }
 
 /**

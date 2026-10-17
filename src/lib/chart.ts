@@ -10,17 +10,17 @@ import type { GraphQlPeriodGranularity } from '@gql/adminResource/graphql'
 
 /** One point as the server sends it — `date` is a `YYYY-MM-DD` bucket start, UTC. */
 export interface SeriesPoint {
-	date: string
-	total: number
+  date: string
+  total: number
 }
 
 /** One bar, in viewBox units, with the value it stands for kept alongside for the tooltip. */
 export interface Bar extends SeriesPoint {
-	x: number
-	y: number
-	width: number
-	height: number
-	label: string
+  x: number
+  y: number
+  width: number
+  height: number
+  label: string
 }
 
 /*
@@ -39,10 +39,10 @@ const DAY_FORMAT = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-
  * so it would repeat on every one of ninety-odd labels to disambiguate nothing.
  */
 export const bucketLabel = (bucket: string, granularity: GraphQlPeriodGranularity): string => {
-	const date = new Date(bucket)
-	if (Number.isNaN(date.getTime())) return bucket
+  const date = new Date(bucket)
+  if (Number.isNaN(date.getTime())) return bucket
 
-	return granularity === 'MONTH' ? MONTH_FORMAT.format(date) : DAY_FORMAT.format(date)
+  return granularity === 'MONTH' ? MONTH_FORMAT.format(date) : DAY_FORMAT.format(date)
 }
 
 /**
@@ -67,29 +67,29 @@ const MIN_HEIGHT = 1
  * a failed query.
  */
 export const bars = (
-	points: readonly SeriesPoint[],
-	granularity: GraphQlPeriodGranularity,
-	width: number,
-	height: number
+  points: readonly SeriesPoint[],
+  granularity: GraphQlPeriodGranularity,
+  width: number,
+  height: number
 ): Bar[] => {
-	const max = Math.max(...points.map((p) => p.total), 1)
-	const step = width / points.length
+  const max = Math.max(...points.map((p) => p.total), 1)
+  const step = width / points.length
 
-	return points.map((point, i) => {
-		const alta = Math.max((point.total / max) * height, MIN_HEIGHT)
+  return points.map((point, i) => {
+    const alta = Math.max((point.total / max) * height, MIN_HEIGHT)
 
-		return {
-			...point,
-			x: i * step,
-			// SVG's origin is top-left, so a bar grows upwards by starting lower: the taller it is, the
-			// smaller its `y`. Getting this the wrong way round hangs every bar from the ceiling, which
-			// still looks like a chart.
-			y: height - alta,
-			width: step,
-			height: alta,
-			label: bucketLabel(point.date, granularity)
-		}
-	})
+    return {
+      ...point,
+      x: i * step,
+      // SVG's origin is top-left, so a bar grows upwards by starting lower: the taller it is, the
+      // smaller its `y`. Getting this the wrong way round hangs every bar from the ceiling, which
+      // still looks like a chart.
+      y: height - alta,
+      width: step,
+      height: alta,
+      label: bucketLabel(point.date, granularity)
+    }
+  })
 }
 
 /**
@@ -100,7 +100,7 @@ export const bars = (
  * unreachable — nothing could ever exercise it, so nothing could ever hold it in place either.
  */
 export const bounds = (bars: readonly Bar[]): string[] =>
-	bars.filter((_, i) => i === 0 || i === bars.length - 1).map((b) => b.label)
+  bars.filter((_, i) => i === 0 || i === bars.length - 1).map((b) => b.label)
 
 /** The headline the chart sits under: how many registered across the whole range. */
 export const seriesTotal = (points: readonly SeriesPoint[]): number => points.reduce((sum, p) => sum + p.total, 0)

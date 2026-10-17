@@ -33,12 +33,12 @@ import { clearSession } from '@/auth/session'
  * caller no obligation to keep it stable.
  */
 export const useLogout = (): (() => Promise<void>) => {
-	const [, executeLogout] = useMutation(LogoutDocument)
+  const [, executeLogout] = useMutation(LogoutDocument)
 
-	return async () => {
-		await executeLogout({}, CTX_LOGOUT)
-		clearAccessToken()
-		clearSession()
-		window.location.assign('/')
-	}
+  return async () => {
+    await executeLogout({}, CTX_LOGOUT)
+    clearAccessToken()
+    clearSession()
+    window.location.assign('/')
+  }
 }

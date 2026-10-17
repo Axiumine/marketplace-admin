@@ -45,8 +45,8 @@
 # that is not login / refresh / logout goes here.
 
 schema {
-	query: QueriesApi
-	mutation: MutationsApi
+  query: QueriesApi
+  mutation: MutationsApi
 }
 
 """
@@ -62,396 +62,396 @@ not a transcription error.
 scalar Date
 
 type QueriesApi {
-	"""
-	The authenticated admin's own identity, read straight out of the Redis session — no database
-	round-trip. This is the query that proves a session is live, which is what the app uses it for.
-	"""
-	infoAdminAfterLogin: GraphQLAdminInfoAfterLogin!
+  """
+  The authenticated admin's own identity, read straight out of the Redis session — no database
+  round-trip. This is the query that proves a session is live, which is what the app uses it for.
+  """
+  infoAdminAfterLogin: GraphQLAdminInfoAfterLogin!
 
-	"""
-	One page of the admin's shopOwners table. Every argument has a server-side default, so
-	`shopOwnersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
+  """
+  One page of the admin's shopOwners table. Every argument has a server-side default, so
+  `shopOwnersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
 
-	⚠️ `disabled` and `deleted` are `Boolean!` with a default rather than nullable filters, so every page
-	names one state of each and the query stays on one of the four `tbl_active_*` indexes — every one of
-	them leads with `{deleted, disabled}`, so an unbound leading field costs the index for the sort as
-	well as for the filter. Their four combinations are the four account states the screen offers
-	(ADR-049), and the fourth is not a curiosity: `shopOwnerDel` stamps `deleted` and leaves the
-	suspension trio exactly as it found it, so an account suspended and then closed carries both.
+  ⚠️ `disabled` and `deleted` are `Boolean!` with a default rather than nullable filters, so every page
+  names one state of each and the query stays on one of the four `tbl_active_*` indexes — every one of
+  them leads with `{deleted, disabled}`, so an unbound leading field costs the index for the sort as
+  well as for the filter. Their four combinations are the four account states the screen offers
+  (ADR-049), and the fourth is not a curiosity: `shopOwnerDel` stamps `deleted` and leaves the
+  suspension trio exactly as it found it, so an account suspended and then closed carries both.
 
-	`search` is a case-insensitive prefix over the first name, the last name and the city. It is legal
-	here and refused on the customer table, where all three are ciphertext.
-	"""
-	shopOwnersActiveTbl(
-		offset: Int! = 0
-		limit: Int! = 25
-		disabled: Boolean! = false
-		deleted: Boolean! = false
-		search: String
-		sortBy: GraphQLShopOwnersTblSortField! = REGISTERED_AT
-		sortDir: GraphQLSortDirection! = DESC
-	): GraphQLShopOwnersActiveTblPage!
+  `search` is a case-insensitive prefix over the first name, the last name and the city. It is legal
+  here and refused on the customer table, where all three are ciphertext.
+  """
+  shopOwnersActiveTbl(
+    offset: Int! = 0
+    limit: Int! = 25
+    disabled: Boolean! = false
+    deleted: Boolean! = false
+    search: String
+    sortBy: GraphQLShopOwnersTblSortField! = REGISTERED_AT
+    sortDir: GraphQLSortDirection! = DESC
+  ): GraphQLShopOwnersActiveTblPage!
 
-	"""
-	Headline count of shopOwners. Unfiltered — this is NOT `total` from the table page, which is the
-	size of the searched set and changes as the admin types.
-	"""
-	shopOwnersStats: Int!
+  """
+  Headline count of shopOwners. Unfiltered — this is NOT `total` from the table page, which is the
+  size of the searched set and changes as the admin types.
+  """
+  shopOwnersStats: Int!
 
-	"""
-	The shopOwners-over-time series behind the stats chart. Unfiltered on the same terms as
-	`shopOwnersStats`, so the points sum to that number.
+  """
+  The shopOwners-over-time series behind the stats chart. Unfiltered on the same terms as
+  `shopOwnersStats`, so the points sum to that number.
 
-	`granularity` is a RESPONSE field, not an argument: the bucket width is a consequence of the range,
-	so `ALL` answers one point per month and the two bounded ranges one per day. A client able to ask
-	for day buckets over the whole life of the platform would be asking for a point per day since it
-	opened. Buckets are UTC, and a month bucket is stamped with its own first day — `data` is
-	`YYYY-MM-DD` in both granularities.
-	"""
-	shopOwnersPerPeriod(period: GraphQLShopOwnersPeriod! = ALL): GraphQLShopOwnersPerPeriod!
+  `granularity` is a RESPONSE field, not an argument: the bucket width is a consequence of the range,
+  so `ALL` answers one point per month and the two bounded ranges one per day. A client able to ask
+  for day buckets over the whole life of the platform would be asking for a point per day since it
+  opened. Buckets are UTC, and a month bucket is stamped with its own first day — `data` is
+  `YYYY-MM-DD` in both granularities.
+  """
+  shopOwnersPerPeriod(period: GraphQLShopOwnersPeriod! = ALL): GraphQLShopOwnersPerPeriod!
 
-	shopOwnerById(idShopOwner: ID!): GraphQLShopOwnerById!
+  shopOwnerById(idShopOwner: ID!): GraphQLShopOwnerById!
 
-	"""
-	The companies belonging to one shopOwner. Filtered on `idShopOwner` **and** on `deleted`, like
-	the shops: since `companyDel` became a soft delete the collection does have a deleted-but-present
-	state, and a retired company left in this list would be offered by the shop form's picker and then
-	refused by the write.
-	"""
-	shopOwnerCompanies(idShopOwner: ID!): [GraphQLCompany!]!
+  """
+  The companies belonging to one shopOwner. Filtered on `idShopOwner` **and** on `deleted`, like
+  the shops: since `companyDel` became a soft delete the collection does have a deleted-but-present
+  state, and a retired company left in this list would be offered by the shop form's picker and then
+  refused by the write.
+  """
+  shopOwnerCompanies(idShopOwner: ID!): [GraphQLCompany!]!
 
-	"""
-	The cookie-signing key set as it stands right now, plus which services have read it and are signing
-	with what they read. No arguments, and in particular no `version`: this reads the live record, and
-	the platform keeps no older one to ask for.
+  """
+  The cookie-signing key set as it stands right now, plus which services have read it and are signing
+  with what they read. No arguments, and in particular no `version`: this reads the live record, and
+  the platform keeps no older one to ask for.
 
-	⚠️ Nothing here is key material and nothing here ever may be — the ids are counters, `createdAt` is
-	a date and the fingerprint is a sha256 over the ordered ids. See the note on
-	`GraphQLKeygripStatus`.
-	"""
-	keygripStatus: GraphQLKeygripStatus!
+  ⚠️ Nothing here is key material and nothing here ever may be — the ids are counters, `createdAt` is
+  a date and the fingerprint is a sha256 over the ordered ids. See the note on
+  `GraphQLKeygripStatus`.
+  """
+  keygripStatus: GraphQLKeygripStatus!
 
-	"""
-	The live sessions one account is holding, newest login first.
+  """
+  The live sessions one account is holding, newest login first.
 
-	Both halves of the account, always: ids come from three separate collections and nothing stops two of
-	them minting the same `ObjectId`, so a query by id alone could list — and then end — a stranger's
-	sessions. The tier is an enum rather than a `String` because it is a *lookup* key: a typo would
-	otherwise be a successful query over an empty keyspace, which reads exactly like a clean account.
+  Both halves of the account, always: ids come from three separate collections and nothing stops two of
+  them minting the same `ObjectId`, so a query by id alone could list — and then end — a stranger's
+  sessions. The tier is an enum rather than a `String` because it is a *lookup* key: a typo would
+  otherwise be a successful query over an empty keyspace, which reads exactly like a clean account.
 
-	⚠️ Nothing here is a credential and nothing here ever may be — see the note on `GraphQLSession`.
-	"""
-	sessions(tier: GraphQLTier!, accountId: String!): [GraphQLSession!]!
+  ⚠️ Nothing here is a credential and nothing here ever may be — see the note on `GraphQLSession`.
+  """
+  sessions(tier: GraphQLTier!, accountId: String!): [GraphQLSession!]!
 
-	"""
-	The refresh-token replays recorded against one account, newest first.
+  """
+  The refresh-token replays recorded against one account, newest first.
 
-	Bounded and expiring at the store: the newest 50 lines, kept 30 days. An account with none answers an
-	empty list, which is the ordinary case and not an error.
-	"""
-	reuseEvents(tier: GraphQLTier!, accountId: String!): [GraphQLReuseEvent!]!
+  Bounded and expiring at the store: the newest 50 lines, kept 30 days. An account with none answers an
+  empty list, which is the ordinary case and not an error.
+  """
+  reuseEvents(tier: GraphQLTier!, accountId: String!): [GraphQLReuseEvent!]!
 
-	"""
-	The whole live taxonomy, flat, sorted by `position` then `_id`.
+  """
+  The whole live taxonomy, flat, sorted by `position` then `_id`.
 
-	No arguments and no paging: an admin is the only writer, so the list is bounded by hand, and the
-	screen needs every category at once to draw each parent with its own children under it. The `_id`
-	tiebreak is not decoration — `position` is not unique, so without it two categories sharing one swap
-	places between reads and the screen reorders itself for no reason.
+  No arguments and no paging: an admin is the only writer, so the list is bounded by hand, and the
+  screen needs every category at once to draw each parent with its own children under it. The `_id`
+  tiebreak is not decoration — `position` is not unique, so without it two categories sharing one swap
+  places between reads and the screen reorders itself for no reason.
 
-	Flat rather than nested because the depth cap is two: the client groups by `idParent` in one pass,
-	and a recursive GraphQL type would outlive the cap it was shaped around.
+  Flat rather than nested because the depth cap is two: the client groups by `idParent` in one pass,
+  and a recursive GraphQL type would outlive the cap it was shaped around.
 
-	⚠️ The same query exists on the ShopOwner tier and answers the same documents. This is the only tier
-	that may write one.
-	"""
-	itemCategories: [GraphQLItemCategory!]!
+  ⚠️ The same query exists on the ShopOwner tier and answers the same documents. This is the only tier
+  that may write one.
+  """
+  itemCategories: [GraphQLItemCategory!]!
 
-	"""
-	One page of the admin's customers table. Every argument has a server-side default, so
-	`usersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
+  """
+  One page of the admin's customers table. Every argument has a server-side default, so
+  `usersActiveTbl { … }` with no arguments is a legal first page: the live, enabled accounts.
 
-	⚠️ **There is no `search` argument, and there will not be one.** Every field a search could match on
-	`user` — the two names, the city, a partial email — is encrypted, randomly for all but the login
-	address (ADR-029). A regex over random ciphertext compares against base64 and answers zero rows
-	without erroring, which looks like a customer base with nobody in it.
+  ⚠️ **There is no `search` argument, and there will not be one.** Every field a search could match on
+  `user` — the two names, the city, a partial email — is encrypted, randomly for all but the login
+  address (ADR-029). A regex over random ciphertext compares against base64 and answers zero rows
+  without erroring, which looks like a customer base with nobody in it.
 
-	⚠️ `disabled` and `deleted` are `Boolean!` with a default rather than nullable filters, so every page
-	names one state of each and the query stays on the `tbl_active_registeredAt` index. There is no
-	"either" state to ask for, which is why the screen carries a status filter rather than a checkbox:
-	suspending a customer moves the row to another page instead of changing it in place. `emailVerified`
-	is nullable because it sits outside that index and only narrows what the index already bounded.
-	"""
-	usersActiveTbl(
-		offset: Int! = 0
-		limit: Int! = 25
-		disabled: Boolean! = false
-		deleted: Boolean! = false
-		emailVerified: Boolean
-		sortBy: GraphQLUsersTblSortField! = REGISTERED_AT
-		sortDir: GraphQLSortDirection! = DESC
-	): GraphQLUsersActiveTblPage!
+  ⚠️ `disabled` and `deleted` are `Boolean!` with a default rather than nullable filters, so every page
+  names one state of each and the query stays on the `tbl_active_registeredAt` index. There is no
+  "either" state to ask for, which is why the screen carries a status filter rather than a checkbox:
+  suspending a customer moves the row to another page instead of changing it in place. `emailVerified`
+  is nullable because it sits outside that index and only narrows what the index already bounded.
+  """
+  usersActiveTbl(
+    offset: Int! = 0
+    limit: Int! = 25
+    disabled: Boolean! = false
+    deleted: Boolean! = false
+    emailVerified: Boolean
+    sortBy: GraphQLUsersTblSortField! = REGISTERED_AT
+    sortDir: GraphQLSortDirection! = DESC
+  ): GraphQLUsersActiveTblPage!
 
-	"""
-	Headline count of customers. Unfiltered — every account ever registered, including the disabled and
-	the soft-deleted — and so NOT `total` from `usersActiveTbl`, which is the size of one filtered page's
-	set and moves with the status filter.
+  """
+  Headline count of customers. Unfiltered — every account ever registered, including the disabled and
+  the soft-deleted — and so NOT `total` from `usersActiveTbl`, which is the size of one filtered page's
+  set and moves with the status filter.
 
-	⚠️ Countable despite ADR-029, and that is not an oversight in either direction: a count reads no
-	field at all, and the series below reads only `registeredAt`, which was never encrypted. The
-	encryption blocks searching and sorting on `user` (see `usersActiveTbl`), not counting it.
-	"""
-	usersStats: Int!
+  ⚠️ Countable despite ADR-029, and that is not an oversight in either direction: a count reads no
+  field at all, and the series below reads only `registeredAt`, which was never encrypted. The
+  encryption blocks searching and sorting on `user` (see `usersActiveTbl`), not counting it.
+  """
+  usersStats: Int!
 
-	"""
-	The customers-over-time series behind the customers chart. Unfiltered on the same terms as
-	`usersStats`, so the points sum to that number.
+  """
+  The customers-over-time series behind the customers chart. Unfiltered on the same terms as
+  `usersStats`, so the points sum to that number.
 
-	Same contract as `shopOwnersPerPeriod`, field for field: `granularity` is a RESPONSE field because
-	the bucket width is a consequence of the range, `ALL` answers one point per month and the two
-	bounded ranges one per day, buckets are UTC, and `date` is `YYYY-MM-DD` in both granularities. The
-	service shares one library between the two series, so they cannot drift in arithmetic — only in
-	which collection they count.
-	"""
-	usersPerPeriod(period: GraphQLUsersPeriod! = ALL): GraphQLUsersPerPeriod!
+  Same contract as `shopOwnersPerPeriod`, field for field: `granularity` is a RESPONSE field because
+  the bucket width is a consequence of the range, `ALL` answers one point per month and the two
+  bounded ranges one per day, buckets are UTC, and `date` is `YYYY-MM-DD` in both granularities. The
+  service shares one library between the two series, so they cannot drift in arithmetic — only in
+  which collection they count.
+  """
+  usersPerPeriod(period: GraphQLUsersPeriod! = ALL): GraphQLUsersPerPeriod!
 }
 
 type MutationsApi {
-	"""
-	Changes the authenticated admin's OWN password. There is deliberately no `_id` argument: the
-	account is taken from the Redis session, because every admin authenticates against the same
-	collection and the platform has no role field that could tell one from another. Answers 401 for a
-	wrong old password, a disabled/deleted account, or a session naming an account that no longer
-	exists — all four indistinguishable on purpose. 400 if the new password is outside 10..72
-	characters or equal to the old one.
-	"""
-	adminUpdatePwd(passwordOld: String!, passwordNew: String!): Boolean!
+  """
+  Changes the authenticated admin's OWN password. There is deliberately no `_id` argument: the
+  account is taken from the Redis session, because every admin authenticates against the same
+  collection and the platform has no role field that could tell one from another. Answers 401 for a
+  wrong old password, a disabled/deleted account, or a session naming an account that no longer
+  exists — all four indistinguishable on purpose. 400 if the new password is outside 10..72
+  characters or equal to the old one.
+  """
+  adminUpdatePwd(passwordOld: String!, passwordNew: String!): Boolean!
 
-	shopOwnerAdd(login: GraphQLInputLogin!, personalData: GraphQLInputShopOwnerPersonalData!): Boolean!
-	shopOwnerUpdate(_id: ID!, personalData: GraphQLInputShopOwnerPersonalData!): Boolean!
-	shopOwnerDel(_id: ID!): Boolean!
+  shopOwnerAdd(login: GraphQLInputLogin!, personalData: GraphQLInputShopOwnerPersonalData!): Boolean!
+  shopOwnerUpdate(_id: ID!, personalData: GraphQLInputShopOwnerPersonalData!): Boolean!
+  shopOwnerDel(_id: ID!): Boolean!
 
-	"""
-	Changes `login.email` — the credential, not `personalData.contacts.email`. Its own mutation because it
-	is the only field on the collection with a unique index behind it: answers 409 when the address
-	already belongs to another shopOwner, 400 when it is malformed, 404 when `_id` matches nothing.
-	"""
-	shopOwnerUpdateEmail(_id: ID!, email: String!): Boolean!
+  """
+  Changes `login.email` — the credential, not `personalData.contacts.email`. Its own mutation because it
+  is the only field on the collection with a unique index behind it: answers 409 when the address
+  already belongs to another shopOwner, 400 when it is malformed, 404 when `_id` matches nothing.
+  """
+  shopOwnerUpdateEmail(_id: ID!, email: String!): Boolean!
 
-	"""
-	The disable switch and the manual-approval gate. Both flags are required: a partial update
-	cannot express turning a flag *off*, since "leave alone" and "clear it" are the same wire value.
-	`false` REMOVES the field rather than storing false — `waitApprov: { $exists: true }` is how the
-	approval queue is built.
+  """
+  The disable switch and the manual-approval gate. Both flags are required: a partial update
+  cannot express turning a flag *off*, since "leave alone" and "clear it" are the same wire value.
+  `false` REMOVES the field rather than storing false — `waitApprov: { $exists: true }` is how the
+  approval queue is built.
 
-	⚠️ **`disabledReason` is nullable on the wire and mandatory in fact** (ADR-044). It is required
-	whenever `disabled` is `true` and refused when it is `false`, which is a conditional the argument
-	type cannot state — so the service validates it (400, at most 1000 characters) and the collection
-	backs the requirement up with `dependencies: { disabled: ['disabledReason'] }`. Suspending without
-	one does not half-work: the write is refused. Releasing `$unset`s the reason with the flag and the
-	admin who set it.
-	"""
-	shopOwnerUpdateStatus(_id: ID!, disabled: Boolean!, waitApprov: Boolean!, disabledReason: String): Boolean!
+  ⚠️ **`disabledReason` is nullable on the wire and mandatory in fact** (ADR-044). It is required
+  whenever `disabled` is `true` and refused when it is `false`, which is a conditional the argument
+  type cannot state — so the service validates it (400, at most 1000 characters) and the collection
+  backs the requirement up with `dependencies: { disabled: ['disabledReason'] }`. Suspending without
+  one does not half-work: the write is refused. Releasing `$unset`s the reason with the flag and the
+  admin who set it.
+  """
+  shopOwnerUpdateStatus(_id: ID!, disabled: Boolean!, waitApprov: Boolean!, disabledReason: String): Boolean!
 
-	"""
-	The three preference fields under `login`. Opposite rule to `shopOwnerUpdateStatus`: the two
-	booleans are declared `bool` on the collection and are stored as false, while `onboardingStep` is
-	optional and is removed when blank or omitted.
-	"""
-	shopOwnerUpdatePreferences(_id: ID!, rememberMe: Boolean!, onboardingDone: Boolean!, onboardingStep: String): Boolean!
+  """
+  The three preference fields under `login`. Opposite rule to `shopOwnerUpdateStatus`: the two
+  booleans are declared `bool` on the collection and are stored as false, while `onboardingStep` is
+  optional and is removed when blank or omitted.
+  """
+  shopOwnerUpdatePreferences(_id: ID!, rememberMe: Boolean!, onboardingDone: Boolean!, onboardingStep: String): Boolean!
 
-	"""
-	The admin's note about the account, at most 2000 characters. Its own mutation because it is not
-	part of the personalData — `shopOwnerUpdate` replaces that whole sub-document, and the note sits at
-	the top level of the shopOwner. `notes` is `String!` and not nullable on purpose: the empty string
-	is how the note is cleared (the resolver turns it into an `$unset`), so a nullable argument would
-	give "leave it alone" and "remove it" the same wire value. 400 over the cap, 404 on an unknown `_id`.
-	"""
-	shopOwnerUpdateNote(_id: ID!, notes: String!): Boolean!
+  """
+  The admin's note about the account, at most 2000 characters. Its own mutation because it is not
+  part of the personalData — `shopOwnerUpdate` replaces that whole sub-document, and the note sits at
+  the top level of the shopOwner. `notes` is `String!` and not nullable on purpose: the empty string
+  is how the note is cleared (the resolver turns it into an `$unset`), so a nullable argument would
+  give "leave it alone" and "remove it" the same wire value. 400 over the cap, 404 on an unknown `_id`.
+  """
+  shopOwnerUpdateNote(_id: ID!, notes: String!): Boolean!
 
-	"""
-	Creates one company under an shopOwner. Answers 409 on either unique index (`vatNumber_unique`,
-	`certifiedEmail_unique`, both GLOBAL — one VAT number is one company, whoever registered it), 400 naming the
-	offending path, and 404 when `idShopOwner` names no shopOwner. `Boolean!`, not the new `_id`:
-	the page re-reads `shopOwnerCompanies` after a save.
+  """
+  Creates one company under an shopOwner. Answers 409 on either unique index (`vatNumber_unique`,
+  `certifiedEmail_unique`, both GLOBAL — one VAT number is one company, whoever registered it), 400 naming the
+  offending path, and 404 when `idShopOwner` names no shopOwner. `Boolean!`, not the new `_id`:
+  the page re-reads `shopOwnerCompanies` after a save.
 
-	A company has to exist before a shop can point at it, so this is the first step of adding a shop to
-	an shopOwner who has none — not a side page.
+  A company has to exist before a shop can point at it, so this is the first step of adding a shop to
+  an shopOwner who has none — not a side page.
 
-	⚠️ The company is created **unpublished**: the service stamps `published: false` and only
-	`companyUpdatePublished` ever changes it. Nothing in this app calls that mutation, so a company added
-	here stays invisible on the public site until it is published elsewhere.
-	"""
-	companyAdd(idShopOwner: ID!, company: GraphQLInputCompany!): Boolean!
+  ⚠️ The company is created **unpublished**: the service stamps `published: false` and only
+  `companyUpdatePublished` ever changes it. Nothing in this app calls that mutation, so a company added
+  here stays invisible on the public site until it is published elsewhere.
+  """
+  companyAdd(idShopOwner: ID!, company: GraphQLInputCompany!): Boolean!
 
-	"""
-	Rewrites one company's data. Same input object as `companyAdd`, minus the owner: `idShopOwner` is
-	neither an argument nor a field of `GraphQLInputCompany`, so editing a card cannot hand the company —
-	and its shops with it — to another shopOwner. Same 409 / 400, 404 when `_id` matches no company.
+  """
+  Rewrites one company's data. Same input object as `companyAdd`, minus the owner: `idShopOwner` is
+  neither an argument nor a field of `GraphQLInputCompany`, so editing a card cannot hand the company —
+  and its shops with it — to another shopOwner. Same 409 / 400, 404 when `_id` matches no company.
 
-	⚠️ It does **not** touch `published`. Saving this card cannot publish a shop and cannot take one
-	down — that is `companyUpdatePublished`, which this app does not call.
-	"""
-	companyUpdate(_id: ID!, company: GraphQLInputCompany!): Boolean!
+  ⚠️ It does **not** touch `published`. Saving this card cannot publish a shop and cannot take one
+  down — that is `companyUpdatePublished`, which this app does not call.
+  """
+  companyUpdate(_id: ID!, company: GraphQLInputCompany!): Boolean!
 
-	"""
-	Retires one company — a soft delete: the company keeps its place and gains a `deleted` instant, and every
-	read path filters on it. 404 when `_id` matches no company; a company already retired answers 200
-	again, since the `$set` still matches it.
+  """
+  Retires one company — a soft delete: the company keeps its place and gains a `deleted` instant, and every
+  read path filters on it. 404 when `_id` matches no company; a company already retired answers 200
+  again, since the `$set` still matches it.
 
-	⚠️ `vatNumber_unique` and `certifiedEmail_unique` are plain global unique indexes with no `partialFilterExpression`,
-	so a retired company keeps its VAT number occupied and the same one cannot be registered again.
-	"""
-	companyDel(_id: ID!): Boolean!
+  ⚠️ `vatNumber_unique` and `certifiedEmail_unique` are plain global unique indexes with no `partialFilterExpression`,
+  so a retired company keeps its VAT number occupied and the same one cannot be registered again.
+  """
+  companyDel(_id: ID!): Boolean!
 
-	"""
-	Mints a new cookie-signing key for the whole platform and retires the ones nothing can still be
-	signed with.
+  """
+  Mints a new cookie-signing key for the whole platform and retires the ones nothing can still be
+  signed with.
 
-	⚠️ No arguments, and in particular no key material and no version: what the new key is, and which
-	number it lands under, are decided by the service. A mutation that accepted either would let its
-	caller install a key of their choosing, which is the ability to mint a session cookie for any
-	account on the platform.
+  ⚠️ No arguments, and in particular no key material and no version: what the new key is, and which
+  number it lands under, are decided by the service. A mutation that accepted either would let its
+  caller install a key of their choosing, which is the ability to mint a session cookie for any
+  account on the platform.
 
-	`Boolean!` for the same reason — the answer is "it happened", never the keys. What an admin
-	needs afterwards is `keygripStatus`, which reads the ids and never the material. 409 when another
-	rotation swapped the record first (the Lua compare-and-set lost), 500 when this service cannot
-	unwrap the record under its own `KEYGRIP_KEK`.
-	"""
-	keygripRotate: Boolean!
+  `Boolean!` for the same reason — the answer is "it happened", never the keys. What an admin
+  needs afterwards is `keygripStatus`, which reads the ids and never the material. 409 when another
+  rotation swapped the record first (the Lua compare-and-set lost), 500 when this service cannot
+  unwrap the record under its own `KEYGRIP_KEK`.
+  """
+  keygripRotate: Boolean!
 
-	"""
-	Drops one cookie-signing key from the whole platform and signs every account out, the calling admin
-	included.
+  """
+  Drops one cookie-signing key from the whole platform and signs every account out, the calling admin
+  included.
 
-	⚠️ **It ends every live session, not only the ones the retired key signed.** Nothing records which key
-	signed which cookie, and a service that has not adopted the new key set yet still verifies what the
-	retirement was meant to kill — so the sessions go instead, and the adoption window stops mattering
-	(R47). The admin who presses it is signed out with everybody else.
+  ⚠️ **It ends every live session, not only the ones the retired key signed.** Nothing records which key
+  signed which cookie, and a service that has not adopted the new key set yet still verifies what the
+  retirement was meant to kill — so the sessions go instead, and the adoption window stops mattering
+  (R47). The admin who presses it is signed out with everybody else.
 
-	One argument, and it is an id — never key material, never a version. The id is public by construction:
-	`keygripStatus` renders it and the fingerprint is computed over the ids.
+  One argument, and it is an id — never key material, never a version. The id is public by construction:
+  `keygripStatus` renders it and the fingerprint is computed over the ids.
 
-	⚠️ **The service refuses to retire the key that is currently signing**, and the panel does not offer it
-	at all — an admin who could reach that button would be one click from invalidating every cookie on
-	the platform, including their own. 404 when no key in the record has this id, which is a real failure
-	and must be shown as one: a stale screen naming a key a rotation has already replaced would otherwise
-	read as a successful retire that did nothing.
-	"""
-	keygripRetire(id: String!): Boolean!
+  ⚠️ **The service refuses to retire the key that is currently signing**, and the panel does not offer it
+  at all — an admin who could reach that button would be one click from invalidating every cookie on
+  the platform, including their own. 404 when no key in the record has this id, which is a real failure
+  and must be shown as one: a stale screen naming a key a rotation has already replaced would otherwise
+  read as a successful retire that did nothing.
+  """
+  keygripRetire(id: String!): Boolean!
 
-	"""
-	Signs every account out again, to finish a retirement whose session sweep did not reach the whole
-	platform.
+  """
+  Signs every account out again, to finish a retirement whose session sweep did not reach the whole
+  platform.
 
-	⚠️ **The retirement is the write plus the sweep, and only the write is atomic.** The key leaves the
-	record first, so a `keygripRetire` that fails part way through the sweep cannot be retried — the second
-	attempt answers 404, correctly, because nothing is left to retire. What is left is the sweep, and the
-	sweep is safe to repeat: every account's session index is deleted last, so a second pass over an
-	interrupted account deletes nothing (R55).
+  ⚠️ **The retirement is the write plus the sweep, and only the write is atomic.** The key leaves the
+  record first, so a `keygripRetire` that fails part way through the sweep cannot be retried — the second
+  attempt answers 404, correctly, because nothing is left to retire. What is left is the sweep, and the
+  sweep is safe to repeat: every account's session index is deleted last, so a second pass over an
+  interrupted account deletes nothing (R55).
 
-	No arguments — not even the key id. This mutation reads no keygrip record and changes none, so it
-	answers neither 404 nor 409; the only sweep it can run is the whole platform, and an argument could
-	only narrow it back into the partial sweep it exists to repair.
+  No arguments — not even the key id. This mutation reads no keygrip record and changes none, so it
+  answers neither 404 nor 409; the only sweep it can run is the whole platform, and an argument could
+  only narrow it back into the partial sweep it exists to repair.
 
-	500 when the sweep could not start, and 500 again — naming how many accounts are still standing — when
-	it ran and some of them could not be reached. `true` means every account was reached, so the screen must
-	not confirm on anything else.
-	"""
-	keygripResweep: Boolean!
+  500 when the sweep could not start, and 500 again — naming how many accounts are still standing — when
+  it ran and some of them could not be reached. `true` means every account was reached, so the screen must
+  not confirm on anything else.
+  """
+  keygripResweep: Boolean!
 
-	"""
-	Ends one session of one account and stops it being listed.
+  """
+  Ends one session of one account and stops it being listed.
 
-	`id` is the row's own id from `sessions` — the digest of the session key, never a token. Answers
-	whether a *live* session was ended: a row whose session had already expired answers `false` and still
-	prunes the index, and the screen says "already ended" rather than reporting an error, because an
-	admin told "error" retries a call that has already done everything it can.
+  `id` is the row's own id from `sessions` — the digest of the session key, never a token. Answers
+  whether a *live* session was ended: a row whose session had already expired answers `false` and still
+  prunes the index, and the screen says "already ended" rather than reporting an error, because an
+  admin told "error" retries a call that has already done everything it can.
 
-	⚠️ Ends the refresh lineage. An access token already minted from it keeps working until its own short
-	expiry — the residual is real, is the same one the `disabled` flag carries, and the confirmation text
-	says so.
-	"""
-	revokeSession(tier: GraphQLTier!, accountId: String!, id: String!): Boolean!
+  ⚠️ Ends the refresh lineage. An access token already minted from it keeps working until its own short
+  expiry — the residual is real, is the same one the `disabled` flag carries, and the confirmation text
+  says so.
+  """
+  revokeSession(tier: GraphQLTier!, accountId: String!, id: String!): Boolean!
 
-	"""
-	Ends every session one account holds and answers how many there were.
+  """
+  Ends every session one account holds and answers how many there were.
 
-	⚠️ **One account, by construction — there is no "every account" form and there will not be one.** It
-	would be a single call that logs out the whole platform, and no incident this console exists for is
-	answered by it.
+  ⚠️ **One account, by construction — there is no "every account" form and there will not be one.** It
+  would be a single call that logs out the whole platform, and no incident this console exists for is
+  answered by it.
 
-	The count is what was actually revoked, never more: a login landing mid-revoke keeps its session and is
-	left out of the total rather than claimed.
-	"""
-	revokeAllSessions(tier: GraphQLTier!, accountId: String!): Int!
+  The count is what was actually revoked, never more: a login landing mid-revoke keeps its session and is
+  left out of the total rather than claimed.
+  """
+  revokeAllSessions(tier: GraphQLTier!, accountId: String!): Int!
 
-	"""
-	Creates one category, at either of the taxonomy's two levels.
+  """
+  Creates one category, at either of the taxonomy's two levels.
 
-	**Admin-only, and that is the design of the taxonomy rather than a permission choice.** Two shops
-	selling the same kind of thing have to land in the same category or the customer-facing filter means
-	nothing, so no other tier has this mutation and the collection carries no `idShopOwner`.
+  **Admin-only, and that is the design of the taxonomy rather than a permission choice.** Two shops
+  selling the same kind of thing have to land in the same category or the customer-facing filter means
+  nothing, so no other tier has this mutation and the collection carries no `idShopOwner`.
 
-	409 on the slug, which is the collection's only unique index and is unique **across both levels** —
-	`/category/:slug` and `/category/:slug/:subSlug` share one namespace of first segments. 400 naming the
-	offending path for a name, a slug or a position outside its bounds, and two more the admin can
-	reach by hand: an `idParent` that is itself a subcategory (the depth cap), and a position that is
-	not a whole number. 404 when `idParent` names no live category.
+  409 on the slug, which is the collection's only unique index and is unique **across both levels** —
+  `/category/:slug` and `/category/:slug/:subSlug` share one namespace of first segments. 400 naming the
+  offending path for a name, a slug or a position outside its bounds, and two more the admin can
+  reach by hand: an `idParent` that is itself a subcategory (the depth cap), and a position that is
+  not a whole number. 404 when `idParent` names no live category.
 
-	`Boolean!`, not the new `_id`: the screen re-reads `itemCategories` after a save.
-	"""
-	itemCategoryAdd(itemCategory: GraphQLInputItemCategory!): Boolean!
+  `Boolean!`, not the new `_id`: the screen re-reads `itemCategories` after a save.
+  """
+  itemCategoryAdd(itemCategory: GraphQLInputItemCategory!): Boolean!
 
-	"""
-	Saves one category, whole.
+  """
+  Saves one category, whole.
 
-	⚠️ **A save of the document, not a patch of it.** An omitted `idParent` means "top-level category"
-	rather than "leave the parent alone" — `funItemCategoryUpdate` `$unset`s it — which is what makes
-	promoting a subcategory back to the top level expressible at all. Send every field, not a diff.
+  ⚠️ **A save of the document, not a patch of it.** An omitted `idParent` means "top-level category"
+  rather than "leave the parent alone" — `funItemCategoryUpdate` `$unset`s it — which is what makes
+  promoting a subcategory back to the top level expressible at all. Send every field, not a diff.
 
-	Same 409 and 400 as `itemCategoryAdd`, plus the second half of the depth cap, which only this path
-	can trip: a category that already has subcategories cannot be given a parent, because every one of
-	those children would land three levels deep without a write naming them. 404 when `_id` matches no
-	category. A save that matched and changed nothing is a plain `true` — `matchedCount`, not
-	`modifiedCount`.
-	"""
-	itemCategoryUpdate(_id: ID!, itemCategory: GraphQLInputItemCategory!): Boolean!
+  Same 409 and 400 as `itemCategoryAdd`, plus the second half of the depth cap, which only this path
+  can trip: a category that already has subcategories cannot be given a parent, because every one of
+  those children would land three levels deep without a write naming them. 404 when `_id` matches no
+  category. A save that matched and changed nothing is a plain `true` — `matchedCount`, not
+  `modifiedCount`.
+  """
+  itemCategoryUpdate(_id: ID!, itemCategory: GraphQLInputItemCategory!): Boolean!
 
-	"""
-	Retires one category — a soft delete, like every other delete on this tier.
+  """
+  Retires one category — a soft delete, like every other delete on this tier.
 
-	⚠️ **Refused, not cascaded, while anything live still points at it**: 400 for a live subcategory, 400
-	for a live item. `item.idCategory` is required, so a cascade would silently withdraw an unbounded
-	number of other shop owners' items, and retiring a stocked category would leave every one of them
-	filed under something no read path returns. Re-filing them first is the admin's call to make
-	explicitly. 404 when `_id` matches no category.
-	"""
-	itemCategoryDel(_id: ID!): Boolean!
+  ⚠️ **Refused, not cascaded, while anything live still points at it**: 400 for a live subcategory, 400
+  for a live item. `item.idCategory` is required, so a cascade would silently withdraw an unbounded
+  number of other shop owners' items, and retiring a stocked category would leave every one of them
+  filed under something no read path returns. Re-filing them first is the admin's call to make
+  explicitly. 404 when `_id` matches no category.
+  """
+  itemCategoryDel(_id: ID!): Boolean!
 
-	"""
-	The customer's disable switch — the only status lever `user` has, and the only one it will get.
+  """
+  The customer's disable switch — the only status lever `user` has, and the only one it will get.
 
-	No `waitApprov` counterpart, unlike `shopOwnerUpdateStatus`: a customer registers and confirms their
-	address, and there is no manual gate between the two. `false` REMOVES the field rather than
-	storing it, so an enabled account has no `disabled` key at all.
+  No `waitApprov` counterpart, unlike `shopOwnerUpdateStatus`: a customer registers and confirms their
+  address, and there is no manual gate between the two. `false` REMOVES the field rather than
+  storing it, so an enabled account has no `disabled` key at all.
 
-	⚠️ **Suspending also ends every session the customer holds**, in the same call, and both halves of each
-	one: since R54 the access session is retired alongside the refresh lineage, so the device the customer
-	is on stops working now rather than when its token would have expired. Re-enabling ends nothing — the
-	customer simply logs in again. 404 when `_id` matches no user.
+  ⚠️ **Suspending also ends every session the customer holds**, in the same call, and both halves of each
+  one: since R54 the access session is retired alongside the refresh lineage, so the device the customer
+  is on stops working now rather than when its token would have expired. Re-enabling ends nothing — the
+  customer simply logs in again. 404 when `_id` matches no user.
 
-	⚠️ **`disabledReason` is nullable on the wire and mandatory in fact** (ADR-044): required whenever
-	`disabled` is `true`, refused when it is `false`, at most 1000 characters, and backed by the
-	collection's own `dependencies: { disabled: ['disabledReason'] }`. Suspending without one is refused
-	outright rather than stored half-done.
-	"""
-	userUpdateStatus(_id: ID!, disabled: Boolean!, disabledReason: String): Boolean!
+  ⚠️ **`disabledReason` is nullable on the wire and mandatory in fact** (ADR-044): required whenever
+  `disabled` is `true`, refused when it is `false`, at most 1000 characters, and backed by the
+  collection's own `dependencies: { disabled: ['disabledReason'] }`. Suspending without one is refused
+  outright rather than stored half-done.
+  """
+  userUpdateStatus(_id: ID!, disabled: Boolean!, disabledReason: String): Boolean!
 }
 
 type GraphQLAdminInfoAfterLogin {
-	_id: ID!
-	email: String!
+  _id: ID!
+  email: String!
 }
 
 """
@@ -467,10 +467,10 @@ ids, which is what makes publishing it harmless. Together they are how an admin 
 apart without seeing either.
 """
 type GraphQLKeygripStatus {
-	version: Int!
-	fingerprint: String!
-	keys: [GraphQLKeygripKeyInfo!]!
-	holders: [GraphQLKeygripHolder!]!
+  version: Int!
+  fingerprint: String!
+  keys: [GraphQLKeygripKeyInfo!]!
+  holders: [GraphQLKeygripHolder!]!
 }
 
 """
@@ -483,9 +483,9 @@ different instant under any cadence faster than monthly (ADR-034, amended 2026-0
 stamp on the wire either way.
 """
 type GraphQLKeygripKeyInfo {
-	id: String!
-	createdAt: String!
-	ageDays: Int!
+  id: String!
+  createdAt: String!
+  ageDays: Int!
 }
 
 """
@@ -497,10 +497,10 @@ cannot be a rotation apart. A row is absent rather than `current: false` once it
 heartbeating for an hour — absent and stale mean different things: gone, versus here and behind.
 """
 type GraphQLKeygripHolder {
-	service: String!
-	fingerprint: String!
-	lastSeen: String!
-	current: Boolean!
+  service: String!
+  fingerprint: String!
+  lastSeen: String!
+  current: Boolean!
 }
 
 """
@@ -513,9 +513,9 @@ index key: a value the service did not know would name a key that has never exis
 answer "no sessions" for an account holding several.
 """
 enum GraphQLTier {
-	admin
-	shopOwner
-	user
+  admin
+  shopOwner
+  user
 }
 
 """
@@ -531,14 +531,14 @@ attributable"; a case for it would reverse that ruling by accident and would nee
 decision.
 """
 enum GraphQLReuseEventAction {
-	"""
-	A consumed refresh token was presented again, past the grace window.
-	"""
-	refreshTokenReplayed
-	"""
-	The session reached its absolute age cap, measured from the login it descends from.
-	"""
-	sessionCapReached
+  """
+  A consumed refresh token was presented again, past the grace window.
+  """
+  refreshTokenReplayed
+  """
+  The session reached its absolute age cap, measured from the login it descends from.
+  """
+  sessionCapReached
 }
 
 """
@@ -561,10 +561,10 @@ sharing a `familyId` are one login seen either side of a rotation race, which is
 explains a duplicate an admin would otherwise read as a second device.
 """
 type GraphQLSession {
-	id: String!
-	tier: GraphQLTier!
-	mintedAt: String!
-	familyId: String!
+  id: String!
+  tier: GraphQLTier!
+  mintedAt: String!
+  familyId: String!
 }
 
 """
@@ -576,19 +576,19 @@ line here to the rows `sessions` no longer returns: a mass logout an admin can e
 mystery ticket. `at` is epoch millis as a string, as it is stored.
 """
 type GraphQLReuseEvent {
-	familyId: String!
-	tier: GraphQLTier!
-	accountId: String!
-	action: GraphQLReuseEventAction!
-	at: String!
+  familyId: String!
+  tier: GraphQLTier!
+  accountId: String!
+  action: GraphQLReuseEventAction!
+  at: String!
 }
 
 """
 One page of the admin table. `total` is the size of the FILTERED set, not of the collection.
 """
 type GraphQLShopOwnersActiveTblPage {
-	items: [GraphQLShopOwnerActiveTbl!]!
-	total: Int!
+  items: [GraphQLShopOwnerActiveTbl!]!
+  total: Int!
 }
 
 """
@@ -598,15 +598,15 @@ NAME and maps it to a Mongo path itself. Each one has a matching index in market
 than turned into a blocking in-memory sort.
 """
 enum GraphQLShopOwnersTblSortField {
-	REGISTERED_AT
-	FIRST_NAME
-	LAST_NAME
-	CITY
+  REGISTERED_AT
+  FIRST_NAME
+  LAST_NAME
+  CITY
 }
 
 enum GraphQLSortDirection {
-	ASC
-	DESC
+  ASC
+  DESC
 }
 
 """
@@ -615,8 +615,8 @@ collection — it moves with the three filter arguments. The unfiltered headline
 which counts every account ever registered and deliberately disagrees with `total` under every filter.
 """
 type GraphQLUsersActiveTblPage {
-	items: [GraphQLUserActiveTbl!]!
-	total: Int!
+  items: [GraphQLUserActiveTbl!]!
+  total: Int!
 }
 
 """
@@ -629,7 +629,7 @@ It is an enum rather than a dropped argument so the client shape matches the sho
 a second column is planned.
 """
 enum GraphQLUsersTblSortField {
-	REGISTERED_AT
+  REGISTERED_AT
 }
 
 """
@@ -641,41 +641,41 @@ bill (ADR-029). What is here is the identity a support request arrives with and 
 account can do.
 """
 type GraphQLUserActiveTbl {
-	_id: ID!
-	registeredAt: DateTime!
-	"""
-	The address the account authenticates with, flattened out of `login` by the resolver, and the only
-	thing on this row that identifies a person. Deterministically encrypted, so the driver hands it back
-	as plaintext — which is what makes it renderable at all.
-	"""
-	email: String!
-	"""
-	Nullable, and not merely permissive: the flag is stored `true` or removed outright, so an enabled
-	account has no `disabled` key and reads as absent rather than `false`. Render on truthiness, as with
-	`waitApprov` on the shop-owner table.
-	"""
-	disabled: Boolean
-	"""
-	Who suspended this account and why (ADR-044), absent together on an account that is not suspended.
-	This row is the only place the reason is legible: it is randomly encrypted (ADR-029) and there is no
-	customer detail page to read it on instead. `disabledBy` is an attribution, not a foreign key.
-	"""
-	disabledBy: ID
-	disabledReason: String
-	"""
-	A timestamp, not a flag (ADR-011), written by two closures: `userDel` on the customer tier, where a
-	customer closes their own account, and `userDel` on this one, where an admin closes it for them
-	(ADR-048). The stamp is permanent (ADR-041); what ends thirty days later is the personal data,
-	overwritten in place, unless the same address registers again first and takes the account back
-	(ADR-046).
-	"""
-	deleted: DateTime
-	"""
-	Whether the customer confirmed the address above — the one gate between registering and logging in on
-	this tier, since `user` has no `waitApprov` and never will. Nullable for the reason `disabled`
-	is: an unconfirmed account has no `emailVerify.valid` key rather than a `false` one.
-	"""
-	emailVerified: Boolean
+  _id: ID!
+  registeredAt: DateTime!
+  """
+  The address the account authenticates with, flattened out of `login` by the resolver, and the only
+  thing on this row that identifies a person. Deterministically encrypted, so the driver hands it back
+  as plaintext — which is what makes it renderable at all.
+  """
+  email: String!
+  """
+  Nullable, and not merely permissive: the flag is stored `true` or removed outright, so an enabled
+  account has no `disabled` key and reads as absent rather than `false`. Render on truthiness, as with
+  `waitApprov` on the shop-owner table.
+  """
+  disabled: Boolean
+  """
+  Who suspended this account and why (ADR-044), absent together on an account that is not suspended.
+  This row is the only place the reason is legible: it is randomly encrypted (ADR-029) and there is no
+  customer detail page to read it on instead. `disabledBy` is an attribution, not a foreign key.
+  """
+  disabledBy: ID
+  disabledReason: String
+  """
+  A timestamp, not a flag (ADR-011), written by two closures: `userDel` on the customer tier, where a
+  customer closes their own account, and `userDel` on this one, where an admin closes it for them
+  (ADR-048). The stamp is permanent (ADR-041); what ends thirty days later is the personal data,
+  overwritten in place, unless the same address registers again first and takes the account back
+  (ADR-046).
+  """
+  deleted: DateTime
+  """
+  Whether the customer confirmed the address above — the one gate between registering and logging in on
+  this tier, since `user` has no `waitApprov` and never will. Nullable for the reason `disabled`
+  is: an unconfirmed account has no `emailVerify.valid` key rather than a `false` one.
+  """
+  emailVerified: Boolean
 }
 
 """
@@ -684,36 +684,36 @@ to the current one; the other two are counted back from today, clamped to the ta
 (one month before 31 March is 28 February, not 3 March).
 """
 enum GraphQLShopOwnersPeriod {
-	ALL
-	THREE_MONTHS
-	ONE_MONTH
+  ALL
+  THREE_MONTHS
+  ONE_MONTH
 }
 
 """
 The width of one bucket. Derived from the range by the server — see `shopOwnersPerPeriod`.
 """
 enum GraphQLPeriodGranularity {
-	DAY
-	MONTH
+  DAY
+  MONTH
 }
 
 type GraphQLShopOwnersPerPeriod {
-	granularity: GraphQLPeriodGranularity!
-	points: [GraphQLShopOwnersPerPeriodPoint!]!
+  granularity: GraphQLPeriodGranularity!
+  points: [GraphQLShopOwnersPerPeriodPoint!]!
 }
 
 type GraphQLShopOwnersPerPeriodPoint {
-	"""
-	Bucket start, `YYYY-MM-DD`. A plain String and not the `Date` scalar: the service builds it with
-	`$dateToString` in the aggregation, so it is a string on the wire in both granularities.
-	"""
-	date: String!
+  """
+  Bucket start, `YYYY-MM-DD`. A plain String and not the `Date` scalar: the service builds it with
+  `$dateToString` in the aggregation, so it is a string on the wire in both granularities.
+  """
+  date: String!
 
-	"""
-	Registrations in this bucket. Gaps are filled server-side, so an empty bucket is present with `0`
-	rather than absent — the series is contiguous and the client never interpolates.
-	"""
-	total: Int!
+  """
+  Registrations in this bucket. Gaps are filled server-side, so an empty bucket is present with `0`
+  rather than absent — the series is contiguous and the client never interpolates.
+  """
+  total: Int!
 }
 
 """
@@ -725,9 +725,9 @@ the descriptions differ (the first shopOwner and the first customer are differen
 `GraphQLPeriod` would make the two charts' arguments interchangeable in a query document.
 """
 enum GraphQLUsersPeriod {
-	ALL
-	THREE_MONTHS
-	ONE_MONTH
+  ALL
+  THREE_MONTHS
+  ONE_MONTH
 }
 
 """
@@ -736,139 +736,139 @@ Structurally identical to `GraphQLShopOwnersPerPeriod`, and deliberately not the
 and belongs to neither collection.
 """
 type GraphQLUsersPerPeriod {
-	granularity: GraphQLPeriodGranularity!
-	points: [GraphQLUsersPerPeriodPoint!]!
+  granularity: GraphQLPeriodGranularity!
+  points: [GraphQLUsersPerPeriodPoint!]!
 }
 
 type GraphQLUsersPerPeriodPoint {
-	"""
-	Bucket start, `YYYY-MM-DD`, on the same terms as the shopOwner point: built with `$dateToString` in
-	the aggregation, so a String on the wire in both granularities.
-	"""
-	date: String!
+  """
+  Bucket start, `YYYY-MM-DD`, on the same terms as the shopOwner point: built with `$dateToString` in
+  the aggregation, so a String on the wire in both granularities.
+  """
+  date: String!
 
-	"""
-	Registrations in this bucket. Gaps are filled server-side — an empty bucket is present with `0`.
-	"""
-	total: Int!
+  """
+  Registrations in this bucket. Gaps are filled server-side — an empty bucket is present with `0`.
+  """
+  total: Int!
 }
 
 type GraphQLShopOwnerActiveTbl {
-	_id: ID!
-	registeredAt: DateTime!
-	"""
-	The address the account authenticates with, flattened out of `login` by the resolver. On a
-	self-registered row it is the only thing identifying the account: `personalData` below is absent
-	until onboarding runs.
-	"""
-	email: String!
-	"""
-	⚠️ **Nullable, and the resolver agrees — do not "tidy" it back to `GraphQLPersonalData!`.** A seller
-	who signed themselves up through `shopOwnerRegister` has an address and a password and nothing else,
-	so this whole block is missing on exactly the rows an admin opened the table to approve. `items`
-	is a non-null list of non-null rows, so one such row under a `NonNull` here errors the entire page.
-	"""
-	personalData: GraphQLPersonalData
-	"""
-	Present and true while the account waits for an admin. `$unset` on approval, so it is never
-	`false` — render "pending" on truthiness, not on equality.
-	"""
-	waitApprov: Boolean
-	"""
-	Nullable for the reason `waitApprov` is: the flag is stored `true` or removed outright, so an enabled
-	account has no `disabled` key and reads as absent rather than `false`. Render on truthiness.
-	"""
-	disabled: Boolean
-	"""
-	Who suspended this account and why (ADR-044), absent together on an account that is not suspended.
-	`disabledReason` is randomly encrypted (ADR-029) and legible on this tier alone; `disabledBy` is an
-	attribution, not a foreign key.
-	"""
-	disabledBy: ID
-	disabledReason: String
-	"""
-	A timestamp, not a flag (ADR-011), written by `shopOwnerDel`, which also withdraws the storefront
-	(ADR-045). The stamp is permanent (ADR-041) and independent of the suspension trio, so a row can
-	carry both — which is why the table filters on the two flags separately rather than on one status.
-	"""
-	deleted: DateTime
+  _id: ID!
+  registeredAt: DateTime!
+  """
+  The address the account authenticates with, flattened out of `login` by the resolver. On a
+  self-registered row it is the only thing identifying the account: `personalData` below is absent
+  until onboarding runs.
+  """
+  email: String!
+  """
+  ⚠️ **Nullable, and the resolver agrees — do not "tidy" it back to `GraphQLPersonalData!`.** A seller
+  who signed themselves up through `shopOwnerRegister` has an address and a password and nothing else,
+  so this whole block is missing on exactly the rows an admin opened the table to approve. `items`
+  is a non-null list of non-null rows, so one such row under a `NonNull` here errors the entire page.
+  """
+  personalData: GraphQLPersonalData
+  """
+  Present and true while the account waits for an admin. `$unset` on approval, so it is never
+  `false` — render "pending" on truthiness, not on equality.
+  """
+  waitApprov: Boolean
+  """
+  Nullable for the reason `waitApprov` is: the flag is stored `true` or removed outright, so an enabled
+  account has no `disabled` key and reads as absent rather than `false`. Render on truthiness.
+  """
+  disabled: Boolean
+  """
+  Who suspended this account and why (ADR-044), absent together on an account that is not suspended.
+  `disabledReason` is randomly encrypted (ADR-029) and legible on this tier alone; `disabledBy` is an
+  attribution, not a foreign key.
+  """
+  disabledBy: ID
+  disabledReason: String
+  """
+  A timestamp, not a flag (ADR-011), written by `shopOwnerDel`, which also withdraws the storefront
+  (ADR-045). The stamp is permanent (ADR-041) and independent of the suspension trio, so a row can
+  carry both — which is why the table filters on the two flags separately rather than on one status.
+  """
+  deleted: DateTime
 }
 
 type GraphQLPersonalData {
-	firstName: String!
-	lastName: String!
-	address: GraphQLShopOwnerAddressTbl!
+  firstName: String!
+  lastName: String!
+  address: GraphQLShopOwnerAddressTbl!
 }
 
 type GraphQLShopOwnerAddressTbl {
-	street: String!
-	postalCode: String!
-	city: String!
-	province: String!
+  street: String!
+  postalCode: String!
+  city: String!
+  province: String!
 }
 
 type GraphQLShopOwnerById {
-	_id: ID!
-	login: GraphQLShopOwnerLogin!
-	"""
-	⚠️ **Nullable, for the reason the table's is.** This is the page an admin opens to decide whether
-	to approve a self-registration, and a self-registration has no `personalData` at all — under a
-	`NonNull` the one account that needs looking at is the one that cannot be looked at.
-	"""
-	personalData: GraphQLShopOwnerPersonalDataById
-	registeredAt: DateTime!
-	deleted: DateTime
-	disabled: Boolean
-	"""
-	Who suspended this account and why (ADR-044), absent together on an account that is not suspended —
-	the resolver `$unset`s the trio as one.
+  _id: ID!
+  login: GraphQLShopOwnerLogin!
+  """
+  ⚠️ **Nullable, for the reason the table's is.** This is the page an admin opens to decide whether
+  to approve a self-registration, and a self-registration has no `personalData` at all — under a
+  `NonNull` the one account that needs looking at is the one that cannot be looked at.
+  """
+  personalData: GraphQLShopOwnerPersonalDataById
+  registeredAt: DateTime!
+  deleted: DateTime
+  disabled: Boolean
+  """
+  Who suspended this account and why (ADR-044), absent together on an account that is not suspended —
+  the resolver `$unset`s the trio as one.
 
-	⚠️ **This is the only surface where the reason is legible.** `disabledReason` is randomly encrypted
-	(ADR-029): a shell reading the collection sees `binData`, and the admin resource service decrypts it
-	because it holds the data key. `disabledBy` is an attribution and not a foreign key — nothing joins
-	on it, and it may name an admin who no longer exists.
-	"""
-	disabledBy: ID
-	disabledReason: String
-	waitApprov: Boolean
-	"""
-	The admin's free-text note about this account, at most 2000 characters. Absent until one is
-	written; `shopOwnerUpdateNote` removes the field again when the note is cleared.
-	"""
-	notes: String
-	resetPwd: GraphQLResetPwd
+  ⚠️ **This is the only surface where the reason is legible.** `disabledReason` is randomly encrypted
+  (ADR-029): a shell reading the collection sees `binData`, and the admin resource service decrypts it
+  because it holds the data key. `disabledBy` is an attribution and not a foreign key — nothing joins
+  on it, and it may name an admin who no longer exists.
+  """
+  disabledBy: ID
+  disabledReason: String
+  waitApprov: Boolean
+  """
+  The admin's free-text note about this account, at most 2000 characters. Absent until one is
+  written; `shopOwnerUpdateNote` removes the field again when the note is cleared.
+  """
+  notes: String
+  resetPwd: GraphQLResetPwd
 }
 
 type GraphQLShopOwnerLogin {
-	email: String!
-	firstLogin: DateTime
-	lastLogin: DateTime
-	onboardingStep: String
-	onboardingDone: Boolean
-	rememberMe: Boolean
+  email: String!
+  firstLogin: DateTime
+  lastLogin: DateTime
+  onboardingStep: String
+  onboardingDone: Boolean
+  rememberMe: Boolean
 }
 
 type GraphQLShopOwnerPersonalDataById {
-	firstName: String!
-	lastName: String!
-	address: GraphQLShopOwnerAddress!
-	birth: GraphQLBirth!
-	contacts: GraphQLShopOwnerContacts!
+  firstName: String!
+  lastName: String!
+  address: GraphQLShopOwnerAddress!
+  birth: GraphQLBirth!
+  contacts: GraphQLShopOwnerContacts!
 }
 
 type GraphQLShopOwnerAddress {
-	street: String!
-	postalCode: String!
-	city: String!
-	province: String!
-	"""
-	⚠️ **Nullable, unlike `GraphQLCompanyPosition!`.** The point was added to the
-	collection by 20260802000300 as an optional field and nothing backfilled it — `collMod` does not
-	re-validate stored documents, and there is nothing to derive a coordinate from without geocoding —
-	so every shopOwner that existed before the migration answers `null` here until an address is
-	picked from the autocomplete and saved.
-	"""
-	position: GraphQLPositionShopOwner
+  street: String!
+  postalCode: String!
+  city: String!
+  province: String!
+  """
+  ⚠️ **Nullable, unlike `GraphQLCompanyPosition!`.** The point was added to the
+  collection by 20260802000300 as an optional field and nothing backfilled it — `collMod` does not
+  re-validate stored documents, and there is nothing to derive a coordinate from without geocoding —
+  so every shopOwner that existed before the migration answers `null` here until an address is
+  picked from the autocomplete and saved.
+  """
+  position: GraphQLPositionShopOwner
 }
 
 """
@@ -877,18 +877,18 @@ one flat type namespace, so the two tiers cannot share the fragment's output typ
 [longitude, latitude].
 """
 type GraphQLPositionShopOwner {
-	type: String!
-	coordinates: [Float!]!
+  type: String!
+  coordinates: [Float!]!
 }
 
 type GraphQLBirth {
-	date: DateTime!
+  date: DateTime!
 }
 
 type GraphQLShopOwnerContacts {
-	email: String!
-	landline: String
-	mobile: String!
+  email: String!
+  landline: String
+  mobile: String!
 }
 
 """
@@ -898,7 +898,7 @@ admin read a shop owner's live reset token and take the account over with no aud
 alone is enough to answer "is a reset pending, and since when".
 """
 type GraphQLResetPwd {
-	resetDateReq: DateTime!
+  resetDateReq: DateTime!
 }
 
 """
@@ -915,21 +915,21 @@ with the extraction and no stored company carries one.
 public listing or its publication state. A screen that did would transcribe them here first.
 """
 type GraphQLCompany {
-	_id: ID!
-	idShopOwner: ID!
-	legalName: String!
-	vatNumber: String!
-	taxCode: String
-	contactPerson: String!
-	administrator: String!
-	uniqueCode: String
-	certifiedEmail: String!
-	address: GraphQLCompanyAddress!
-	"""
-	The path of the uploaded registryExtract, not the document. Required, and capped at 1000 characters by the
-	collection — it was the one unbounded string on the embedded shape.
-	"""
-	registryExtract: String!
+  _id: ID!
+  idShopOwner: ID!
+  legalName: String!
+  vatNumber: String!
+  taxCode: String
+  contactPerson: String!
+  administrator: String!
+  uniqueCode: String
+  certifiedEmail: String!
+  address: GraphQLCompanyAddress!
+  """
+  The path of the uploaded registryExtract, not the document. Required, and capped at 1000 characters by the
+  collection — it was the one unbounded string on the embedded shape.
+  """
+  registryExtract: String!
 }
 
 """
@@ -939,11 +939,11 @@ namespace, so two collections' addresses cannot share one type without a field a
 appearing on both.
 """
 type GraphQLCompanyAddress {
-	street: String!
-	postalCode: String!
-	city: String!
-	province: String!
-	position: GraphQLCompanyPosition!
+  street: String!
+  postalCode: String!
+  city: String!
+  province: String!
+  position: GraphQLCompanyPosition!
 }
 
 """
@@ -951,8 +951,8 @@ GeoJSON `Point`. `coordinates` is [longitude, latitude], in that order — not t
 and not a pair of named fields. Float, because a latitude is not an integer.
 """
 type GraphQLCompanyPosition {
-	type: String!
-	coordinates: [Float!]!
+  type: String!
+  coordinates: [Float!]!
 }
 
 """
@@ -964,61 +964,61 @@ means a subcategory of the one it names. Depth is capped at two by `throwIfParen
 time and the parent's own `idParent` lives in another, so the collection cannot state the rule.
 """
 type GraphQLItemCategory {
-	_id: ID!
-	idParent: ID
-	name: String!
-	"""
-	URL segment of `/category/:slug` and of `/category/:slug/:subSlug`. Unique across both levels.
-	"""
-	slug: String!
-	"""
-	A sort ordinal the admin reorders the menu with — ⚠️ **not** the GeoJSON `position` of
-	`GraphQLCompanyPosition`. The two share a name and nothing else; this collection stores no
-	coordinates at all.
-	"""
-	position: Int!
+  _id: ID!
+  idParent: ID
+  name: String!
+  """
+  URL segment of `/category/:slug` and of `/category/:slug/:subSlug`. Unique across both levels.
+  """
+  slug: String!
+  """
+  A sort ordinal the admin reorders the menu with — ⚠️ **not** the GeoJSON `position` of
+  `GraphQLCompanyPosition`. The two share a name and nothing else; this collection stores no
+  coordinates at all.
+  """
+  position: Int!
 }
 
 input GraphQLInputLogin {
-	email: String!
-	password: String!
+  email: String!
+  password: String!
 }
 
 input GraphQLInputShopOwnerPersonalData {
-	firstName: String!
-	lastName: String!
-	birth: GraphQLInputBirth!
-	address: GraphQLInputAddress!
-	contacts: GraphQLInputContacts!
+  firstName: String!
+  lastName: String!
+  birth: GraphQLInputBirth!
+  address: GraphQLInputAddress!
+  contacts: GraphQLInputContacts!
 }
 
 input GraphQLInputBirth {
-	date: Date!
+  date: Date!
 }
 
 input GraphQLInputAddress {
-	street: String!
-	postalCode: String!
-	city: String!
-	province: String!
-	"""
-	⚠️ **Coordinates only and nullable.** No `type` field, like `GraphQLInputCompanyPosition` — the
-	resolver adds `type: 'Point'`. Nullable because the admin can save personal data whose
-	address was never re-picked. ⚠️ Omitting it does **not** preserve the stored point:
-	`shopOwnerUpdate` `$set`s the whole `personalData`, so a save without `position` erases it. Send
-	back the point the query returned whenever the address is left alone.
-	"""
-	position: GraphQLInputAddressPosition
+  street: String!
+  postalCode: String!
+  city: String!
+  province: String!
+  """
+  ⚠️ **Coordinates only and nullable.** No `type` field, like `GraphQLInputCompanyPosition` — the
+  resolver adds `type: 'Point'`. Nullable because the admin can save personal data whose
+  address was never re-picked. ⚠️ Omitting it does **not** preserve the stored point:
+  `shopOwnerUpdate` `$set`s the whole `personalData`, so a save without `position` erases it. Send
+  back the point the query returned whenever the address is left alone.
+  """
+  position: GraphQLInputAddressPosition
 }
 
 input GraphQLInputAddressPosition {
-	coordinates: [Float!]!
+  coordinates: [Float!]!
 }
 
 input GraphQLInputContacts {
-	mobile: String!
-	landline: String
-	email: String!
+  mobile: String!
+  landline: String
+  email: String!
 }
 
 """
@@ -1043,23 +1043,23 @@ clearing it, so a save from this app leaves whatever is stored alone. Transcribi
 three fields in a generated type that no form can fill.
 """
 input GraphQLInputCompany {
-	legalName: String!
-	vatNumber: String!
-	taxCode: String
-	contactPerson: String!
-	administrator: String!
-	uniqueCode: String
-	certifiedEmail: String!
-	address: GraphQLInputCompanyAddress!
-	registryExtract: String!
+  legalName: String!
+  vatNumber: String!
+  taxCode: String
+  contactPerson: String!
+  administrator: String!
+  uniqueCode: String
+  certifiedEmail: String!
+  address: GraphQLInputCompanyAddress!
+  registryExtract: String!
 }
 
 input GraphQLInputCompanyAddress {
-	street: String!
-	postalCode: String!
-	city: String!
-	province: String!
-	position: GraphQLInputCompanyPosition!
+  street: String!
+  postalCode: String!
+  city: String!
+  province: String!
+  position: GraphQLInputCompanyPosition!
 }
 
 """
@@ -1069,7 +1069,7 @@ accepting it from a client would only be a way to receive `point` or `POINT` and
 naming a field the admin never saw. The service writes the literal.
 """
 input GraphQLInputCompanyPosition {
-	coordinates: [Float!]!
+  coordinates: [Float!]!
 }
 
 """
@@ -1086,8 +1086,8 @@ does. ⚠️ On the update path `null` is not "leave it alone": it is how a subc
 the top level, and there is no other value that says so.
 """
 input GraphQLInputItemCategory {
-	name: String!
-	slug: String!
-	idParent: ID
-	position: Int!
+  name: String!
+  slug: String!
+  idParent: ID
+  position: Int!
 }

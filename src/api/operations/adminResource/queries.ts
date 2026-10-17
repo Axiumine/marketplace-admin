@@ -5,12 +5,12 @@ import { graphql } from '@gql/adminResource'
  * backend — no database round-trip — which is why the app can call it on every boot without cost.
  */
 export const InfoAdminAfterLoginDocument = graphql(`
-	query InfoAdminAfterLogin {
-		infoAdminAfterLogin {
-			_id
-			email
-		}
-	}
+  query InfoAdminAfterLogin {
+    infoAdminAfterLogin {
+      _id
+      email
+    }
+  }
 `)
 
 /**
@@ -18,9 +18,9 @@ export const InfoAdminAfterLoginDocument = graphql(`
  * which is the size of the searched set and moves as the admin types.
  */
 export const ShopOwnersStatsDocument = graphql(`
-	query ShopOwnersStats {
-		shopOwnersStats
-	}
+  query ShopOwnersStats {
+    shopOwnersStats
+  }
 `)
 
 /**
@@ -32,15 +32,15 @@ export const ShopOwnersStatsDocument = graphql(`
  * `YYYY-MM-DD` in both.
  */
 export const ShopOwnersPerPeriodDocument = graphql(`
-	query ShopOwnersPerPeriod($period: GraphQLShopOwnersPeriod!) {
-		shopOwnersPerPeriod(period: $period) {
-			granularity
-			points {
-				date
-				total
-			}
-		}
-	}
+  query ShopOwnersPerPeriod($period: GraphQLShopOwnersPeriod!) {
+    shopOwnersPerPeriod(period: $period) {
+      granularity
+      points {
+        date
+        total
+      }
+    }
+  }
 `)
 
 /**
@@ -71,47 +71,47 @@ export const ShopOwnersPerPeriodDocument = graphql(`
  * or `$unset`s, never `false`. Read them on truthiness. `deleted` is a timestamp (ADR-011).
  */
 export const ShopOwnersActiveTblDocument = graphql(`
-	query ShopOwnersActiveTbl(
-		$offset: Int!
-		$limit: Int!
-		$disabled: Boolean!
-		$deleted: Boolean!
-		$search: String
-		$sortBy: GraphQLShopOwnersTblSortField!
-		$sortDir: GraphQLSortDirection!
-	) {
-		shopOwnersActiveTbl(
-			offset: $offset
-			limit: $limit
-			disabled: $disabled
-			deleted: $deleted
-			search: $search
-			sortBy: $sortBy
-			sortDir: $sortDir
-		) {
-			total
-			items {
-				_id
-				registeredAt
-				email
-				waitApprov
-				disabled
-				disabledBy
-				disabledReason
-				deleted
-				personalData {
-					firstName
-					lastName
-					address {
-						street
-						postalCode
-						city
-						province
-					}
-				}
-			}
-		}
-	}
+  query ShopOwnersActiveTbl(
+    $offset: Int!
+    $limit: Int!
+    $disabled: Boolean!
+    $deleted: Boolean!
+    $search: String
+    $sortBy: GraphQLShopOwnersTblSortField!
+    $sortDir: GraphQLSortDirection!
+  ) {
+    shopOwnersActiveTbl(
+      offset: $offset
+      limit: $limit
+      disabled: $disabled
+      deleted: $deleted
+      search: $search
+      sortBy: $sortBy
+      sortDir: $sortDir
+    ) {
+      total
+      items {
+        _id
+        registeredAt
+        email
+        waitApprov
+        disabled
+        disabledBy
+        disabledReason
+        deleted
+        personalData {
+          firstName
+          lastName
+          address {
+            street
+            postalCode
+            city
+            province
+          }
+        }
+      }
+    }
+  }
 `)
 
 /**
@@ -123,51 +123,51 @@ export const ShopOwnersActiveTblDocument = graphql(`
  * document that looks similar.
  */
 export const ShopOwnerByIdDocument = graphql(`
-	query ShopOwnerById($idShopOwner: ID!) {
-		shopOwnerById(idShopOwner: $idShopOwner) {
-			_id
-			registeredAt
-			deleted
-			disabled
-			disabledBy
-			disabledReason
-			waitApprov
-			notes
-			login {
-				email
-				firstLogin
-				lastLogin
-				onboardingStep
-				onboardingDone
-				rememberMe
-			}
-			personalData {
-				firstName
-				lastName
-				birth {
-					date
-				}
-				contacts {
-					email
-					landline
-					mobile
-				}
-				address {
-					street
-					postalCode
-					city
-					province
-					position {
-						type
-						coordinates
-					}
-				}
-			}
-			resetPwd {
-				resetDateReq
-			}
-		}
-	}
+  query ShopOwnerById($idShopOwner: ID!) {
+    shopOwnerById(idShopOwner: $idShopOwner) {
+      _id
+      registeredAt
+      deleted
+      disabled
+      disabledBy
+      disabledReason
+      waitApprov
+      notes
+      login {
+        email
+        firstLogin
+        lastLogin
+        onboardingStep
+        onboardingDone
+        rememberMe
+      }
+      personalData {
+        firstName
+        lastName
+        birth {
+          date
+        }
+        contacts {
+          email
+          landline
+          mobile
+        }
+        address {
+          street
+          postalCode
+          city
+          province
+          position {
+            type
+            coordinates
+          }
+        }
+      }
+      resetPwd {
+        resetDateReq
+      }
+    }
+  }
 `)
 
 /**
@@ -183,23 +183,23 @@ export const ShopOwnerByIdDocument = graphql(`
  * `keys` comes back newest first, and `holders` sorted by service name; neither is re-sorted here.
  */
 export const KeygripStatusDocument = graphql(`
-	query KeygripStatus {
-		keygripStatus {
-			version
-			fingerprint
-			keys {
-				id
-				createdAt
-				ageDays
-			}
-			holders {
-				service
-				fingerprint
-				lastSeen
-				current
-			}
-		}
-	}
+  query KeygripStatus {
+    keygripStatus {
+      version
+      fingerprint
+      keys {
+        id
+        createdAt
+        ageDays
+      }
+      holders {
+        service
+        fingerprint
+        lastSeen
+        current
+      }
+    }
+  }
 `)
 
 /**
@@ -220,14 +220,14 @@ export const KeygripStatusDocument = graphql(`
  * only thing that explains a duplicate an admin would otherwise read as a second device.
  */
 export const SessionsDocument = graphql(`
-	query Sessions($tier: GraphQLTier!, $accountId: String!) {
-		sessions(tier: $tier, accountId: $accountId) {
-			id
-			tier
-			mintedAt
-			familyId
-		}
-	}
+  query Sessions($tier: GraphQLTier!, $accountId: String!) {
+    sessions(tier: $tier, accountId: $accountId) {
+      id
+      tier
+      mintedAt
+      familyId
+    }
+  }
 `)
 
 /**
@@ -242,15 +242,15 @@ export const SessionsDocument = graphql(`
  * derived — no token, no digest of one, nothing about a device.
  */
 export const ReuseEventsDocument = graphql(`
-	query ReuseEvents($tier: GraphQLTier!, $accountId: String!) {
-		reuseEvents(tier: $tier, accountId: $accountId) {
-			familyId
-			tier
-			accountId
-			action
-			at
-		}
-	}
+  query ReuseEvents($tier: GraphQLTier!, $accountId: String!) {
+    reuseEvents(tier: $tier, accountId: $accountId) {
+      familyId
+      tier
+      accountId
+      action
+      at
+    }
+  }
 `)
 
 /**
@@ -264,15 +264,15 @@ export const ReuseEventsDocument = graphql(`
  * write, so the three mutations name `GraphQLItemCategory` in `additionalTypenames`.
  */
 export const ItemCategoriesDocument = graphql(`
-	query ItemCategories {
-		itemCategories {
-			_id
-			idParent
-			name
-			slug
-			position
-		}
-	}
+  query ItemCategories {
+    itemCategories {
+      _id
+      idParent
+      name
+      slug
+      position
+    }
+  }
 `)
 
 /**
@@ -282,29 +282,29 @@ export const ItemCategoriesDocument = graphql(`
  * company card, and there is no second query behind it.
  */
 export const ShopOwnerCompaniesDocument = graphql(`
-	query ShopOwnerCompanies($idShopOwner: ID!) {
-		shopOwnerCompanies(idShopOwner: $idShopOwner) {
-			_id
-			legalName
-			vatNumber
-			taxCode
-			contactPerson
-			administrator
-			uniqueCode
-			certifiedEmail
-			registryExtract
-			address {
-				street
-				postalCode
-				city
-				province
-				position {
-					type
-					coordinates
-				}
-			}
-		}
-	}
+  query ShopOwnerCompanies($idShopOwner: ID!) {
+    shopOwnerCompanies(idShopOwner: $idShopOwner) {
+      _id
+      legalName
+      vatNumber
+      taxCode
+      contactPerson
+      administrator
+      uniqueCode
+      certifiedEmail
+      registryExtract
+      address {
+        street
+        postalCode
+        city
+        province
+        position {
+          type
+          coordinates
+        }
+      }
+    }
+  }
 `)
 
 /**
@@ -326,28 +326,28 @@ export const ShopOwnerCompaniesDocument = graphql(`
  * never `false`. Read them on truthiness.
  */
 export const UsersActiveTblDocument = graphql(`
-	query UsersActiveTbl(
-		$offset: Int!
-		$limit: Int!
-		$disabled: Boolean!
-		$deleted: Boolean!
-		$sortBy: GraphQLUsersTblSortField!
-		$sortDir: GraphQLSortDirection!
-	) {
-		usersActiveTbl(offset: $offset, limit: $limit, disabled: $disabled, deleted: $deleted, sortBy: $sortBy, sortDir: $sortDir) {
-			total
-			items {
-				_id
-				registeredAt
-				email
-				disabled
-				disabledBy
-				disabledReason
-				deleted
-				emailVerified
-			}
-		}
-	}
+  query UsersActiveTbl(
+    $offset: Int!
+    $limit: Int!
+    $disabled: Boolean!
+    $deleted: Boolean!
+    $sortBy: GraphQLUsersTblSortField!
+    $sortDir: GraphQLSortDirection!
+  ) {
+    usersActiveTbl(offset: $offset, limit: $limit, disabled: $disabled, deleted: $deleted, sortBy: $sortBy, sortDir: $sortDir) {
+      total
+      items {
+        _id
+        registeredAt
+        email
+        disabled
+        disabledBy
+        disabledReason
+        deleted
+        emailVerified
+      }
+    }
+  }
 `)
 
 /**
@@ -359,9 +359,9 @@ export const UsersActiveTblDocument = graphql(`
  * on `user` is matching and ordering, not counting.
  */
 export const UsersStatsDocument = graphql(`
-	query UsersStats {
-		usersStats
-	}
+  query UsersStats {
+    usersStats
+  }
 `)
 
 /**
@@ -374,13 +374,13 @@ export const UsersStatsDocument = graphql(`
  * `YYYY-MM-DD` in both widths, so without it the component cannot tell a month bucket from a day one.
  */
 export const UsersPerPeriodDocument = graphql(`
-	query UsersPerPeriod($period: GraphQLUsersPeriod!) {
-		usersPerPeriod(period: $period) {
-			granularity
-			points {
-				date
-				total
-			}
-		}
-	}
+  query UsersPerPeriod($period: GraphQLUsersPeriod!) {
+    usersPerPeriod(period: $period) {
+      granularity
+      points {
+        date
+        total
+      }
+    }
+  }
 `)

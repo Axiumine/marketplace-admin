@@ -13,36 +13,36 @@ import { useSyncExternalStore } from 'react'
  * the access token already needs.
  */
 export interface AdminIdentity {
-	readonly _id: string
-	readonly email: string
+  readonly _id: string
+  readonly email: string
 }
 
 let current: AdminIdentity | null = null
 const listeners = new Set<() => void>()
 
 const emit = (): void => {
-	listeners.forEach((listener) => {
-		listener()
-	})
+  listeners.forEach((listener) => {
+    listener()
+  })
 }
 
 export const getSession = (): AdminIdentity | null => current
 
 export const setSession = (identity: AdminIdentity): void => {
-	current = identity
-	emit()
+  current = identity
+  emit()
 }
 
 export const clearSession = (): void => {
-	current = null
-	emit()
+  current = null
+  emit()
 }
 
 export const subscribeSession = (listener: () => void): (() => void) => {
-	listeners.add(listener)
-	return () => {
-		listeners.delete(listener)
-	}
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
 }
 
 export const useSession = (): AdminIdentity | null => useSyncExternalStore(subscribeSession, getSession, getSession)

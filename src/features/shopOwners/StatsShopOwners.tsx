@@ -16,14 +16,14 @@ import { Spinner } from '@/components/ui/Spinner'
  * first, then the row.
  */
 export const StatsShopOwners = () => {
-	const [result] = useQuery({ query: ShopOwnersStatsDocument, context: CTX_ADMIN_RESOURCE })
+  const [result] = useQuery({ query: ShopOwnersStatsDocument, context: CTX_ADMIN_RESOURCE })
 
-	if (result.fetching) return <Spinner label="Loading statistics" />
-	if (result.error !== undefined) return <Alert tone="error">{messageOf(result.error)}</Alert>
+  if (result.fetching) return <Spinner label="Loading statistics" />
+  if (result.error !== undefined) return <Alert tone="error">{messageOf(result.error)}</Alert>
 
-	return (
-		<Infobox title="ShopOwners">
-			<InfoRow label="Total" value={String(result.data?.shopOwnersStats ?? 0)} />
-		</Infobox>
-	)
+  return (
+    <Infobox title="ShopOwners">
+      <InfoRow label="Total" value={String(result.data?.shopOwnersStats ?? 0)} />
+    </Infobox>
+  )
 }

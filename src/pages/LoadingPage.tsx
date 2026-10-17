@@ -19,10 +19,10 @@ export const DEFAULT_REDIRECT = '/home'
  * is rejected explicitly — it is a protocol-relative URL, not a path, and it starts with a slash.
  */
 export const safeRedirect = (target: string | undefined): string => {
-	if (target === undefined) return DEFAULT_REDIRECT
-	if (!target.startsWith('/')) return DEFAULT_REDIRECT
-	if (target.startsWith('//')) return DEFAULT_REDIRECT
-	return target
+  if (target === undefined) return DEFAULT_REDIRECT
+  if (!target.startsWith('/')) return DEFAULT_REDIRECT
+  if (target.startsWith('//')) return DEFAULT_REDIRECT
+  return target
 }
 
 /**
@@ -38,33 +38,33 @@ export const safeRedirect = (target: string | undefined): string => {
  * passes. A real authenticated query is the only answer that means anything.
  */
 export const LoadingPage = ({ redirect }: { redirect: string | undefined }) => {
-	const navigate = useNavigate()
-	const router = useRouter()
-	const [result] = useQuery({ query: InfoAdminAfterLoginDocument, context: CTX_ADMIN_RESOURCE })
+  const navigate = useNavigate()
+  const router = useRouter()
+  const [result] = useQuery({ query: InfoAdminAfterLoginDocument, context: CTX_ADMIN_RESOURCE })
 
-	const identity = result.data?.infoAdminAfterLogin
-	const failed = result.error !== undefined
+  const identity = result.data?.infoAdminAfterLogin
+  const failed = result.error !== undefined
 
-	useEffect(() => {
-		if (identity !== undefined) {
-			setSession(identity)
-			// `history.push` rather than `navigate({ to })`: the target is a runtime string and the
-			// router's `to` is a union of known route paths, so this is the one navigation that cannot be
-			// type-checked. `safeRedirect` is what makes it safe instead.
-			router.history.push(safeRedirect(redirect))
-			return
-		}
+  useEffect(() => {
+    if (identity !== undefined) {
+      setSession(identity)
+      // `history.push` rather than `navigate({ to })`: the target is a runtime string and the
+      // router's `to` is a union of known route paths, so this is the one navigation that cannot be
+      // type-checked. `safeRedirect` is what makes it safe instead.
+      router.history.push(safeRedirect(redirect))
+      return
+    }
 
-		if (failed) {
-			clearAccessToken()
-			clearSession()
-			void navigate({ to: '/' })
-		}
-	}, [identity, failed, navigate, router, redirect])
+    if (failed) {
+      clearAccessToken()
+      clearSession()
+      void navigate({ to: '/' })
+    }
+  }, [identity, failed, navigate, router, redirect])
 
-	return (
-		<div className="flex h-full items-center justify-center">
-			<Spinner label="Loading session" />
-		</div>
-	)
+  return (
+    <div className="flex h-full items-center justify-center">
+      <Spinner label="Loading session" />
+    </div>
+  )
 }

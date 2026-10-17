@@ -11,10 +11,10 @@ import { graphql } from '@gql/adminAuthorization'
  * `willAuthError` fires before the first authenticated operation, and this is what runs.
  */
 export const RefreshDocument = graphql(`
-	mutation Refresh {
-		refresh {
-			status
-			accessToken
-		}
-	}
+  mutation Refresh {
+    refresh {
+      status
+      accessToken
+    }
+  }
 `)
