@@ -32,10 +32,10 @@ are separate apps — this is what they were copied from, not a shell to add the
 
 ## Getting started
 
-Node **24.18.0** via nvm — Yarn 4 does not enforce `engines`, so the hooks check the node version themselves.
+Node **26.13.1** via nvm — Yarn 4 does not enforce `engines`, so the hooks check the node version themselves.
 
 ```bash
-nvm use 24.18.0
+nvm use 26.13.1
 yarn install          # `postinstall` points core.hooksPath at .githooks
 cp env .env           # then edit: .env is git-ignored, `env` is the committed template
 yarn codegen          # writes src/gql/ from schema/*.graphql
