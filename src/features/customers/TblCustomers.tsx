@@ -274,23 +274,14 @@ export const TblCustomers = ({
     reason: item.disabledReason ?? null
   }))
 
+  /*
+   * ⚠️ `reason` and `reasonError` are deliberately left as they are. Both are read only inside the form, which
+   * `pending !== null` gates, and the one way to open it again — the row's Suspend button below — resets both in
+   * the same handler, before that render happens. Clearing them here as well is a write that no sequence of
+   * clicks can put on screen.
+   */
   const closeForm = () => {
     setPending(null)
-    /*
-     * ⚠️ Belt and braces, and unobservable. `pending` and `reason` are only ever set together, in
-     * exactly two places — here, and the Suspend button below (`setPending({ … }); setReason('')`). The
-     * box is gated on `pending !== null`, so whatever this call writes is invisible while the form is
-     * closed, and the only way to make it visible again — clicking Suspend — resets `reason` to `''` in
-     * the same handler before that render happens. No reachable sequence of clicks lets this literal's
-     * value reach the screen; it is belt-and-braces for a reopen path that resets its own state anyway.
-     *
-     * ⚠️ The directive below has to stay a single `//` line. Stryker matches its directive regex against the
-     * comment body and allows one leading whitespace character, so a directive written inside a block comment is
-     * read as prose and silently ignored.
-     */
-    // Stryker disable next-line StringLiteral: equivalent — the form is closed, and reopening it resets `reason` itself.
-    setReason('')
-    setReasonError(undefined)
   }
 
   /*
@@ -321,7 +312,7 @@ export const TblCustomers = ({
    * `void executeStatus(...)` invites — throws that text away the instant the click handler returns,
    * before the mutation has said anything at all. A refusal (a duplicate reason validator, a dropped
    * connection) would then leave nothing to recover it from but the generic error toast. Only a write
-   * that actually landed earns the reset.
+   * that actually landed closes the form.
    */
   const submitSuspension = async (target: { _id: string; email: string }): Promise<void> => {
     const problem = reasonProblem(reason)

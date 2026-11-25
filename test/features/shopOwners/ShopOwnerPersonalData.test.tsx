@@ -770,6 +770,56 @@ describe('ShopOwnerPersonalData — editing', () => {
     expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus', 'ShopOwnerUpdateStatus'])
   })
 
+  // The same again one group further down: the status write settles, and the preferences are what fail.
+  it('does not resend the account flags once a later group is retried', async () => {
+    const stub = stubGraphQL({
+      ...detail(),
+      ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } },
+      ShopOwnerUpdatePreferences: [
+        { data: { shopOwnerUpdatePreferences: false } },
+        { data: { shopOwnerUpdatePreferences: true } }
+      ]
+    })
+    await renderRoute(DETAIL)
+
+    await screen.findByText('Mark')
+    await suspend()
+    await open('Remember me at login')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Remember me at login' }))
+    await userEvent.click(save())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+
+    await userEvent.click(save())
+
+    await screen.findByText('Changes saved.')
+    expect(writeNames(stub)).toEqual(['ShopOwnerUpdateStatus', 'ShopOwnerUpdatePreferences', 'ShopOwnerUpdatePreferences'])
+  })
+
+  // And once more, with the preferences settled and the note refused.
+  it('does not resend the preferences once the note is retried', async () => {
+    const stub = stubGraphQL({
+      ...detail(),
+      ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } },
+      ShopOwnerUpdateNote: [{ data: { shopOwnerUpdateNote: false } }, { data: { shopOwnerUpdateNote: true } }]
+    })
+    await renderRoute(DETAIL)
+
+    await screen.findByText('Mark')
+    await open('Onboarding step')
+    write('Onboarding step', '4')
+    await open('Notes')
+    fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Memo' } })
+    await userEvent.click(save())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+
+    await userEvent.click(save())
+
+    await screen.findByText('Changes saved.')
+    expect(writeNames(stub)).toEqual(['ShopOwnerUpdatePreferences', 'ShopOwnerUpdateNote', 'ShopOwnerUpdateNote'])
+  })
+
   // Nothing is written until Save is pressed — a row left open with a typed value is not a write.
   it('writes nothing until Save is pressed', async () => {
     const stub = stubGraphQL(detail())
@@ -1863,6 +1913,54 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
     expect(writeNames(stub)).toEqual(['ShopOwnerUpdateEmail', 'ShopOwnerUpdateStatus', 'ShopOwnerUpdateStatus'])
   })
 
+  it('does not resend the account flags once a later group is retried', async () => {
+    const stub = stubGraphQL({
+      ...detailPending(),
+      ShopOwnerUpdateStatus: { data: { shopOwnerUpdateStatus: true } },
+      ShopOwnerUpdatePreferences: [
+        { data: { shopOwnerUpdatePreferences: false } },
+        { data: { shopOwnerUpdatePreferences: true } }
+      ]
+    })
+    await renderRoute(DETAIL)
+
+    await screen.findByText('new.seller@example.com')
+    await suspend('Registered with a stolen company number.')
+    await open('Remember me at login')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Remember me at login' }))
+    await userEvent.click(save())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+
+    await userEvent.click(save())
+
+    await screen.findByText('Changes saved.')
+    expect(writeNames(stub)).toEqual(['ShopOwnerUpdateStatus', 'ShopOwnerUpdatePreferences', 'ShopOwnerUpdatePreferences'])
+  })
+
+  it('does not resend the preferences once the note is retried', async () => {
+    const stub = stubGraphQL({
+      ...detailPending(),
+      ShopOwnerUpdatePreferences: { data: { shopOwnerUpdatePreferences: true } },
+      ShopOwnerUpdateNote: [{ data: { shopOwnerUpdateNote: false } }, { data: { shopOwnerUpdateNote: true } }]
+    })
+    await renderRoute(DETAIL)
+
+    await screen.findByText('new.seller@example.com')
+    await open('Remember me at login')
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Remember me at login' }))
+    await open('Notes')
+    fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Memo' } })
+    await userEvent.click(save())
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed.')
+
+    await userEvent.click(save())
+
+    await screen.findByText('Changes saved.')
+    expect(writeNames(stub)).toEqual(['ShopOwnerUpdatePreferences', 'ShopOwnerUpdateNote', 'ShopOwnerUpdateNote'])
+  })
+
   // The panel's own schema still has rules, and the login email is the field that carries them: it is
   // the only thing identifying this account, so a typo in it is unrecoverable rather than untidy.
   it('refuses an invalid login email', async () => {
@@ -2051,5 +2149,86 @@ describe('ShopOwnerPersonalData — an account that registered itself', () => {
 
     await screen.findByText('new.seller@example.com')
     expect(screen.getByRole('main')).toMatchSnapshot()
+  })
+})
+
+/** One company, for the tests that need a section of the page to refuse after the account has been written. */
+const company = {
+  __typename: 'GraphQLCompany',
+  _id: '65f0000000000000000000c1',
+  legalName: 'Rivers Trading Ltd',
+  vatNumber: '12345678901',
+  taxCode: null,
+  contactPerson: 'Mark Rivers',
+  administrator: 'Mark Rivers',
+  uniqueCode: null,
+  certifiedEmail: 'certified@rivers.test',
+  registryExtract: 'MA-123456',
+  address: {
+    street: '3 Oak Street',
+    postalCode: '02108',
+    city: 'Boston',
+    province: 'MA',
+    position: { type: 'Point', coordinates: [-71.0636, 42.3626] }
+  }
+}
+
+const refusedCompany = (message: string) => ({ errors: [graphQLError('Error', message, 409)], status: 409 })
+
+/*
+ * ⚠️ The page remounts its sections only when **every** one of them saved. An account written just before a company
+ * is refused therefore stays on screen as it is, and has to put itself right: nothing left dirty, no old refusal.
+ */
+describe.each([
+  ['a complete account', detail, 'Mark'],
+  ['an account that registered itself', detailPending, 'new.seller@example.com']
+])('ShopOwnerPersonalData — %s, beside a refused company', (_label, seed, shown) => {
+  const editBoth = async () => {
+    await screen.findByText(shown)
+    await screen.findByRole('heading', { name: company.legalName, level: 3 })
+    await open('Notes')
+    fireEvent.change(box('Notes').getByLabelText('Notes'), { target: { value: 'Memo' } })
+    await open('Contact person')
+    write('Contact person', 'Anna White')
+  }
+
+  const replies = { ...seed(), ShopOwnerCompanies: { data: { shopOwnerCompanies: [company] } } }
+
+  it('does not resend what it has already written', async () => {
+    const stub = stubGraphQL({
+      ...replies,
+      ShopOwnerUpdateNote: { data: { shopOwnerUpdateNote: true } },
+      CompanyUpdate: [refusedCompany('Certified email already registered'), refusedCompany('VAT number already registered')]
+    })
+    await renderRoute(DETAIL)
+
+    await editBoth()
+    await userEvent.click(save())
+
+    expect(await screen.findByText('Certified email already registered')).toBeInTheDocument()
+
+    await userEvent.click(save())
+
+    expect(await screen.findByText('VAT number already registered')).toBeInTheDocument()
+    expect(writeNames(stub)).toEqual(['ShopOwnerUpdateNote'])
+  })
+
+  it('takes its own refusal down once the retry goes through', async () => {
+    stubGraphQL({
+      ...replies,
+      ShopOwnerUpdateNote: [{ data: { shopOwnerUpdateNote: false } }, { data: { shopOwnerUpdateNote: true } }],
+      CompanyUpdate: refusedCompany('Certified email already registered')
+    })
+    await renderRoute(DETAIL)
+
+    await editBoth()
+    await userEvent.click(save())
+
+    expect(await screen.findByText('Save failed.')).toBeInTheDocument()
+
+    await userEvent.click(save())
+
+    expect(await screen.findByText('Certified email already registered')).toBeInTheDocument()
+    expect(screen.queryByText('Save failed.')).not.toBeInTheDocument()
   })
 })

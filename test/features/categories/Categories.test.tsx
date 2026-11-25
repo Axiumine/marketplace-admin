@@ -413,6 +413,34 @@ describe('Categories — editing', () => {
     expect(await screen.findByText(/That category no longer exists/)).toBeInTheDocument()
     expect(screen.queryByText(/Slug: already used/)).toBeNull()
   })
+
+  // Nothing remounts while a later card is refused, so the card that was written has to mark itself clean: the next
+  // press must go straight to the one still unsaved.
+  it('does not resend a category that was written once a later one is retried', async () => {
+    const stub = stubGraphQL({
+      ...taxonomy([home, books]),
+      ItemCategoryUpdate: [
+        { data: { itemCategoryUpdate: true } },
+        refused('slug already used by another category', 409),
+        refused('category not found', 404)
+      ]
+    })
+    await renderRoute(CATEGORIES)
+
+    await screen.findByRole('heading', { name: 'Books', level: 3 })
+    await open('Name')
+    write('Name', 'House')
+    await open('Name', 'Books')
+    write('Name', 'Reading', 'Books')
+    await userEvent.click(save())
+
+    expect(await screen.findByText(/Slug: already used by another category/)).toBeInTheDocument()
+
+    await userEvent.click(save())
+
+    expect(await screen.findByText(/That category no longer exists/)).toBeInTheDocument()
+    expect(writes(stub).map((call) => call.variables['_id'])).toEqual([ID_HOME, ID_BOOKS, ID_BOOKS])
+  })
 })
 
 /**
@@ -826,6 +854,24 @@ describe('Categories — new category', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Slug: already used by another category.')
     expect(screen.getByRole('heading', { name: NEW, level: 3 })).toBeInTheDocument()
+  })
+
+  // The page remounts only when every section saved. With the second card refused nothing remounts, so the stored
+  // card has to leave by itself, or the next press adds the same category again.
+  it('drops the card that was stored even when the one after it is refused', async () => {
+    const stub = stubGraphQL({ ...taxonomy([]), ...OK_ADD })
+    await renderRoute(CATEGORIES)
+
+    await screen.findByText(/No category yet/)
+    await add()
+    fill()
+    await add()
+    await userEvent.click(save())
+
+    expect(await page().findByText('Name is required')).toBeInTheDocument()
+    expect(adds(stub)).toHaveLength(1)
+    expect(newCards()).toHaveLength(1)
+    expect(within(newCards()[0] as HTMLElement).getByLabelText('Name')).toHaveValue('')
   })
 
   // The card is one more section of the page's save, registered after the categories that exist: an edit

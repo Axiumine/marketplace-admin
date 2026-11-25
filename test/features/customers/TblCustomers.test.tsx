@@ -13,6 +13,7 @@ import {
 
 import type { GraphQLCall } from '../../helpers/graphql'
 import { graphQLError, stubGraphQL } from '../../helpers/graphql'
+import { trackUnhandledRejections } from '../../helpers/rejections'
 import { renderRoute } from '../../helpers/render'
 
 const CUSTOMERS = '/customers'
@@ -498,6 +499,20 @@ describe('TblCustomers', () => {
     expect(within(form).queryByText(/why this account is being suspended/)).not.toBeInTheDocument()
   })
 
+  // Another row's Suspend is a way into the form that passes through no Cancel, so it has to take the standing
+  // refusal down itself: the new account has not been refused anything yet.
+  it('opens another row’s form without the refusal the last one raised', async () => {
+    stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer(), OTHER]) })
+    await renderRoute(CUSTOMERS)
+
+    const first = await openSuspendForm('ada.stone@example.com')
+    await submitForm(first)
+    const second = await openSuspendForm('ben.frost@example.com')
+
+    expect(within(second).getByLabelText('Reason')).not.toHaveAttribute('aria-invalid', 'true')
+    expect(within(second).queryByText(/why this account is being suspended/)).not.toBeInTheDocument()
+  })
+
   // Counted off the trimmed value, because that is the string the submit sends and the one the service
   // measures against its own cap.
   it('counts down to the cap on the trimmed value', async () => {
@@ -549,8 +564,8 @@ describe('TblCustomers', () => {
     expect(callsTo(stub.calls, 'UserUpdateStatus')).toHaveLength(0)
   })
 
-  // A cancelled reason must not turn up in the next one. The state is per-form and cleared on both ways
-  // out, so the box an admin opens is always empty.
+  // A cancelled reason must not turn up in the next one. The state is cleared on the way into the form,
+  // so the box an admin opens is always empty.
   it('opens the next form with an empty box', async () => {
     stubGraphQL({ ...ABOVE, UsersActiveTbl: page([customer(), OTHER]) })
     await renderRoute(CUSTOMERS)
@@ -726,6 +741,29 @@ describe('TblCustomers', () => {
     await screen.findByRole('alert')
     expect(screen.getByRole('group', { name: 'Suspend ada.stone@example.com' })).toBeInTheDocument()
     expect(screen.getByLabelText('Reason')).toHaveValue('Fraud')
+  })
+
+  // A refusal carries `errors` and no `data`. The submit handler is awaited by nobody, so a read that assumed
+  // `data` would throw into a promise nothing on screen shows — only Node's own rejection hook sees it.
+  it('reads a data-less refusal without throwing inside the submit handler', async () => {
+    const rejections = trackUnhandledRejections()
+
+    stubGraphQL({
+      ...ABOVE,
+      UsersActiveTbl: page([customer()]),
+      UserUpdateStatus: { errors: [graphQLError('Oops', 'user not found', 404)], status: 404 }
+    })
+    await renderRoute(CUSTOMERS)
+
+    const form = await openSuspendForm('ada.stone@example.com')
+    await userEvent.type(within(form).getByLabelText('Reason'), 'Fraud')
+    await submitForm(form)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('user not found')
+
+    await rejections.settle()
+    rejections.stop()
+    expect(rejections.reasons).toEqual([])
   })
 
   /**

@@ -389,6 +389,26 @@ describe('AddressField', () => {
   })
 
   /*
+   * A pick spends the answer along with the list. The admin who types the same words again is asking afresh, and
+   * must see the wait for the new request, not the old matches standing in for it.
+   */
+  it('forgets the old matches once one is picked, even when the same words are typed again', async () => {
+    installOsm([{ results: [BOSTON] }, { pending: true }])
+    render(<Host compose={composed} />)
+
+    write('main street boston')
+    await awaitSearch()
+    fireEvent.click(screen.getByRole('button', { name: 'Main Street, 1, Boston, MA, 02108, USA' }))
+    await awaitSearch()
+
+    write('main street boston')
+    await awaitSearch()
+
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Searching addresses')
+  })
+
+  /*
    * A form editing an address that already exists hands the field its text, and that text is not
    * something anybody typed. Geocoding it would open a list of suggestions over an address nobody asked
    * about, and spend a request on a donated service to do it.
