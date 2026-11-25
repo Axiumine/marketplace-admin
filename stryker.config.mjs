@@ -1,3 +1,5 @@
+import { availableParallelism } from 'node:os'
+
 /**
  * Mutation testing gate — 100, the same as the seven backend services and marketplace-common.
  *
@@ -34,8 +36,11 @@ export default {
    * ~570 MB each against 30 GB of RAM, and the 28-worker run sat at 12.7 GB of swap with 502 MB free.
    * It was still 3.3x faster because swap here is a PCIe 5.0 NVMe, so this number does not travel to a
    * machine whose swap is slower or whose RAM is busier.
+   *
+   * ⚠️ On CI, one worker per core: a GitHub-hosted `ubuntu-latest` runner has 4 vCPU, 28 workers starve it,
+   * and a starved worker is counted as a kill.
    */
-  concurrency: 28,
+  concurrency: process.env.CI ? availableParallelism() : 28,
   timeoutMS: 60000,
   thresholds: { high: 100, low: 95, break: 100 },
   // The sandbox is a file-by-file copy of the repo, and `copyFile` refuses a symlink that points at a
