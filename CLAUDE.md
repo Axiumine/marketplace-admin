@@ -10,7 +10,6 @@ One of sixteen sub-repos; almost nothing here is changeable on its own.
 | what the app is, setup, Node/engine requirement | [`README.md`](./README.md) |
 | hooks, gate order, node selection, lint scope, layout, testing quirks, schema-drift & mutation-gate rationale | [`REPO.md`](./REPO.md) |
 | gate policy, thresholds | [`COVERAGE.md`](./COVERAGE.md) |
-| GitNexus rules, CLI skills, registry name | [`AGENTS.md`](./AGENTS.md) |
 | anything cross-repo | parent `CLAUDE.md` |
 
 ⚠️ **English only** — identifiers, UI text, form labels, comments, routes. No exception; these are the
@@ -83,12 +82,3 @@ A change here often is not local:
 - a model field → `marketplace-common`, published, then every consumer bumped
 
 One logical change = N commits, one per repo. There is no atomic cross-repo commit.
-
-## GitNexus
-
-Indexed as **marketplace-admin**, group `marketplace-platform`. Tool/resource reference, Never-Do list and
-CLI skills live in [`AGENTS.md`](./AGENTS.md) — not duplicated here.
-
-- **Run `impact({target, repo: "marketplace-admin"})` before editing a symbol.**
-- **Run `detect_changes({repo: "marketplace-admin"})` before committing.** `repo:` is mandatory and must
-  be a `marketplace*` registry name.
