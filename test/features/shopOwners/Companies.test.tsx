@@ -508,6 +508,34 @@ describe('Companies — editing', () => {
     expect(screen.queryByText('Certified email already registered')).not.toBeInTheDocument()
   })
 
+  // Nothing remounts while a later card is refused, so the card that was written has to mark itself clean: the next
+  // press must go straight to the one still unsaved.
+  it('does not resend a company that was written once a later one is retried', async () => {
+    const stub = stubGraphQL({
+      ...companies([company, companyTwo]),
+      CompanyUpdate: [
+        { data: { companyUpdate: true } },
+        { errors: [graphQLError('Error', 'Certified email already registered', 409)], status: 409 },
+        { errors: [graphQLError('Error', 'VAT number already registered', 409)], status: 409 }
+      ]
+    })
+    await renderRoute(DETAIL)
+
+    await screen.findByRole('heading', { name: 'White Trading Ltd', level: 3 })
+    await open('Company data', 'Contact person')
+    write('Company data', 'Contact person', 'Anna White')
+    await open('Company data', 'Contact person', 'White Trading Ltd')
+    write('Company data', 'Contact person', 'Louis Green', 'White Trading Ltd')
+    await userEvent.click(save())
+
+    expect(await screen.findByText('Certified email already registered')).toBeInTheDocument()
+
+    await userEvent.click(save())
+
+    expect(await screen.findByText('VAT number already registered')).toBeInTheDocument()
+    expect(writes(stub).map((call) => call.variables['_id'])).toEqual([ID_COMPANY, companyTwo._id, companyTwo._id])
+  })
+
   // `false` with no error at all: no resolver answers that way, but `Boolean!` says it could, and a save
   // reported as successful would be worse than a generic line.
   it('reports a bare refusal', async () => {
@@ -1220,6 +1248,24 @@ describe('Companies — new company', () => {
     await screen.findByText('Changes saved.')
     expect(writes(stub)[0]?.variables).toMatchObject({ _id: ID_COMPANY, company: { contactPerson: 'Anna White' } })
     expect(adds(stub)[0]?.variables).toMatchObject({ idShopOwner: ID, company: { vatNumber: '11122233344' } })
+  })
+
+  // The page remounts only when every section saved. With the second card refused nothing remounts, so the stored
+  // card has to leave by itself, or the next press adds the same company again.
+  it('drops the card that was stored even when the one after it is refused', async () => {
+    const stub = stubNetwork({ ...companies([]), ...OK_ADD }, withAddress)
+    await renderRoute(DETAIL)
+
+    await screen.findByText('No company registered.')
+    await add()
+    await fill()
+    await add()
+    await userEvent.click(save())
+
+    expect(await page().findByText('Legal name is required')).toBeInTheDocument()
+    expect(adds(stub)).toHaveLength(1)
+    expect(newCards()).toHaveLength(1)
+    expect(within(newCards()[0] as HTMLElement).getByLabelText('Legal name')).toHaveValue('')
   })
 
   /*

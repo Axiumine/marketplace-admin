@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -170,6 +170,18 @@ describe('the account lookup', () => {
     expect(callsTo(stub.calls, 'Sessions')[0]?.variables).toEqual({ tier: 'user', accountId: ACCOUNT })
     expect(callsTo(stub.calls, 'Sessions')[0]?.url).toBe(ENDPOINT.adminResource)
     expect(callsTo(stub.calls, 'ReuseEvents')[0]?.variables).toEqual({ tier: 'user', accountId: ACCOUNT })
+  })
+
+  // The lookup is a client-side navigation. Left to its default, the browser would submit the form itself and reload
+  // the page, and the access token held in memory would go with it.
+  it('keeps the browser from submitting the form itself', async () => {
+    stubGraphQL({ KeygripStatus: KEYGRIP })
+    await renderRoute('/security')
+
+    const form = screen.getByRole('button', { name: 'Look up' }).closest('form') as HTMLFormElement
+
+    // `false` is `dispatchEvent` reporting that a listener called `preventDefault`.
+    expect(fireEvent.submit(form)).toBe(false)
   })
 
   // A pasted id arrives with the whitespace the paste brought. Sent as typed it is a different key, and the

@@ -130,6 +130,22 @@ describe('LoadingPage', () => {
     expect(getSession()).toBeNull()
   })
 
+  /*
+   * ⚠️ An outage and not a 401, with a token and an identity both seeded. On a dead session the client's own
+   * `mapExchange` drops the token before this page sees the error, and a run with no identity leaves nothing to
+   * clear — so only this shows what the page itself throws away.
+   */
+  it('drops the token and the identity itself when the identity cannot be read', async () => {
+    stubGraphQL({ InfoAdminAfterLogin: { errors: [graphQLError('Unavailable', undefined, 500)], status: 500 } })
+    const { router } = await renderRoute('/loading')
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe('/')
+    })
+    expect(getAccessToken()).toBeNull()
+    expect(getSession()).toBeNull()
+  })
+
   it('renders', async () => {
     stubGraphQL({ InfoAdminAfterLogin: { pending: true } })
     const { container } = await renderRoute('/loading')
